@@ -3,16 +3,12 @@
 -- Tracked actuals:
 --   Attendance And Coverage -> Tbl_SOAttendanceandPunctuality
 --   Training Evaluation     -> Tbl_SOTraining
---   Total Sales Target      -> SUM(Tbl_SalesClaimMaster.TotalLiters)        per SO in quarter
---   Platinum Target         -> SUM liters from Tbl_ClaimDetail→Tbl_ProductDetail where Incentive_Category='Special Coating'
---   Premium Target          -> SUM liters from Tbl_ClaimDetail→Tbl_ProductDetail where Incentive_Category='ACTD'
+--   Total Sales Target      -> SUM(Tbl_SalesClaimMaster.TotalLiters) per SO in quarter
+--   Platinum Target         -> SUM liters from Tbl_ClaimDetail->Tbl_ProductDetail where Incentive_Category='Platinum'
+--   Premium Target          -> SUM liters from Tbl_ClaimDetail->Tbl_ProductDetail where Incentive_Category='Premium'
 --   Dealer Visits Target    -> COUNT(Tbl_TradeVisitsFinal) per SO in quarter
 --   All others              -> 1 (no tracking yet)
---
--- Verify exact FocusArea spellings before running:
---   SELECT Name FROM dbo.Tbl_FocusArea
--- Verify segment names:
---   SELECT ID, Name FROM dbo.Tbl_Segmenttype
+-- All numeric outputs rounded to 2 decimal places.
 -- =============================================
 CREATE OR ALTER PROCEDURE dbo.usp_GetKPIExcelReport
     @FinancialYearID INT,
@@ -44,22 +40,22 @@ BEGIN
         rh.Name                                          AS HeadName,
         so.Name                                          AS SOName,
 
-        -- ── 1. Total Sales Target -> actual = SUM of all claim liters ────────
-        ISNULL(MAX(CASE WHEN dk.FocusArea = 'Total Sales Target'
-                        THEN dk.TargetValue END), 0)    AS SalesTarget,
-        ISNULL((
+        -- ── 1. Total Sales Target ────────────────────────────────────────────
+        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Total Sales Target'
+                              THEN dk.TargetValue END), 0), 2)   AS SalesTarget,
+        ROUND(ISNULL((
             SELECT SUM(c.TotalLiters)
             FROM   dbo.Tbl_SalesClaimMaster c
             WHERE  c.SOID          = so.ID
               AND  c.DateSelected >= @StartDate
               AND  c.DateSelected <= @EndDate
               AND  ISNULL(c.IsActive, 1) = 1
-        ), 0)                                            AS SalesActual,
+        ), 0), 2)                                                 AS SalesActual,
 
-        -- ── 2. Platinum Target -> actual = Special Coating liters ─────────────
-        ISNULL(MAX(CASE WHEN dk.FocusArea = 'Platinum Target'
-                        THEN dk.TargetValue END), 0)    AS PlatinumTarget,
-        ISNULL((
+        -- ── 2. Platinum Target ───────────────────────────────────────────────
+        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Platinum Target'
+                              THEN dk.TargetValue END), 0), 2)   AS PlatinumTarget,
+        ROUND(ISNULL((
             SELECT SUM(
                 ISNULL(cd.Drum,    0) * ISNULL(pd.Drum_UoM,   0) +
                 ISNULL(cd.Gallon,  0) * ISNULL(pd.Gallon_UoM, 0) +
@@ -72,13 +68,13 @@ BEGIN
               AND  cm.DateSelected >= @StartDate
               AND  cm.DateSelected <= @EndDate
               AND  ISNULL(cm.IsActive, 1) = 1
-              AND  pd.Incentive_Category  = 'Special Coating'
-        ), 0)                                            AS PlatinumActual,
+              AND  pd.Incentive_Category  = 'Platinum'
+        ), 0), 2)                                                 AS PlatinumActual,
 
-        -- ── 3. Premium Target -> actual = ACTD liters ────────────────────────
-        ISNULL(MAX(CASE WHEN dk.FocusArea = 'Premium Target'
-                        THEN dk.TargetValue END), 0)    AS PremiumTarget,
-        ISNULL((
+        -- ── 3. Premium Target ────────────────────────────────────────────────
+        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Premium Target'
+                              THEN dk.TargetValue END), 0), 2)   AS PremiumTarget,
+        ROUND(ISNULL((
             SELECT SUM(
                 ISNULL(cd.Drum,    0) * ISNULL(pd.Drum_UoM,   0) +
                 ISNULL(cd.Gallon,  0) * ISNULL(pd.Gallon_UoM, 0) +
@@ -91,12 +87,12 @@ BEGIN
               AND  cm.DateSelected >= @StartDate
               AND  cm.DateSelected <= @EndDate
               AND  ISNULL(cm.IsActive, 1) = 1
-              AND  pd.Incentive_Category  = 'ACTD'
-        ), 0)                                            AS PremiumActual,
+              AND  pd.Incentive_Category  = 'Premium'
+        ), 0), 2)                                                 AS PremiumActual,
 
-        -- ── 4. Dealer Visits Target -> actual = COUNT of Trade Visits ───────────
-        ISNULL(MAX(CASE WHEN dk.FocusArea = 'Dealer Visits Target'
-                        THEN dk.TargetValue END), 0)    AS DealerVisitsTarget,
+        -- ── 4. Dealer Visits Target ──────────────────────────────────────────
+        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Dealer visit Target'
+                              THEN dk.TargetValue END), 0), 2)   AS DealerVisitsTarget,
         ISNULL((
             SELECT COUNT(*)
             FROM   dbo.Tbl_TradeVisitsFinal tv
@@ -104,150 +100,153 @@ BEGIN
               AND  tv.CreatedAt    >= @StartDate
               AND  tv.CreatedAt    <= DATEADD(DAY, 1, CAST(@EndDate AS DATETIME))
               AND  ISNULL(tv.IsActive, 1) = 1
-        ), 0)                                            AS DealerVisitsActual,
+        ), 0)                                                     AS DealerVisitsActual,
 
         -- ── 5. Site Visit Target (actual = 1) ────────────────────────────────
-        ISNULL(MAX(CASE WHEN dk.FocusArea = 'Site Visit Target'
-                        THEN dk.TargetValue END), 0)    AS SiteVisitsTarget,
-        1                                                AS SiteVisitsActual,
+        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Site Visit Target'
+                              THEN dk.TargetValue END), 0), 2)   AS SiteVisitsTarget,
+        1                                                         AS SiteVisitsActual,
 
         -- ── 6. Business Affiliate Visit Target (actual = 1) ──────────────────
-        ISNULL(MAX(CASE WHEN dk.FocusArea = 'Business Affiliate Visit Target'
-                        THEN dk.TargetValue END), 0)    AS ContractorVisitsTarget,
-        1                                                AS ContractorVisitsActual,
+        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Business Affiliate Visit Target'
+                              THEN dk.TargetValue END), 0), 2)   AS ContractorVisitsTarget,
+        1                                                         AS ContractorVisitsActual,
 
         -- ── 7. Customer Satisfaction (actual = 1) ────────────────────────────
-        ISNULL(MAX(CASE WHEN dk.FocusArea = 'Customer Satisfaction'
-                        THEN dk.TargetValue END), 0)    AS CustSatisfactionTarget,
-        1                                                AS CustSatisfactionActual,
+        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Customer Satisfaction'
+                              THEN dk.TargetValue END), 0), 2)   AS CustSatisfactionTarget,
+        1                                                         AS CustSatisfactionActual,
 
         -- ── 8. Area Coverage (actual = 1) ────────────────────────────────────
-        ISNULL(MAX(CASE WHEN dk.FocusArea = 'Area Coverage'
-                        THEN dk.TargetValue END), 0)    AS AreaCoverageTarget,
-        1                                                AS AreaCoverageActual,
+        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Area Coverage'
+                              THEN dk.TargetValue END), 0), 2)   AS AreaCoverageTarget,
+        1                                                         AS AreaCoverageActual,
 
-        -- ── 9. Attendance And Coverage -> tracked ─────────────────────────────
-        ISNULL(MAX(CASE WHEN dk.FocusArea = 'Attendance And Coverage'
-                        THEN dk.TargetValue END), 0)    AS AttendanceTarget,
-        ISNULL((
+        -- ── 9. Attendance And Coverage ───────────────────────────────────────
+        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Attendance And Coverage'
+                              THEN dk.TargetValue END), 0), 2)   AS AttendanceTarget,
+        ROUND(ISNULL((
             SELECT SUM(a.AttendanceandPunctuality)
             FROM   dbo.Tbl_SOAttendanceandPunctuality a
             WHERE  a.SOID            = so.ID
               AND  a.FinancialYearID = @FinancialYearID
               AND  a.Quarter         = @Quarter
               AND  ISNULL(a.IsActive, 1) = 1
-        ), 0)                                            AS AttendanceActual,
+        ), 0), 2)                                                 AS AttendanceActual,
 
         -- ── 10. Product Knowledge (actual = 1) ───────────────────────────────
-        ISNULL(MAX(CASE WHEN dk.FocusArea = 'Product Knowledge'
-                        THEN dk.TargetValue END), 0)    AS ProdKnowTarget,
-        1                                                AS ProdKnowActual,
+        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Product Knowledge'
+                              THEN dk.TargetValue END), 0), 2)   AS ProdKnowTarget,
+        1                                                         AS ProdKnowActual,
 
-        -- ── 11. Training Evaluation -> tracked ───────────────────────────────
-        ISNULL(MAX(CASE WHEN dk.FocusArea = 'Training Evaluation'
-                        THEN dk.TargetValue END), 0)    AS TrainingTarget,
-        ISNULL((
+        -- ── 11. Training Evaluation ──────────────────────────────────────────
+        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Training Evaluation'
+                              THEN dk.TargetValue END), 0), 2)   AS TrainingTarget,
+        ROUND(ISNULL((
             SELECT SUM(t.Training)
             FROM   dbo.Tbl_SOTraining t
             WHERE  t.SOID            = so.ID
               AND  t.FinancialYearID = @FinancialYearID
               AND  t.Quarter         = @Quarter
               AND  ISNULL(t.IsActive, 1) = 1
-        ), 0)                                            AS TrainingActual,
+        ), 0), 2)                                                 AS TrainingActual,
 
         -- ── 12. Compititor Feedback (actual = 1) ─────────────────────────────
-        ISNULL(MAX(CASE WHEN dk.FocusArea = 'Compititor Feedback'
-                        THEN dk.TargetValue END), 0)    AS CompFeedTarget,
-        1                                                AS CompFeedActual,
+        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Compititor Feedback'
+                              THEN dk.TargetValue END), 0), 2)   AS CompFeedTarget,
+        1                                                         AS CompFeedActual,
 
-        -- ── Total Target (sum of all 12 focus areas) ─────────────────────────
-        ISNULL(MAX(CASE WHEN dk.FocusArea = 'Total Sales Target'              THEN dk.TargetValue END), 0)
-      + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Platinum Target'                 THEN dk.TargetValue END), 0)
-      + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Premium Target'                  THEN dk.TargetValue END), 0)
-      + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Dealer Visits Target'            THEN dk.TargetValue END), 0)
-      + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Site Visit Target'               THEN dk.TargetValue END), 0)
-      + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Business Affiliate Visit Target' THEN dk.TargetValue END), 0)
-      + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Customer Satisfaction'           THEN dk.TargetValue END), 0)
-      + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Area Coverage'                   THEN dk.TargetValue END), 0)
-      + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Attendance And Coverage'         THEN dk.TargetValue END), 0)
-      + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Product Knowledge'               THEN dk.TargetValue END), 0)
-      + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Training Evaluation'             THEN dk.TargetValue END), 0)
-      + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Compititor Feedback'             THEN dk.TargetValue END), 0)
-                                                         AS TotalTarget,
+        -- ── Total Target ─────────────────────────────────────────────────────
+        ROUND(
+            ISNULL(MAX(CASE WHEN dk.FocusArea = 'Total Sales Target'              THEN dk.TargetValue END), 0)
+          + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Platinum Target'                 THEN dk.TargetValue END), 0)
+          + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Premium Target'                  THEN dk.TargetValue END), 0)
+          + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Dealer visit Target'             THEN dk.TargetValue END), 0)
+          + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Site Visit Target'               THEN dk.TargetValue END), 0)
+          + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Business Affiliate Visit Target' THEN dk.TargetValue END), 0)
+          + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Customer Satisfaction'           THEN dk.TargetValue END), 0)
+          + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Area Coverage'                   THEN dk.TargetValue END), 0)
+          + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Attendance And Coverage'         THEN dk.TargetValue END), 0)
+          + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Product Knowledge'               THEN dk.TargetValue END), 0)
+          + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Training Evaluation'             THEN dk.TargetValue END), 0)
+          + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Compititor Feedback'             THEN dk.TargetValue END), 0)
+        , 2)                                                      AS TotalTarget,
 
         -- ── Total Actual ──────────────────────────────────────────────────────
-        -- Sales Total Liters
-        ISNULL((
-            SELECT SUM(c.TotalLiters)
-            FROM   dbo.Tbl_SalesClaimMaster c
-            WHERE  c.SOID          = so.ID
-              AND  c.DateSelected >= @StartDate
-              AND  c.DateSelected <= @EndDate
-              AND  ISNULL(c.IsActive, 1) = 1
-        ), 0)
-        -- Platinum (Special Coating)
-      + ISNULL((
-            SELECT SUM(
-                ISNULL(cd.Drum,    0) * ISNULL(pd.Drum_UoM,   0) +
-                ISNULL(cd.Gallon,  0) * ISNULL(pd.Gallon_UoM, 0) +
-                ISNULL(cd.Quarter, 0) * ISNULL(pd.Qtr_UoM,    0)
-            )
-            FROM   dbo.Tbl_SalesClaimMaster cm
-            INNER JOIN dbo.Tbl_ClaimDetail   cd ON cd.ClaimMasterID = cm.ID
-            INNER JOIN dbo.Tbl_ProductDetail pd ON pd.ID = cd.ProductID
-            WHERE  cm.SOID          = so.ID
-              AND  cm.DateSelected >= @StartDate
-              AND  cm.DateSelected <= @EndDate
-              AND  ISNULL(cm.IsActive, 1) = 1
-              AND  pd.Incentive_Category  = 'Special Coating'
-        ), 0)
-        -- Premium (ACTD)
-      + ISNULL((
-            SELECT SUM(
-                ISNULL(cd.Drum,    0) * ISNULL(pd.Drum_UoM,   0) +
-                ISNULL(cd.Gallon,  0) * ISNULL(pd.Gallon_UoM, 0) +
-                ISNULL(cd.Quarter, 0) * ISNULL(pd.Qtr_UoM,    0)
-            )
-            FROM   dbo.Tbl_SalesClaimMaster cm
-            INNER JOIN dbo.Tbl_ClaimDetail   cd ON cd.ClaimMasterID = cm.ID
-            INNER JOIN dbo.Tbl_ProductDetail pd ON pd.ID = cd.ProductID
-            WHERE  cm.SOID          = so.ID
-              AND  cm.DateSelected >= @StartDate
-              AND  cm.DateSelected <= @EndDate
-              AND  ISNULL(cm.IsActive, 1) = 1
-              AND  pd.Incentive_Category  = 'ACTD'
-        ), 0)
-        + ISNULL((
-              SELECT COUNT(*)
-              FROM   dbo.Tbl_TradeVisitsFinal tv
-              WHERE  tv.SOID          = so.ID
-                AND  tv.CreatedAt    >= @StartDate
-                AND  tv.CreatedAt    <= DATEADD(DAY, 1, CAST(@EndDate AS DATETIME))
-                AND  ISNULL(tv.IsActive, 1) = 1
-          ), 0)  -- Dealer Visits Target
-        + 1  -- Site Visit Target
-        + 1  -- Business Affiliate Visit Target
-        + 1  -- Customer Satisfaction
-        + 1  -- Area Coverage
-        + ISNULL((
-              SELECT SUM(a.AttendanceandPunctuality)
-              FROM   dbo.Tbl_SOAttendanceandPunctuality a
-              WHERE  a.SOID            = so.ID
-                AND  a.FinancialYearID = @FinancialYearID
-                AND  a.Quarter         = @Quarter
-                AND  ISNULL(a.IsActive, 1) = 1
-          ), 0)  -- Attendance And Coverage
-        + 1  -- Product Knowledge
-        + ISNULL((
-              SELECT SUM(t.Training)
-              FROM   dbo.Tbl_SOTraining t
-              WHERE  t.SOID            = so.ID
-                AND  t.FinancialYearID = @FinancialYearID
-                AND  t.Quarter         = @Quarter
-                AND  ISNULL(t.IsActive, 1) = 1
-          ), 0)  -- Training Evaluation
-        + 1  -- Compititor Feedback
-                                                         AS TotalActual
+        ROUND(
+            -- Sales Total Liters
+            ISNULL((
+                SELECT SUM(c.TotalLiters)
+                FROM   dbo.Tbl_SalesClaimMaster c
+                WHERE  c.SOID          = so.ID
+                  AND  c.DateSelected >= @StartDate
+                  AND  c.DateSelected <= @EndDate
+                  AND  ISNULL(c.IsActive, 1) = 1
+            ), 0)
+            -- Platinum
+          + ISNULL((
+                SELECT SUM(
+                    ISNULL(cd.Drum,    0) * ISNULL(pd.Drum_UoM,   0) +
+                    ISNULL(cd.Gallon,  0) * ISNULL(pd.Gallon_UoM, 0) +
+                    ISNULL(cd.Quarter, 0) * ISNULL(pd.Qtr_UoM,    0)
+                )
+                FROM   dbo.Tbl_SalesClaimMaster cm
+                INNER JOIN dbo.Tbl_ClaimDetail   cd ON cd.ClaimMasterID = cm.ID
+                INNER JOIN dbo.Tbl_ProductDetail pd ON pd.ID = cd.ProductID
+                WHERE  cm.SOID          = so.ID
+                  AND  cm.DateSelected >= @StartDate
+                  AND  cm.DateSelected <= @EndDate
+                  AND  ISNULL(cm.IsActive, 1) = 1
+                  AND  pd.Incentive_Category  = 'Platinum'
+            ), 0)
+            -- Premium
+          + ISNULL((
+                SELECT SUM(
+                    ISNULL(cd.Drum,    0) * ISNULL(pd.Drum_UoM,   0) +
+                    ISNULL(cd.Gallon,  0) * ISNULL(pd.Gallon_UoM, 0) +
+                    ISNULL(cd.Quarter, 0) * ISNULL(pd.Qtr_UoM,    0)
+                )
+                FROM   dbo.Tbl_SalesClaimMaster cm
+                INNER JOIN dbo.Tbl_ClaimDetail   cd ON cd.ClaimMasterID = cm.ID
+                INNER JOIN dbo.Tbl_ProductDetail pd ON pd.ID = cd.ProductID
+                WHERE  cm.SOID          = so.ID
+                  AND  cm.DateSelected >= @StartDate
+                  AND  cm.DateSelected <= @EndDate
+                  AND  ISNULL(cm.IsActive, 1) = 1
+                  AND  pd.Incentive_Category  = 'Premium'
+            ), 0)
+            -- Dealer Visits
+          + ISNULL((
+                SELECT COUNT(*)
+                FROM   dbo.Tbl_TradeVisitsFinal tv
+                WHERE  tv.SOID          = so.ID
+                  AND  tv.CreatedAt    >= @StartDate
+                  AND  tv.CreatedAt    <= DATEADD(DAY, 1, CAST(@EndDate AS DATETIME))
+                  AND  ISNULL(tv.IsActive, 1) = 1
+            ), 0)
+          + 1  -- Site Visit Target
+          + 1  -- Business Affiliate Visit Target
+          + 1  -- Customer Satisfaction
+          + 1  -- Area Coverage
+          + ISNULL((
+                SELECT SUM(a.AttendanceandPunctuality)
+                FROM   dbo.Tbl_SOAttendanceandPunctuality a
+                WHERE  a.SOID            = so.ID
+                  AND  a.FinancialYearID = @FinancialYearID
+                  AND  a.Quarter         = @Quarter
+                  AND  ISNULL(a.IsActive, 1) = 1
+            ), 0)
+          + 1  -- Product Knowledge
+          + ISNULL((
+                SELECT SUM(t.Training)
+                FROM   dbo.Tbl_SOTraining t
+                WHERE  t.SOID            = so.ID
+                  AND  t.FinancialYearID = @FinancialYearID
+                  AND  t.Quarter         = @Quarter
+                  AND  ISNULL(t.IsActive, 1) = 1
+            ), 0)
+          + 1  -- Compititor Feedback
+        , 2)                                                      AS TotalActual
 
     FROM       dbo.Tbl_MasterKPIS  mk
     INNER JOIN dbo.SaleOfficers     so ON so.ID = mk.SOID
