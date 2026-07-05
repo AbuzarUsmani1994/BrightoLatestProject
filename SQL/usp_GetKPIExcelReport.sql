@@ -4,8 +4,8 @@
 --   Attendance And Coverage -> Tbl_SOAttendanceandPunctuality
 --   Training Evaluation     -> Tbl_SOTraining
 --   Total Sales Target      -> SUM(Tbl_SalesClaimMaster.TotalLiters)        per SO in quarter
---   Platinum Target         -> SUM where Tbl_Segmenttype.Name='Special Coating'
---   Premium Target          -> SUM where Tbl_Segmenttype.Name='ACTD'
+--   Platinum Target         -> SUM liters from Tbl_ClaimDetail→Tbl_ProductDetail where Incentive_Category='Special Coating'
+--   Premium Target          -> SUM liters from Tbl_ClaimDetail→Tbl_ProductDetail where Incentive_Category='ACTD'
 --   Dealer Visits Target    -> COUNT(Tbl_TradeVisitsFinal) per SO in quarter
 --   All others              -> 1 (no tracking yet)
 --
@@ -60,28 +60,38 @@ BEGIN
         ISNULL(MAX(CASE WHEN dk.FocusArea = 'Platinum Target'
                         THEN dk.TargetValue END), 0)    AS PlatinumTarget,
         ISNULL((
-            SELECT SUM(c.TotalLiters)
-            FROM   dbo.Tbl_SalesClaimMaster c
-            INNER JOIN dbo.Tbl_Segmenttype  st ON st.ID = c.SegmentID
-            WHERE  c.SOID          = so.ID
-              AND  c.DateSelected >= @StartDate
-              AND  c.DateSelected <= @EndDate
-              AND  ISNULL(c.IsActive, 1) = 1
-              AND  st.Name = 'Special Coating'
+            SELECT SUM(
+                ISNULL(cd.Drum,    0) * ISNULL(pd.Drum_UoM,   0) +
+                ISNULL(cd.Gallon,  0) * ISNULL(pd.Gallon_UoM, 0) +
+                ISNULL(cd.Quarter, 0) * ISNULL(pd.Qtr_UoM,    0)
+            )
+            FROM   dbo.Tbl_SalesClaimMaster cm
+            INNER JOIN dbo.Tbl_ClaimDetail   cd ON cd.ClaimMasterID = cm.ID
+            INNER JOIN dbo.Tbl_ProductDetail pd ON pd.ID = cd.ProductID
+            WHERE  cm.SOID          = so.ID
+              AND  cm.DateSelected >= @StartDate
+              AND  cm.DateSelected <= @EndDate
+              AND  ISNULL(cm.IsActive, 1) = 1
+              AND  pd.Incentive_Category  = 'Special Coating'
         ), 0)                                            AS PlatinumActual,
 
         -- ── 3. Premium Target -> actual = ACTD liters ────────────────────────
         ISNULL(MAX(CASE WHEN dk.FocusArea = 'Premium Target'
                         THEN dk.TargetValue END), 0)    AS PremiumTarget,
         ISNULL((
-            SELECT SUM(c.TotalLiters)
-            FROM   dbo.Tbl_SalesClaimMaster c
-            INNER JOIN dbo.Tbl_Segmenttype  st ON st.ID = c.SegmentID
-            WHERE  c.SOID          = so.ID
-              AND  c.DateSelected >= @StartDate
-              AND  c.DateSelected <= @EndDate
-              AND  ISNULL(c.IsActive, 1) = 1
-              AND  st.Name = 'ACTD'
+            SELECT SUM(
+                ISNULL(cd.Drum,    0) * ISNULL(pd.Drum_UoM,   0) +
+                ISNULL(cd.Gallon,  0) * ISNULL(pd.Gallon_UoM, 0) +
+                ISNULL(cd.Quarter, 0) * ISNULL(pd.Qtr_UoM,    0)
+            )
+            FROM   dbo.Tbl_SalesClaimMaster cm
+            INNER JOIN dbo.Tbl_ClaimDetail   cd ON cd.ClaimMasterID = cm.ID
+            INNER JOIN dbo.Tbl_ProductDetail pd ON pd.ID = cd.ProductID
+            WHERE  cm.SOID          = so.ID
+              AND  cm.DateSelected >= @StartDate
+              AND  cm.DateSelected <= @EndDate
+              AND  ISNULL(cm.IsActive, 1) = 1
+              AND  pd.Incentive_Category  = 'ACTD'
         ), 0)                                            AS PremiumActual,
 
         -- ── 4. Dealer Visits Target -> actual = COUNT of Trade Visits ───────────
@@ -177,25 +187,35 @@ BEGIN
         ), 0)
         -- Platinum (Special Coating)
       + ISNULL((
-            SELECT SUM(c.TotalLiters)
-            FROM   dbo.Tbl_SalesClaimMaster c
-            INNER JOIN dbo.Tbl_Segmenttype  st ON st.ID = c.SegmentID
-            WHERE  c.SOID          = so.ID
-              AND  c.DateSelected >= @StartDate
-              AND  c.DateSelected <= @EndDate
-              AND  ISNULL(c.IsActive, 1) = 1
-              AND  st.Name = 'Special Coating'
+            SELECT SUM(
+                ISNULL(cd.Drum,    0) * ISNULL(pd.Drum_UoM,   0) +
+                ISNULL(cd.Gallon,  0) * ISNULL(pd.Gallon_UoM, 0) +
+                ISNULL(cd.Quarter, 0) * ISNULL(pd.Qtr_UoM,    0)
+            )
+            FROM   dbo.Tbl_SalesClaimMaster cm
+            INNER JOIN dbo.Tbl_ClaimDetail   cd ON cd.ClaimMasterID = cm.ID
+            INNER JOIN dbo.Tbl_ProductDetail pd ON pd.ID = cd.ProductID
+            WHERE  cm.SOID          = so.ID
+              AND  cm.DateSelected >= @StartDate
+              AND  cm.DateSelected <= @EndDate
+              AND  ISNULL(cm.IsActive, 1) = 1
+              AND  pd.Incentive_Category  = 'Special Coating'
         ), 0)
         -- Premium (ACTD)
       + ISNULL((
-            SELECT SUM(c.TotalLiters)
-            FROM   dbo.Tbl_SalesClaimMaster c
-            INNER JOIN dbo.Tbl_Segmenttype  st ON st.ID = c.SegmentID
-            WHERE  c.SOID          = so.ID
-              AND  c.DateSelected >= @StartDate
-              AND  c.DateSelected <= @EndDate
-              AND  ISNULL(c.IsActive, 1) = 1
-              AND  st.Name = 'ACTD'
+            SELECT SUM(
+                ISNULL(cd.Drum,    0) * ISNULL(pd.Drum_UoM,   0) +
+                ISNULL(cd.Gallon,  0) * ISNULL(pd.Gallon_UoM, 0) +
+                ISNULL(cd.Quarter, 0) * ISNULL(pd.Qtr_UoM,    0)
+            )
+            FROM   dbo.Tbl_SalesClaimMaster cm
+            INNER JOIN dbo.Tbl_ClaimDetail   cd ON cd.ClaimMasterID = cm.ID
+            INNER JOIN dbo.Tbl_ProductDetail pd ON pd.ID = cd.ProductID
+            WHERE  cm.SOID          = so.ID
+              AND  cm.DateSelected >= @StartDate
+              AND  cm.DateSelected <= @EndDate
+              AND  ISNULL(cm.IsActive, 1) = 1
+              AND  pd.Incentive_Category  = 'ACTD'
         ), 0)
         + ISNULL((
               SELECT COUNT(*)
