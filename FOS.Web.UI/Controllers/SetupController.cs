@@ -3153,32 +3153,32 @@ namespace FOS.Web.UI.Controllers
                             Sr                      = Convert.ToInt32(reader["Sr"]),
                             HeadName                = reader["HeadName"].ToString(),
                             SOName                  = reader["SOName"].ToString(),
-                            SalesTarget             = Convert.ToDecimal(reader["SalesTarget"]),
-                            SalesActual             = Convert.ToDecimal(reader["SalesActual"]),
-                            PlatinumTarget          = Convert.ToDecimal(reader["PlatinumTarget"]),
-                            PlatinumActual          = Convert.ToDecimal(reader["PlatinumActual"]),
-                            PremiumTarget           = Convert.ToDecimal(reader["PremiumTarget"]),
-                            PremiumActual           = Convert.ToDecimal(reader["PremiumActual"]),
-                            DealerVisitsTarget      = Convert.ToDecimal(reader["DealerVisitsTarget"]),
-                            DealerVisitsActual      = Convert.ToDecimal(reader["DealerVisitsActual"]),
-                            SiteVisitsTarget        = Convert.ToDecimal(reader["SiteVisitsTarget"]),
-                            SiteVisitsActual        = Convert.ToDecimal(reader["SiteVisitsActual"]),
-                            ContractorVisitsTarget  = Convert.ToDecimal(reader["ContractorVisitsTarget"]),
-                            ContractorVisitsActual  = Convert.ToDecimal(reader["ContractorVisitsActual"]),
-                            CustSatisfactionTarget  = Convert.ToDecimal(reader["CustSatisfactionTarget"]),
-                            CustSatisfactionActual  = Convert.ToDecimal(reader["CustSatisfactionActual"]),
-                            AreaCoverageTarget      = Convert.ToDecimal(reader["AreaCoverageTarget"]),
-                            AreaCoverageActual      = Convert.ToDecimal(reader["AreaCoverageActual"]),
-                            AttendanceTarget        = Convert.ToDecimal(reader["AttendanceTarget"]),
-                            AttendanceActual        = Convert.ToDecimal(reader["AttendanceActual"]),
-                            ProdKnowTarget          = Convert.ToDecimal(reader["ProdKnowTarget"]),
-                            ProdKnowActual          = Convert.ToDecimal(reader["ProdKnowActual"]),
-                            TrainingTarget          = Convert.ToDecimal(reader["TrainingTarget"]),
-                            TrainingActual          = Convert.ToDecimal(reader["TrainingActual"]),
-                            CompFeedTarget          = Convert.ToDecimal(reader["CompFeedTarget"]),
-                            CompFeedActual          = Convert.ToDecimal(reader["CompFeedActual"]),
-                            TotalTarget             = Convert.ToDecimal(reader["TotalTarget"]),
-                            TotalActual             = Convert.ToDecimal(reader["TotalActual"])
+                            SalesTarget             = Convert.ToInt32(reader["SalesTarget"]),
+                            SalesActual             = Convert.ToInt32(reader["SalesActual"]),
+                            PlatinumTarget          = Convert.ToInt32(reader["PlatinumTarget"]),
+                            PlatinumActual          = Convert.ToInt32(reader["PlatinumActual"]),
+                            PremiumTarget           = Convert.ToInt32(reader["PremiumTarget"]),
+                            PremiumActual           = Convert.ToInt32(reader["PremiumActual"]),
+                            DealerVisitsTarget      = Convert.ToInt32(reader["DealerVisitsTarget"]),
+                            DealerVisitsActual      = Convert.ToInt32(reader["DealerVisitsActual"]),
+                            SiteVisitsTarget        = Convert.ToInt32(reader["SiteVisitsTarget"]),
+                            SiteVisitsActual        = Convert.ToInt32(reader["SiteVisitsActual"]),
+                            ContractorVisitsTarget  = Convert.ToInt32(reader["ContractorVisitsTarget"]),
+                            ContractorVisitsActual  = Convert.ToInt32(reader["ContractorVisitsActual"]),
+                            CustSatisfactionTarget  = Convert.ToInt32(reader["CustSatisfactionTarget"]),
+                            CustSatisfactionActual  = Convert.ToInt32(reader["CustSatisfactionActual"]),
+                            AreaCoverageTarget      = Convert.ToInt32(reader["AreaCoverageTarget"]),
+                            AreaCoverageActual      = Convert.ToInt32(reader["AreaCoverageActual"]),
+                            AttendanceTarget        = Convert.ToInt32(reader["AttendanceTarget"]),
+                            AttendanceActual        = Convert.ToInt32(reader["AttendanceActual"]),
+                            ProdKnowTarget          = Convert.ToInt32(reader["ProdKnowTarget"]),
+                            ProdKnowActual          = Convert.ToInt32(reader["ProdKnowActual"]),
+                            TrainingTarget          = Convert.ToInt32(reader["TrainingTarget"]),
+                            TrainingActual          = Convert.ToInt32(reader["TrainingActual"]),
+                            CompFeedTarget          = Convert.ToInt32(reader["CompFeedTarget"]),
+                            CompFeedActual          = Convert.ToInt32(reader["CompFeedActual"]),
+                            TotalTarget             = Convert.ToInt32(reader["TotalTarget"]),
+                            TotalActual             = Convert.ToInt32(reader["TotalActual"])
                         });
                     }
                 }
@@ -3319,32 +3319,32 @@ namespace FOS.Web.UI.Controllers
             public int     Sr                     { get; set; }
             public string  HeadName               { get; set; }
             public string  SOName                 { get; set; }
-            public decimal SalesTarget            { get; set; }
-            public decimal SalesActual            { get; set; }
-            public decimal PlatinumTarget         { get; set; }
-            public decimal PlatinumActual         { get; set; }
-            public decimal PremiumTarget          { get; set; }
-            public decimal PremiumActual          { get; set; }
-            public decimal DealerVisitsTarget     { get; set; }
-            public decimal DealerVisitsActual     { get; set; }
-            public decimal SiteVisitsTarget       { get; set; }
-            public decimal SiteVisitsActual       { get; set; }
-            public decimal ContractorVisitsTarget { get; set; }
-            public decimal ContractorVisitsActual { get; set; }
-            public decimal CustSatisfactionTarget { get; set; }
-            public decimal CustSatisfactionActual { get; set; }
-            public decimal AreaCoverageTarget     { get; set; }
-            public decimal AreaCoverageActual     { get; set; }
-            public decimal AttendanceTarget       { get; set; }
-            public decimal AttendanceActual       { get; set; }
-            public decimal ProdKnowTarget         { get; set; }
-            public decimal ProdKnowActual         { get; set; }
-            public decimal TrainingTarget         { get; set; }
-            public decimal TrainingActual         { get; set; }
-            public decimal CompFeedTarget         { get; set; }
-            public decimal CompFeedActual         { get; set; }
-            public decimal TotalTarget            { get; set; }
-            public decimal TotalActual            { get; set; }
+            public int SalesTarget            { get; set; }
+            public int SalesActual            { get; set; }
+            public int PlatinumTarget         { get; set; }
+            public int PlatinumActual         { get; set; }
+            public int PremiumTarget          { get; set; }
+            public int PremiumActual          { get; set; }
+            public int DealerVisitsTarget     { get; set; }
+            public int DealerVisitsActual     { get; set; }
+            public int SiteVisitsTarget       { get; set; }
+            public int SiteVisitsActual       { get; set; }
+            public int ContractorVisitsTarget { get; set; }
+            public int ContractorVisitsActual { get; set; }
+            public int CustSatisfactionTarget { get; set; }
+            public int CustSatisfactionActual { get; set; }
+            public int AreaCoverageTarget     { get; set; }
+            public int AreaCoverageActual     { get; set; }
+            public int AttendanceTarget       { get; set; }
+            public int AttendanceActual       { get; set; }
+            public int ProdKnowTarget         { get; set; }
+            public int ProdKnowActual         { get; set; }
+            public int TrainingTarget         { get; set; }
+            public int TrainingActual         { get; set; }
+            public int CompFeedTarget         { get; set; }
+            public int CompFeedActual         { get; set; }
+            public int TotalTarget            { get; set; }
+            public int TotalActual            { get; set; }
         }
 
         #endregion KPIPerformanceReport
