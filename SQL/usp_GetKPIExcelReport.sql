@@ -8,7 +8,7 @@
 --   Premium Target          -> SUM liters from Tbl_ClaimDetail->Tbl_ProductDetail where Incentive_Category='Premium'
 --   Dealer Visits Target    -> COUNT(Tbl_TradeVisitsFinal) per SO in quarter
 --   All others              -> 1 (no tracking yet)
--- All numeric outputs rounded to 2 decimal places.
+-- All numeric outputs cast to DECIMAL(18,2) for exactly 2 decimal places.
 -- =============================================
 CREATE OR ALTER PROCEDURE dbo.usp_GetKPIExcelReport
     @FinancialYearID INT,
@@ -41,21 +41,21 @@ BEGIN
         so.Name                                          AS SOName,
 
         -- ── 1. Total Sales Target ────────────────────────────────────────────
-        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Total Sales Target'
-                              THEN dk.TargetValue END), 0), 2)   AS SalesTarget,
-        ROUND(ISNULL((
+        CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Total Sales Target'
+                              THEN dk.TargetValue END), 0) AS DECIMAL(18,2))   AS SalesTarget,
+        CAST(ISNULL((
             SELECT SUM(c.TotalLiters)
             FROM   dbo.Tbl_SalesClaimMaster c
             WHERE  c.SOID          = so.ID
               AND  c.DateSelected >= @StartDate
               AND  c.DateSelected <= @EndDate
               AND  ISNULL(c.IsActive, 1) = 1
-        ), 0), 2)                                                 AS SalesActual,
+        ), 0) AS DECIMAL(18,2))                                                AS SalesActual,
 
         -- ── 2. Platinum Target ───────────────────────────────────────────────
-        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Platinum Target'
-                              THEN dk.TargetValue END), 0), 2)   AS PlatinumTarget,
-        ROUND(ISNULL((
+        CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Platinum Target'
+                              THEN dk.TargetValue END), 0) AS DECIMAL(18,2))   AS PlatinumTarget,
+        CAST(ISNULL((
             SELECT SUM(
                 ISNULL(cd.Drum,    0) * ISNULL(pd.Drum_UoM,   0) +
                 ISNULL(cd.Gallon,  0) * ISNULL(pd.Gallon_UoM, 0) +
@@ -69,12 +69,12 @@ BEGIN
               AND  cm.DateSelected <= @EndDate
               AND  ISNULL(cm.IsActive, 1) = 1
               AND  pd.Incentive_Category  = 'Platinum'
-        ), 0), 2)                                                 AS PlatinumActual,
+        ), 0) AS DECIMAL(18,2))                                                AS PlatinumActual,
 
         -- ── 3. Premium Target ────────────────────────────────────────────────
-        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Premium Target'
-                              THEN dk.TargetValue END), 0), 2)   AS PremiumTarget,
-        ROUND(ISNULL((
+        CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Premium Target'
+                              THEN dk.TargetValue END), 0) AS DECIMAL(18,2))   AS PremiumTarget,
+        CAST(ISNULL((
             SELECT SUM(
                 ISNULL(cd.Drum,    0) * ISNULL(pd.Drum_UoM,   0) +
                 ISNULL(cd.Gallon,  0) * ISNULL(pd.Gallon_UoM, 0) +
@@ -88,11 +88,11 @@ BEGIN
               AND  cm.DateSelected <= @EndDate
               AND  ISNULL(cm.IsActive, 1) = 1
               AND  pd.Incentive_Category  = 'Premium'
-        ), 0), 2)                                                 AS PremiumActual,
+        ), 0) AS DECIMAL(18,2))                                                AS PremiumActual,
 
         -- ── 4. Dealer Visits Target ──────────────────────────────────────────
-        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Dealer visit Target'
-                              THEN dk.TargetValue END), 0), 2)   AS DealerVisitsTarget,
+        CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Dealer visit Target'
+                              THEN dk.TargetValue END), 0) AS DECIMAL(18,2))   AS DealerVisitsTarget,
         ISNULL((
             SELECT COUNT(*)
             FROM   dbo.Tbl_TradeVisitsFinal tv
@@ -100,64 +100,64 @@ BEGIN
               AND  tv.CreatedAt    >= @StartDate
               AND  tv.CreatedAt    <= DATEADD(DAY, 1, CAST(@EndDate AS DATETIME))
               AND  ISNULL(tv.IsActive, 1) = 1
-        ), 0)                                                     AS DealerVisitsActual,
+        ), 0)                                                                   AS DealerVisitsActual,
 
         -- ── 5. Site Visit Target (actual = 1) ────────────────────────────────
-        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Site Visit Target'
-                              THEN dk.TargetValue END), 0), 2)   AS SiteVisitsTarget,
-        1                                                         AS SiteVisitsActual,
+        CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Site Visit Target'
+                              THEN dk.TargetValue END), 0) AS DECIMAL(18,2))   AS SiteVisitsTarget,
+        1                                                                       AS SiteVisitsActual,
 
         -- ── 6. Business Affiliate Visit Target (actual = 1) ──────────────────
-        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Business Affiliate Visit Target'
-                              THEN dk.TargetValue END), 0), 2)   AS ContractorVisitsTarget,
-        1                                                         AS ContractorVisitsActual,
+        CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Business Affiliate Visit Target'
+                              THEN dk.TargetValue END), 0) AS DECIMAL(18,2))   AS ContractorVisitsTarget,
+        1                                                                       AS ContractorVisitsActual,
 
         -- ── 7. Customer Satisfaction (actual = 1) ────────────────────────────
-        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Customer Satisfaction'
-                              THEN dk.TargetValue END), 0), 2)   AS CustSatisfactionTarget,
-        1                                                         AS CustSatisfactionActual,
+        CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Customer Satisfaction'
+                              THEN dk.TargetValue END), 0) AS DECIMAL(18,2))   AS CustSatisfactionTarget,
+        1                                                                       AS CustSatisfactionActual,
 
         -- ── 8. Area Coverage (actual = 1) ────────────────────────────────────
-        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Area Coverage'
-                              THEN dk.TargetValue END), 0), 2)   AS AreaCoverageTarget,
-        1                                                         AS AreaCoverageActual,
+        CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Area Coverage'
+                              THEN dk.TargetValue END), 0) AS DECIMAL(18,2))   AS AreaCoverageTarget,
+        1                                                                       AS AreaCoverageActual,
 
         -- ── 9. Attendance And Coverage ───────────────────────────────────────
-        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Attendance And Coverage'
-                              THEN dk.TargetValue END), 0), 2)   AS AttendanceTarget,
-        ROUND(ISNULL((
+        CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Attendance And Coverage'
+                              THEN dk.TargetValue END), 0) AS DECIMAL(18,2))   AS AttendanceTarget,
+        CAST(ISNULL((
             SELECT SUM(a.AttendanceandPunctuality)
             FROM   dbo.Tbl_SOAttendanceandPunctuality a
             WHERE  a.SOID            = so.ID
               AND  a.FinancialYearID = @FinancialYearID
               AND  a.Quarter         = @Quarter
               AND  ISNULL(a.IsActive, 1) = 1
-        ), 0), 2)                                                 AS AttendanceActual,
+        ), 0) AS DECIMAL(18,2))                                                AS AttendanceActual,
 
         -- ── 10. Product Knowledge (actual = 1) ───────────────────────────────
-        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Product Knowledge'
-                              THEN dk.TargetValue END), 0), 2)   AS ProdKnowTarget,
-        1                                                         AS ProdKnowActual,
+        CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Product Knowledge'
+                              THEN dk.TargetValue END), 0) AS DECIMAL(18,2))   AS ProdKnowTarget,
+        1                                                                       AS ProdKnowActual,
 
         -- ── 11. Training Evaluation ──────────────────────────────────────────
-        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Training Evaluation'
-                              THEN dk.TargetValue END), 0), 2)   AS TrainingTarget,
-        ROUND(ISNULL((
+        CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Training Evaluation'
+                              THEN dk.TargetValue END), 0) AS DECIMAL(18,2))   AS TrainingTarget,
+        CAST(ISNULL((
             SELECT SUM(t.Training)
             FROM   dbo.Tbl_SOTraining t
             WHERE  t.SOID            = so.ID
               AND  t.FinancialYearID = @FinancialYearID
               AND  t.Quarter         = @Quarter
               AND  ISNULL(t.IsActive, 1) = 1
-        ), 0), 2)                                                 AS TrainingActual,
+        ), 0) AS DECIMAL(18,2))                                                AS TrainingActual,
 
         -- ── 12. Compititor Feedback (actual = 1) ─────────────────────────────
-        ROUND(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Compititor Feedback'
-                              THEN dk.TargetValue END), 0), 2)   AS CompFeedTarget,
-        1                                                         AS CompFeedActual,
+        CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Compititor Feedback'
+                              THEN dk.TargetValue END), 0) AS DECIMAL(18,2))   AS CompFeedTarget,
+        1                                                                       AS CompFeedActual,
 
         -- ── Total Target ─────────────────────────────────────────────────────
-        ROUND(
+        CAST(
             ISNULL(MAX(CASE WHEN dk.FocusArea = 'Total Sales Target'              THEN dk.TargetValue END), 0)
           + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Platinum Target'                 THEN dk.TargetValue END), 0)
           + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Premium Target'                  THEN dk.TargetValue END), 0)
@@ -170,10 +170,10 @@ BEGIN
           + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Product Knowledge'               THEN dk.TargetValue END), 0)
           + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Training Evaluation'             THEN dk.TargetValue END), 0)
           + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Compititor Feedback'             THEN dk.TargetValue END), 0)
-        , 2)                                                      AS TotalTarget,
+        AS DECIMAL(18,2))                                                       AS TotalTarget,
 
         -- ── Total Actual ──────────────────────────────────────────────────────
-        ROUND(
+        CAST(
             -- Sales Total Liters
             ISNULL((
                 SELECT SUM(c.TotalLiters)
@@ -246,7 +246,7 @@ BEGIN
                   AND  ISNULL(t.IsActive, 1) = 1
             ), 0)
           + 1  -- Compititor Feedback
-        , 2)                                                      AS TotalActual
+        AS DECIMAL(18,2))                                                       AS TotalActual
 
     FROM       dbo.Tbl_MasterKPIS  mk
     INNER JOIN dbo.SaleOfficers     so ON so.ID = mk.SOID
