@@ -2793,14 +2793,9 @@ namespace FOS.Web.UI.Controllers
         {
             try
             {
-                var dtsource = new List<JobsDetailData>();
-
-                //int regionalheadID = FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser();
-
-                //if (regionalheadID == 0)
-                //{
                 // Resolve Financial Year + Quarter to a date range
-                string kpiFrom = "01-Jan-1900", kpiTo = "31-Dec-2099";
+                DateTime fromDate = new DateTime(1900, 1, 1);
+                DateTime toDate   = new DateTime(2099, 12, 31);
                 if (param.FinancialYearID > 0 && !string.IsNullOrEmpty(param.Quarter))
                 {
                     using (var conn = new System.Data.SqlClient.SqlConnection(db.Database.Connection.ConnectionString))
@@ -2814,52 +2809,101 @@ namespace FOS.Web.UI.Controllers
                         {
                             if (reader.Read())
                             {
-                                kpiFrom = Convert.ToDateTime(reader["StartDate"]).ToString("dd-MMM-yyyy");
-                                kpiTo   = Convert.ToDateTime(reader["EndDate"]).ToString("dd-MMM-yyyy");
+                                fromDate = Convert.ToDateTime(reader["StartDate"]);
+                                toDate   = Convert.ToDateTime(reader["EndDate"]);
                             }
                         }
                     }
                 }
-                dtsource = ManageJobs.GetKPISDetailForGrid(kpiFrom, kpiTo, param.ZoneID, param.SOID);
-                //}
-                //else
-                //{
-                //dtsource = ManageJobs.GetJobsDetailForGrid(regionalheadID);
-                //}
 
-                List<String> columnSearch = new List<String>();
+                var rows = new List<KPIGridRow>();
+                var sql = @"
+                    SELECT
+                        mk.ID,
+                        ISNULL(rh.Name, '')   AS HeadName,
+                        ISNULL(so.Name, '')   AS SOName,
+                        ISNULL(seg.Name, '')  AS SegmentName,
+                        ISNULL(role.Name, '') AS RoleName,
+                        mk.DateFrom,
+                        mk.DateTo,
+                        ISNULL(SUM(dk.TargetValue), 0) AS TotalTarget
+                    FROM dbo.Tbl_MasterKPIS mk
+                    LEFT JOIN dbo.SaleOfficers     so   ON so.ID   = mk.SOID
+                    LEFT JOIN dbo.RegionalHeads    rh   ON rh.ID   = mk.HeadID
+                    LEFT JOIN dbo.Tbl_Segmenttype  seg  ON seg.ID  = mk.BusinessSegmentID
+                    LEFT JOIN dbo.SOTypes          role ON role.ID = mk.RoleID
+                    LEFT JOIN dbo.Tbl_DetailKPI    dk   ON dk.KPIMasterID = mk.ID
+                    WHERE ISNULL(mk.IsActive, 1) = 1
+                      AND mk.DateFrom >= @FromDate
+                      AND mk.DateTo   <= @ToDate
+                      AND (@SOID  = 0 OR mk.SOID   = @SOID)
+                      AND (@HeadID = 0 OR mk.HeadID = @HeadID)
+                    GROUP BY mk.ID, rh.Name, so.Name, seg.Name, role.Name, mk.DateFrom, mk.DateTo
+                    ORDER BY rh.Name, so.Name";
 
-                foreach (var col in param.Columns)
+                using (var conn = new System.Data.SqlClient.SqlConnection(db.Database.Connection.ConnectionString))
+                using (var cmd  = new System.Data.SqlClient.SqlCommand(sql, conn))
                 {
-                    columnSearch.Add(col.Search.Value);
-                }
-
-                List<JobsDetailData> data = ManageJobs.GetResult12(param.Search.Value, param.SortOrder, param.Start, param.Length, dtsource, columnSearch/*param.SaleOfficer,param.StartingDate1,param.StartingDate2*/);
-                foreach (var itm in data)
-                {
-                    if (itm.AssignDate.HasValue)
+                    cmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@FromDate", fromDate));
+                    cmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ToDate",   toDate));
+                    cmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@SOID",     param.SOID));
+                    cmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@HeadID",   param.ZoneID));
+                    conn.Open();
+                    using (var reader = cmd.ExecuteReader())
                     {
-
-                        itm.VisitDateFormatted = Convert.ToDateTime(itm.AssignDate).ToString("dd-MM-yyyy");
-                        itm.ClaimDateFormatted = Convert.ToDateTime(itm.ClaimDate).ToString("dd-MM-yyyy");
+                        while (reader.Read())
+                        {
+                            rows.Add(new KPIGridRow
+                            {
+                                ID          = Convert.ToInt32(reader["ID"]),
+                                HeadName    = reader["HeadName"].ToString(),
+                                SOName      = reader["SOName"].ToString(),
+                                SegmentName = reader["SegmentName"].ToString(),
+                                RoleName    = reader["RoleName"].ToString(),
+                                DateFrom    = reader["DateFrom"] == DBNull.Value ? "" : Convert.ToDateTime(reader["DateFrom"]).ToString("dd-MMM-yyyy"),
+                                DateTo      = reader["DateTo"]   == DBNull.Value ? "" : Convert.ToDateTime(reader["DateTo"]).ToString("dd-MMM-yyyy"),
+                                TotalTarget = Convert.ToDecimal(reader["TotalTarget"])
+                            });
+                        }
                     }
-
-
                 }
-                int count = ManageJobs.Count12(param.Search.Value, dtsource, columnSearch /*param.SaleOfficer, param.StartingDate1, param.StartingDate2*/);
-                DTResult<JobsDetailData> result = new DTResult<JobsDetailData>
+
+                // Apply search
+                string search = param.Search?.Value?.ToLower() ?? "";
+                if (!string.IsNullOrEmpty(search))
+                    rows = rows.Where(r =>
+                        r.HeadName.ToLower().Contains(search) ||
+                        r.SOName.ToLower().Contains(search) ||
+                        r.SegmentName.ToLower().Contains(search) ||
+                        r.RoleName.ToLower().Contains(search)).ToList();
+
+                int total    = rows.Count;
+                var pageData = rows.Skip(param.Start).Take(param.Length > 0 ? param.Length : total).ToList();
+
+                return Json(new DTResult<KPIGridRow>
                 {
-                    draw = param.Draw,
-                    data = data,
-                    recordsFiltered = count,
-                    recordsTotal = count
-                };
-                return Json(result);
+                    draw            = param.Draw,
+                    data            = pageData,
+                    recordsFiltered = total,
+                    recordsTotal    = total
+                });
             }
             catch (Exception ex)
             {
                 return Json(new { error = ex.Message });
             }
+        }
+
+        public class KPIGridRow
+        {
+            public int     ID          { get; set; }
+            public string  HeadName    { get; set; }
+            public string  SOName      { get; set; }
+            public string  SegmentName { get; set; }
+            public string  RoleName    { get; set; }
+            public string  DateFrom    { get; set; }
+            public string  DateTo      { get; set; }
+            public decimal TotalTarget { get; set; }
         }
 
 

@@ -205,27 +205,15 @@
         <thead>
             <tr>
                 <th></th>
-                <th></th>
-                <th></th>
-                <th style="width: 10% !important">Sr #</th>
-
-                <th style="width:16% !important">
-                    Sales Officer
-                </th>
-
-
-                <th style="width:16% !important">
-                    Head Name 
-                </th>
-                <th style="width:16% !important">
-                    Business Segment Name
-                </th>
-                <th style="width:16% !important">
-                   Role
-                </th>
-
-                <th style="width:10% !important">Action</th>
-
+                <th>Sr #</th>
+                <th>Head Name</th>
+                <th>SO Name</th>
+                <th>Business Segment</th>
+                <th>Role</th>
+                <th>Date From</th>
+                <th>Date To</th>
+                <th>Total Target</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -1015,30 +1003,23 @@
             "deferRender": true,
             "bSelect": true,
             "columns": [
-           { "data": "ID", "bVisible": false },
-           { "data": "DealerID", "bVisible": false },
-           { "data": "SaleOfficerID", "bVisible": false },
-           { "data": "ID" },
-           { "data": "SaleOfficerName" },
-               
-                { "data": "RegionalHeadName" },
+                { "data": "ID", "bVisible": false },
+                { "data": "ID", "bSortable": false },
+                { "data": "HeadName" },
+                { "data": "SOName" },
                 { "data": "SegmentName" },
-                { "data": "RetailerName" },
-       
-           {
-               "sClass": "center-align-td",
-               "mData": null,
-               "bSortable": false,
-               "mRender": function (data, type, row) {
-
-                   // alert('<button class="btn btn-primary view" data-id=' + row.ID + '' + ' data-saleofficer=' + '"' + row.SaleOfficerName + '"' + ' data-ShopName=' + '"' + row.ShopName + '"' + ' data-VisitPlanName=' + '"' + row.VisitPlanName + '"' + ' data-RetailerType=' + '"' + row.RetailerType + '"' + ' data-visitplan=' + '"' + row.VisitPlanName + '"' + ' data-visittype=' + '"' + row.VisitType + '"' + ' data-retailertype=' + '"' + row.RetailerType + '"' + ' data-savailability=' + '"' + row.SAvailable + '"' + ' data-squantity1kg=' + '"' + row.SQuantity1KG + '"' + ' data-squantity5kg=' + '"' + row.SQuantity5KG + '"' + 'data-sneworder=' + '"' + row.SNewOrder + '"' + ' data-snewquantity1kg=' + '"' + row.SNewQuantity1KG + '"' + ' data-snewquantity5kg=' + '"' + row.SNewQuantity5KG + '"' + ' data-spreviousorder1kg=' + '"' + row.SPreviousOrder1KG + '"' + ' data-spreviousorder5kg=' + '"' + row.SPreviousOrder5KG + '"' + ' data-sposmaterialavailable=' + '"' + row.SPOSMaterialAvailable + '"' + ' data-simage=' + '"' + row.SImage + '"' + 'data-snote=' + '"' + row.SNote + '"' + 'data-pusewc=' + '"' + row.PUseWC + '"' + ' data-pusewc1kg=' + '"' + row.PUseWC1KG + '"' + ' data-pusewc5kg=' + '"' + row.PUseWC5KG + '"' + ' data-pneworder=' + '"' + row.PNewOrder + '"' + ' data-pneworder1kg=' + '"' + row.PNewOrder1KG + '"' + ' data-pneworder5kg=' + '"' + row.PNewOrder5KG + '"' + ' data-pnewlead=' + '"' + row.PNewLead + '"' + ' data-pnewleadmobno=' + '"' + row.PNewLeadMobNo + '"' + ' data-premarks=' + '"' + row.PRemarks + '"' + 'data-bareaid=' + '"' + row.BAreaName + '"' + ' data-bshop=' + '"' + row.BShop + '"' + ' data-boldhouse=' + '"' + row.BOldHouse + '"' + ' data-bnewhouse=' + '"' + row.BNewHouse + '"' + ' data-bparking=' + '"' + row.BParking + '"' + ' data-bplazabasement=' + '"' + row.BPlazaBasement + '"' + ' data-bfactoryarea=' + '"' + row.BFactoryArea + '"' + ' data-bmosque=' + '"' + row.BMosque + '"' + ' data-bothers=' + '"' + row.BOthers + '"' + ' data-blead=' + '"' + row.BLead + '"' + ' data-bsampleapplied=' + '"' + row.BSampleApplied + '"' + ' data-bremarks=' + '"' + row.BRemarks + '"' + ' data-statuschecker=' + '"' + row.StatusChecker + '"' + ' data-assigndate=' + '"' + row.AssignDate + '"' + ' data-visiteddate=' + '"' + row.VisitedDate + '"' + 'data-visitdate=' + '"' + row.VisitDate + '"' + 'data-address=' + '"' + row.Address + '"' + '><i class=icon-file-text-alt></i></button>');
-                   return '<button class="btn btn-info delete" data-id=' + row.JobID + '"' + '>' + '<i class=icon-trash></i>' + '</button>';
-
-
-
-
-               }
-           }
+                { "data": "RoleName" },
+                { "data": "DateFrom" },
+                { "data": "DateTo" },
+                { "data": "TotalTarget" },
+                {
+                    "sClass": "center-align-td",
+                    "mData": null,
+                    "bSortable": false,
+                    "mRender": function (data, type, row) {
+                        return '<button class="btn btn-danger delete" data-id="' + row.ID + '"><i class="icon-trash"></i></button>';
+                    }
+                }
             ], "order": [0, "desc"]
 
         });
