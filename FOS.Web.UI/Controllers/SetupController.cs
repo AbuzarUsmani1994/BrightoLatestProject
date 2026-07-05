@@ -1207,6 +1207,245 @@ namespace FOS.Web.UI.Controllers
         #endregion AttendanceAndPunc
 
 
+        #region ProdKnowledgeCompFeed
+
+        [CustomAuthorize]
+        public ActionResult ProdKnowledge()
+        {
+            var objArea = BuildAreaSetupModel();
+            return View(objArea);
+        }
+
+        [HttpPost]
+        public ActionResult SaveProdKnowledgeBulk(AreaData newData)
+        {
+            try
+            {
+                if (newData == null
+                    || newData.FinancialYearID == null || newData.FinancialYearID == 0
+                    || string.IsNullOrEmpty(newData.Quarter)
+                    || newData.RegionID == 0
+                    || newData.ProdKnowledgeRows == null || newData.ProdKnowledgeRows.Count == 0)
+                    return Content("0");
+
+                var connStr = dbContext.Database.Connection.ConnectionString;
+                using (var conn = new System.Data.SqlClient.SqlConnection(connStr))
+                {
+                    conn.Open();
+                    var soIds = string.Join(",", newData.ProdKnowledgeRows.Select(r => r.SOID));
+                    using (var cmd = new System.Data.SqlClient.SqlCommand(
+                        "UPDATE dbo.Tbl_SOProdKnowledgeCompFeed SET IsActive = 0 " +
+                        "WHERE FinancialYearID = @FY AND Quarter = @Q AND SOID IN (" + soIds + ")", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@FY", newData.FinancialYearID);
+                        cmd.Parameters.AddWithValue("@Q", newData.Quarter);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    int nextId;
+                    using (var cmd = new System.Data.SqlClient.SqlCommand(
+                        "SELECT ISNULL(MAX(ID), 0) + 1 FROM dbo.Tbl_SOProdKnowledgeCompFeed", conn))
+                        nextId = (int)cmd.ExecuteScalar();
+
+                    var now = DateTime.Now;
+                    foreach (var r in newData.ProdKnowledgeRows)
+                    {
+                        using (var cmd = new System.Data.SqlClient.SqlCommand(@"
+                            INSERT INTO dbo.Tbl_SOProdKnowledgeCompFeed
+                                (ID, SOID, HeadID, ProductKnowledge, CompFeed, FinancialYearID, Quarter, IsActive, CreatedOn)
+                            VALUES (@ID, @SOID, @HeadID, @PK, @CF, @FY, @Q, 1, @Now)", conn))
+                        {
+                            cmd.Parameters.AddWithValue("@ID", nextId++);
+                            cmd.Parameters.AddWithValue("@SOID", r.SOID);
+                            cmd.Parameters.AddWithValue("@HeadID", newData.RegionID);
+                            cmd.Parameters.AddWithValue("@PK", (object)r.ProductKnowledge ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@CF", (object)r.CompFeed ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@FY", newData.FinancialYearID);
+                            cmd.Parameters.AddWithValue("@Q", newData.Quarter);
+                            cmd.Parameters.AddWithValue("@Now", now);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+                return Content("1");
+            }
+            catch (Exception ex) { return Content("Exception: " + ex.Message); }
+        }
+
+        public JsonResult AddProdKnowledgeDataHandler(DTParameters param, int RegionalHeadID, int FinancialYearID, string Quarter)
+        {
+            try
+            {
+                var rows = new List<ProdKnowledgeGridRow>();
+                var connStr = dbContext.Database.Connection.ConnectionString;
+                using (var conn = new System.Data.SqlClient.SqlConnection(connStr))
+                using (var cmd = new System.Data.SqlClient.SqlCommand(@"
+                    SELECT pk.ID,
+                           ISNULL(rh.Name, '') AS HeadName,
+                           ISNULL(so.Name, '') AS SOName,
+                           ISNULL(fy.[Year], '') AS FinancialYearName,
+                           ISNULL(pk.Quarter, '') AS Quarter,
+                           ISNULL(pk.ProductKnowledge, 0) AS ProductKnowledge,
+                           ISNULL(pk.CompFeed, 0) AS CompFeed,
+                           pk.CreatedOn
+                    FROM dbo.Tbl_SOProdKnowledgeCompFeed pk
+                    LEFT JOIN dbo.SaleOfficers so ON so.ID = pk.SOID
+                    LEFT JOIN dbo.RegionalHeads rh ON rh.ID = pk.HeadID
+                    LEFT JOIN dbo.Tbl_FinancialYear fy ON fy.ID = pk.FinancialYearID
+                    WHERE ISNULL(pk.IsActive, 1) = 1
+                      AND (@HeadID = 0 OR pk.HeadID = @HeadID)
+                      AND (@FY = 0 OR pk.FinancialYearID = @FY)
+                      AND (@Q = '' OR pk.Quarter = @Q)
+                    ORDER BY rh.Name, so.Name", conn))
+                {
+                    cmd.Parameters.AddWithValue("@HeadID", RegionalHeadID);
+                    cmd.Parameters.AddWithValue("@FY", FinancialYearID);
+                    cmd.Parameters.AddWithValue("@Q", Quarter ?? "");
+                    conn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            rows.Add(new ProdKnowledgeGridRow
+                            {
+                                ID               = Convert.ToInt32(reader["ID"]),
+                                HeadName         = reader["HeadName"].ToString(),
+                                SOName           = reader["SOName"].ToString(),
+                                FinancialYearName= reader["FinancialYearName"].ToString(),
+                                Quarter          = reader["Quarter"].ToString(),
+                                ProductKnowledge = Convert.ToDecimal(reader["ProductKnowledge"]),
+                                CompFeed         = Convert.ToDecimal(reader["CompFeed"]),
+                                CreatedOn        = reader["CreatedOn"] == DBNull.Value ? "" : Convert.ToDateTime(reader["CreatedOn"]).ToString("dd-MMM-yyyy")
+                            });
+                        }
+                    }
+                }
+
+                int start  = param.Start;
+                int length = param.Length > 0 ? param.Length : rows.Count;
+                var paged  = rows.Skip(start).Take(length).ToList();
+                return Json(new DTResult<ProdKnowledgeGridRow>
+                {
+                    draw            = param.Draw,
+                    data            = paged,
+                    recordsFiltered = rows.Count,
+                    recordsTotal    = rows.Count
+                });
+            }
+            catch (Exception ex) { return Json(new { error = ex.Message }); }
+        }
+
+        [HttpPost]
+        public JsonResult DeleteProdKnowledgeRecord(int id)
+        {
+            try
+            {
+                var connStr = dbContext.Database.Connection.ConnectionString;
+                using (var conn = new System.Data.SqlClient.SqlConnection(connStr))
+                using (var cmd = new System.Data.SqlClient.SqlCommand(
+                    "UPDATE dbo.Tbl_SOProdKnowledgeCompFeed SET IsActive = 0 WHERE ID = @ID", conn))
+                {
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+                return Json(new { success = true });
+            }
+            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        }
+
+        public JsonResult GetProdKnowledgeRecord(int id)
+        {
+            try
+            {
+                var connStr = dbContext.Database.Connection.ConnectionString;
+                using (var conn = new System.Data.SqlClient.SqlConnection(connStr))
+                using (var cmd = new System.Data.SqlClient.SqlCommand(
+                    "SELECT ID, ISNULL(ProductKnowledge,0) AS ProductKnowledge, ISNULL(CompFeed,0) AS CompFeed FROM dbo.Tbl_SOProdKnowledgeCompFeed WHERE ID = @ID", conn))
+                {
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    conn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                            return Json(new { success = true, id = Convert.ToInt32(reader["ID"]), pk = reader["ProductKnowledge"], cf = reader["CompFeed"] }, JsonRequestBehavior.AllowGet);
+                    }
+                }
+                return Json(new { success = false }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex) { return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet); }
+        }
+
+        [HttpPost]
+        public JsonResult UpdateProdKnowledgeRecord(int id, decimal pkValue, decimal cfValue)
+        {
+            try
+            {
+                var connStr = dbContext.Database.Connection.ConnectionString;
+                using (var conn = new System.Data.SqlClient.SqlConnection(connStr))
+                using (var cmd = new System.Data.SqlClient.SqlCommand(
+                    "UPDATE dbo.Tbl_SOProdKnowledgeCompFeed SET ProductKnowledge = @PK, CompFeed = @CF WHERE ID = @ID", conn))
+                {
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Parameters.AddWithValue("@PK", pkValue);
+                    cmd.Parameters.AddWithValue("@CF", cfValue);
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+                return Json(new { success = true });
+            }
+            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        }
+
+        public class ProdKnowledgeGridRow
+        {
+            public int     ID                { get; set; }
+            public string  HeadName          { get; set; }
+            public string  SOName            { get; set; }
+            public string  FinancialYearName { get; set; }
+            public string  Quarter           { get; set; }
+            public decimal ProductKnowledge  { get; set; }
+            public decimal CompFeed          { get; set; }
+            public string  CreatedOn         { get; set; }
+        }
+
+        public ActionResult ExportProdKnowledgeReport(int RegionalHeadID, int FinancialYearID, string Quarter)
+        {
+            var connStr = dbContext.Database.Connection.ConnectionString;
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("\"Sr No\",\"Financial Year\",\"Quarter\",\"Head Name\",\"SO Name\",\"Product Knowledge\",\"Competitor Activities\"");
+            int sr = 1;
+            using (var conn = new System.Data.SqlClient.SqlConnection(connStr))
+            using (var cmd = new System.Data.SqlClient.SqlCommand(@"
+                SELECT ISNULL(fy.[Year],'') AS FY, ISNULL(pk.Quarter,'') AS Q,
+                       ISNULL(rh.Name,'') AS Head, ISNULL(so.Name,'') AS SO,
+                       ISNULL(pk.ProductKnowledge,0) AS PK, ISNULL(pk.CompFeed,0) AS CF
+                FROM dbo.Tbl_SOProdKnowledgeCompFeed pk
+                LEFT JOIN dbo.SaleOfficers so ON so.ID = pk.SOID
+                LEFT JOIN dbo.RegionalHeads rh ON rh.ID = pk.HeadID
+                LEFT JOIN dbo.Tbl_FinancialYear fy ON fy.ID = pk.FinancialYearID
+                WHERE ISNULL(pk.IsActive,1)=1
+                  AND (@HeadID=0 OR pk.HeadID=@HeadID)
+                  AND (@FY=0 OR pk.FinancialYearID=@FY)
+                  AND (@Q='' OR pk.Quarter=@Q)
+                ORDER BY rh.Name, so.Name", conn))
+            {
+                cmd.Parameters.AddWithValue("@HeadID", RegionalHeadID);
+                cmd.Parameters.AddWithValue("@FY", FinancialYearID);
+                cmd.Parameters.AddWithValue("@Q", Quarter ?? "");
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                        sb.AppendLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\"",
+                            sr++, reader["FY"], reader["Q"], reader["Head"], reader["SO"], reader["PK"], reader["CF"]));
+                }
+            }
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+            return File(bytes, "text/csv", "ProdKnowledgeReport_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv");
+        }
+
+        #endregion ProdKnowledgeCompFeed
 
 
 

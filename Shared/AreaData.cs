@@ -71,15 +71,24 @@ namespace FOS.Shared
         public int? FinancialYearID { get; set; }
         public string FinancialYearName { get; set; }
         public string Quarter { get; set; }
+        public DateTime? CreatedOn { get; set; }
         public List<FinancialYearListItem> FinancialYears { get; set; }
         public List<TrainingRowData> TrainingRows { get; set; }
         public List<TrainingRowData> AttendanceRows { get; set; }
+        public List<ProdKnowledgeRowData> ProdKnowledgeRows { get; set; }
     }
 
     public class TrainingRowData
     {
         public int SOID { get; set; }
         public decimal? Value { get; set; }
+    }
+
+    public class ProdKnowledgeRowData
+    {
+        public int SOID { get; set; }
+        public decimal? ProductKnowledge { get; set; }
+        public decimal? CompFeed { get; set; }
     }
 
     public class AreaGraphData
