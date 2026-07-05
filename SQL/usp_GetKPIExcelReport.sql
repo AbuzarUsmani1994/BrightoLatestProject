@@ -6,6 +6,7 @@
 --   Total Sales Target      -> SUM(Tbl_SalesClaimMaster.TotalLiters)        per SO in quarter
 --   Platinum Target         -> SUM where Tbl_Segmenttype.Name='Special Coating'
 --   Premium Target          -> SUM where Tbl_Segmenttype.Name='ACTD'
+--   Dealer Visits Target    -> COUNT(Tbl_TradeVisitsFinal) per SO in quarter
 --   All others              -> 1 (no tracking yet)
 --
 -- Verify exact FocusArea spellings before running:
@@ -83,10 +84,17 @@ BEGIN
               AND  st.Name = 'ACTD'
         ), 0)                                            AS PremiumActual,
 
-        -- ── 4. Dealer Visits Target (actual = 1) ─────────────────────────────
+        -- ── 4. Dealer Visits Target -> actual = COUNT of Trade Visits ───────────
         ISNULL(MAX(CASE WHEN dk.FocusArea = 'Dealer Visits Target'
                         THEN dk.TargetValue END), 0)    AS DealerVisitsTarget,
-        1                                                AS DealerVisitsActual,
+        ISNULL((
+            SELECT COUNT(*)
+            FROM   dbo.Tbl_TradeVisitsFinal tv
+            WHERE  tv.SOID          = so.ID
+              AND  tv.CreatedAt    >= @StartDate
+              AND  tv.CreatedAt    <= DATEADD(DAY, 1, CAST(@EndDate AS DATETIME))
+              AND  ISNULL(tv.IsActive, 1) = 1
+        ), 0)                                            AS DealerVisitsActual,
 
         -- ── 5. Site Visit Target (actual = 1) ────────────────────────────────
         ISNULL(MAX(CASE WHEN dk.FocusArea = 'Site Visit Target'
@@ -189,7 +197,14 @@ BEGIN
               AND  ISNULL(c.IsActive, 1) = 1
               AND  st.Name = 'ACTD'
         ), 0)
-        + 1  -- Dealer Visits Target
+        + ISNULL((
+              SELECT COUNT(*)
+              FROM   dbo.Tbl_TradeVisitsFinal tv
+              WHERE  tv.SOID          = so.ID
+                AND  tv.CreatedAt    >= @StartDate
+                AND  tv.CreatedAt    <= DATEADD(DAY, 1, CAST(@EndDate AS DATETIME))
+                AND  ISNULL(tv.IsActive, 1) = 1
+          ), 0)  -- Dealer Visits Target
         + 1  -- Site Visit Target
         + 1  -- Business Affiliate Visit Target
         + 1  -- Customer Satisfaction
