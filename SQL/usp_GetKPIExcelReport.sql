@@ -146,14 +146,14 @@ BEGIN
         -- ── 10. Product Knowledge ────────────────────────────────────────────
         CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Product Knowledge'
                               THEN dk.TargetValue END), 0) AS INT)   AS ProdKnowTarget,
-        ISNULL((
+        CAST(ISNULL((
             SELECT SUM(pk.ProductKnowledge)
             FROM   dbo.Tbl_SOProdKnowledgeCompFeed pk
             WHERE  pk.SOID            = so.ID
               AND  pk.FinancialYearID = @FinancialYearID
               AND  pk.Quarter         = @Quarter
               AND  ISNULL(pk.IsActive, 1) = 1
-        ), 0)                                                                   AS ProdKnowActual,
+        ), 0) AS INT)                                                           AS ProdKnowActual,
 
         -- ── 11. Training Evaluation ──────────────────────────────────────────
         CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Training Evaluation'
@@ -170,14 +170,14 @@ BEGIN
         -- ── 12. Compititor Feedback ──────────────────────────────────────────
         CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Compititor Feedback'
                               THEN dk.TargetValue END), 0) AS INT)   AS CompFeedTarget,
-        ISNULL((
+        CAST(ISNULL((
             SELECT SUM(pk.CompFeed)
             FROM   dbo.Tbl_SOProdKnowledgeCompFeed pk
             WHERE  pk.SOID            = so.ID
               AND  pk.FinancialYearID = @FinancialYearID
               AND  pk.Quarter         = @Quarter
               AND  ISNULL(pk.IsActive, 1) = 1
-        ), 0)                                                                   AS CompFeedActual,
+        ), 0) AS INT)                                                           AS CompFeedActual,
 
         -- ── Total Target ─────────────────────────────────────────────────────
         CAST(
