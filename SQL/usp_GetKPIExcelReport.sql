@@ -7,6 +7,8 @@
 --   Platinum Target         -> SUM liters from Tbl_ClaimDetail->Tbl_ProductDetail where Incentive_Category='Platinum'
 --   Premium Target          -> SUM liters from Tbl_ClaimDetail->Tbl_ProductDetail where Incentive_Category='Premium'
 --   Dealer Visits Target    -> COUNT(Tbl_TradeVisitsFinal) per SO in quarter
+--   Product Knowledge       -> SUM(Tbl_SOProdKnowledgeCompFeed.ProductKnowledge) per SO in quarter
+--   Compititor Feedback     -> SUM(Tbl_SOProdKnowledgeCompFeed.CompFeed) per SO in quarter
 --   All others              -> 1 (no tracking yet)
 -- All numeric outputs cast to INT (no decimal places).
 -- =============================================
@@ -141,10 +143,17 @@ BEGIN
               AND  ISNULL(a.IsActive, 1) = 1
         ), 0) AS INT)                                                AS AttendanceActual,
 
-        -- ── 10. Product Knowledge (actual = 1) ───────────────────────────────
+        -- ── 10. Product Knowledge ────────────────────────────────────────────
         CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Product Knowledge'
                               THEN dk.TargetValue END), 0) AS INT)   AS ProdKnowTarget,
-        1                                                                       AS ProdKnowActual,
+        ISNULL((
+            SELECT SUM(pk.ProductKnowledge)
+            FROM   dbo.Tbl_SOProdKnowledgeCompFeed pk
+            WHERE  pk.SOID            = so.ID
+              AND  pk.FinancialYearID = @FinancialYearID
+              AND  pk.Quarter         = @Quarter
+              AND  ISNULL(pk.IsActive, 1) = 1
+        ), 0)                                                                   AS ProdKnowActual,
 
         -- ── 11. Training Evaluation ──────────────────────────────────────────
         CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Training Evaluation'
@@ -158,10 +167,17 @@ BEGIN
               AND  ISNULL(t.IsActive, 1) = 1
         ), 0) AS INT)                                                AS TrainingActual,
 
-        -- ── 12. Compititor Feedback (actual = 1) ─────────────────────────────
+        -- ── 12. Compititor Feedback ──────────────────────────────────────────
         CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Compititor Feedback'
                               THEN dk.TargetValue END), 0) AS INT)   AS CompFeedTarget,
-        1                                                                       AS CompFeedActual,
+        ISNULL((
+            SELECT SUM(pk.CompFeed)
+            FROM   dbo.Tbl_SOProdKnowledgeCompFeed pk
+            WHERE  pk.SOID            = so.ID
+              AND  pk.FinancialYearID = @FinancialYearID
+              AND  pk.Quarter         = @Quarter
+              AND  ISNULL(pk.IsActive, 1) = 1
+        ), 0)                                                                   AS CompFeedActual,
 
         -- ── Total Target ─────────────────────────────────────────────────────
         CAST(
@@ -251,7 +267,15 @@ BEGIN
                   AND  a.Quarter         = @Quarter
                   AND  ISNULL(a.IsActive, 1) = 1
             ), 0)
-          + 1  -- Product Knowledge
+          -- Product Knowledge
+          + ISNULL((
+                SELECT SUM(pk.ProductKnowledge)
+                FROM   dbo.Tbl_SOProdKnowledgeCompFeed pk
+                WHERE  pk.SOID            = so.ID
+                  AND  pk.FinancialYearID = @FinancialYearID
+                  AND  pk.Quarter         = @Quarter
+                  AND  ISNULL(pk.IsActive, 1) = 1
+            ), 0)
           + ISNULL((
                 SELECT SUM(t.Training)
                 FROM   dbo.Tbl_SOTraining t
@@ -260,7 +284,15 @@ BEGIN
                   AND  t.Quarter         = @Quarter
                   AND  ISNULL(t.IsActive, 1) = 1
             ), 0)
-          + 1  -- Compititor Feedback
+          -- Compititor Feedback
+          + ISNULL((
+                SELECT SUM(pk.CompFeed)
+                FROM   dbo.Tbl_SOProdKnowledgeCompFeed pk
+                WHERE  pk.SOID            = so.ID
+                  AND  pk.FinancialYearID = @FinancialYearID
+                  AND  pk.Quarter         = @Quarter
+                  AND  ISNULL(pk.IsActive, 1) = 1
+            ), 0)
         AS INT)                                                       AS TotalActual
 
     FROM       dbo.Tbl_MasterKPIS  mk
