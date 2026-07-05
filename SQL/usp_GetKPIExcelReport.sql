@@ -3,10 +3,15 @@
 -- Tracked actuals:
 --   Attendance And Coverage -> Tbl_SOAttendanceandPunctuality
 --   Training Evaluation     -> Tbl_SOTraining
+--   Total Sales Target      -> SUM(Tbl_SalesClaimMaster.TotalLiters)        per SO in quarter
+--   Platinum Target         -> SUM where Tbl_Segmenttype.Name='Special Coating'
+--   Premium Target          -> SUM where Tbl_Segmenttype.Name='ACTD'
 --   All others              -> 1 (no tracking yet)
 --
 -- Verify exact FocusArea spellings before running:
 --   SELECT Name FROM dbo.Tbl_FocusArea
+-- Verify segment names:
+--   SELECT ID, Name FROM dbo.Tbl_Segmenttype
 -- =============================================
 CREATE OR ALTER PROCEDURE dbo.usp_GetKPIExcelReport
     @FinancialYearID INT,
@@ -38,20 +43,45 @@ BEGIN
         rh.Name                                          AS HeadName,
         so.Name                                          AS SOName,
 
-        -- ── 1. Total Sales Target (actual = 1) ───────────────────────────────
+        -- ── 1. Total Sales Target -> actual = SUM of all claim liters ────────
         ISNULL(MAX(CASE WHEN dk.FocusArea = 'Total Sales Target'
                         THEN dk.TargetValue END), 0)    AS SalesTarget,
-        1                                                AS SalesActual,
+        ISNULL((
+            SELECT SUM(c.TotalLiters)
+            FROM   dbo.Tbl_SalesClaimMaster c
+            WHERE  c.SOID          = so.ID
+              AND  c.DateSelected >= @StartDate
+              AND  c.DateSelected <= @EndDate
+              AND  ISNULL(c.IsActive, 1) = 1
+        ), 0)                                            AS SalesActual,
 
-        -- ── 2. Platinum Target (actual = 1) ──────────────────────────────────
+        -- ── 2. Platinum Target -> actual = Special Coating liters ─────────────
         ISNULL(MAX(CASE WHEN dk.FocusArea = 'Platinum Target'
                         THEN dk.TargetValue END), 0)    AS PlatinumTarget,
-        1                                                AS PlatinumActual,
+        ISNULL((
+            SELECT SUM(c.TotalLiters)
+            FROM   dbo.Tbl_SalesClaimMaster c
+            INNER JOIN dbo.Tbl_Segmenttype  st ON st.ID = c.SegmentID
+            WHERE  c.SOID          = so.ID
+              AND  c.DateSelected >= @StartDate
+              AND  c.DateSelected <= @EndDate
+              AND  ISNULL(c.IsActive, 1) = 1
+              AND  st.Name = 'Special Coating'
+        ), 0)                                            AS PlatinumActual,
 
-        -- ── 3. Premium Target (actual = 1) ───────────────────────────────────
+        -- ── 3. Premium Target -> actual = ACTD liters ────────────────────────
         ISNULL(MAX(CASE WHEN dk.FocusArea = 'Premium Target'
                         THEN dk.TargetValue END), 0)    AS PremiumTarget,
-        1                                                AS PremiumActual,
+        ISNULL((
+            SELECT SUM(c.TotalLiters)
+            FROM   dbo.Tbl_SalesClaimMaster c
+            INNER JOIN dbo.Tbl_Segmenttype  st ON st.ID = c.SegmentID
+            WHERE  c.SOID          = so.ID
+              AND  c.DateSelected >= @StartDate
+              AND  c.DateSelected <= @EndDate
+              AND  ISNULL(c.IsActive, 1) = 1
+              AND  st.Name = 'ACTD'
+        ), 0)                                            AS PremiumActual,
 
         -- ── 4. Dealer Visits Target (actual = 1) ─────────────────────────────
         ISNULL(MAX(CASE WHEN dk.FocusArea = 'Dealer Visits Target'
@@ -127,10 +157,38 @@ BEGIN
       + ISNULL(MAX(CASE WHEN dk.FocusArea = 'Compititor Feedback'             THEN dk.TargetValue END), 0)
                                                          AS TotalTarget,
 
-        -- ── Total Actual (tracked + 10 hardcoded 1s) ─────────────────────────
-          1  -- Total Sales Target
-        + 1  -- Platinum Target
-        + 1  -- Premium Target
+        -- ── Total Actual ──────────────────────────────────────────────────────
+        -- Sales Total Liters
+        ISNULL((
+            SELECT SUM(c.TotalLiters)
+            FROM   dbo.Tbl_SalesClaimMaster c
+            WHERE  c.SOID          = so.ID
+              AND  c.DateSelected >= @StartDate
+              AND  c.DateSelected <= @EndDate
+              AND  ISNULL(c.IsActive, 1) = 1
+        ), 0)
+        -- Platinum (Special Coating)
+      + ISNULL((
+            SELECT SUM(c.TotalLiters)
+            FROM   dbo.Tbl_SalesClaimMaster c
+            INNER JOIN dbo.Tbl_Segmenttype  st ON st.ID = c.SegmentID
+            WHERE  c.SOID          = so.ID
+              AND  c.DateSelected >= @StartDate
+              AND  c.DateSelected <= @EndDate
+              AND  ISNULL(c.IsActive, 1) = 1
+              AND  st.Name = 'Special Coating'
+        ), 0)
+        -- Premium (ACTD)
+      + ISNULL((
+            SELECT SUM(c.TotalLiters)
+            FROM   dbo.Tbl_SalesClaimMaster c
+            INNER JOIN dbo.Tbl_Segmenttype  st ON st.ID = c.SegmentID
+            WHERE  c.SOID          = so.ID
+              AND  c.DateSelected >= @StartDate
+              AND  c.DateSelected <= @EndDate
+              AND  ISNULL(c.IsActive, 1) = 1
+              AND  st.Name = 'ACTD'
+        ), 0)
         + 1  -- Dealer Visits Target
         + 1  -- Site Visit Target
         + 1  -- Business Affiliate Visit Target
