@@ -2667,7 +2667,10 @@ namespace FOS.Setup
                                    seg in dbContext.Tbl_Segmenttype on jd.BusinessSegmentID equals seg.ID
                                    join
                                    role in dbContext.SOTypes on jd.RoleID equals role.ID
-                                   where ( jd.DateFrom >= FromDate && jd.DateTo <= ToDate && jd.SOID == SOID && jd.IsActive==true)
+                                   where ( jd.DateFrom >= FromDate && jd.DateTo <= ToDate
+                                   && (SOID == 0 || jd.SOID == SOID)
+                                   && (ZoneID == 0 || jd.HeadID == ZoneID)
+                                   && jd.IsActive==true)
                                    select new JobsDetailData
                                    //u => new JobsDetailData
                                    {

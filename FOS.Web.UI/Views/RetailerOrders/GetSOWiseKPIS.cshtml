@@ -132,6 +132,10 @@
                 <button type="submit" id="btnNew" class="btn btn-primary">
                     <i class="icon-ok icon-white" style="padding-right: 8px"></i>Add KPI
                 </button>
+                &nbsp;
+                <button type="button" id="btnSearch" class="btn btn-success">
+                    <i class="icon-search icon-white" style="padding-right: 8px"></i>Search
+                </button>
             </div>
 
         </div>
@@ -1076,7 +1080,15 @@
                 });
             }
         });
-      
+
+        $("#Quarter").change(function () {
+            GenerateDetailGrid();
+        });
+
+        $("#btnSearch").click(function () {
+            GenerateDetailGrid();
+        });
+
     });
 
     function showFullImage(src) {
