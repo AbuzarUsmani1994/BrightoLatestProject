@@ -26,8 +26,8 @@ BEGIN
     FROM dbo.Tbl_Quarters
     WHERE FinancialYearID = @FinancialYearID
       AND Name            = @Quarter
-      AND IsDeleted       = 0
-      AND IsActive        = 1;
+      AND ISNULL(IsDeleted, 0) = 0
+      AND ISNULL(IsActive,  1) = 1;
 
     IF @StartDate IS NULL
     BEGIN
