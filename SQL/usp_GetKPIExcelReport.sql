@@ -102,10 +102,17 @@ BEGIN
               AND  ISNULL(tv.IsActive, 1) = 1
         ), 0)                                                                   AS DealerVisitsActual,
 
-        -- ── 5. Site Visit Target (actual = 1) ────────────────────────────────
+        -- ── 5. Site Visit Target ─────────────────────────────────────────────
         CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Site Visit Target'
                               THEN dk.TargetValue END), 0) AS DECIMAL(18,2))   AS SiteVisitsTarget,
-        1                                                                       AS SiteVisitsActual,
+        ISNULL((
+            SELECT COUNT(*)
+            FROM   dbo.Tbl_HousingVisits hv
+            WHERE  hv.SOID          = so.ID
+              AND  hv.CreatedAt    >= @StartDate
+              AND  hv.CreatedAt    <= DATEADD(DAY, 1, CAST(@EndDate AS DATETIME))
+              AND  ISNULL(hv.IsActive, 1) = 1
+        ), 0)                                                                   AS SiteVisitsActual,
 
         -- ── 6. Business Affiliate Visit Target (actual = 1) ──────────────────
         CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Business Affiliate Visit Target'
@@ -224,7 +231,15 @@ BEGIN
                   AND  tv.CreatedAt    <= DATEADD(DAY, 1, CAST(@EndDate AS DATETIME))
                   AND  ISNULL(tv.IsActive, 1) = 1
             ), 0)
-          + 1  -- Site Visit Target
+          -- Site Visits
+          + ISNULL((
+                SELECT COUNT(*)
+                FROM   dbo.Tbl_HousingVisits hv
+                WHERE  hv.SOID          = so.ID
+                  AND  hv.CreatedAt    >= @StartDate
+                  AND  hv.CreatedAt    <= DATEADD(DAY, 1, CAST(@EndDate AS DATETIME))
+                  AND  ISNULL(hv.IsActive, 1) = 1
+            ), 0)
           + 1  -- Business Affiliate Visit Target
           + 1  -- Customer Satisfaction
           + 1  -- Area Coverage
