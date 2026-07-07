@@ -56,6 +56,15 @@
                         </div>
                     </div>
                     <div class="control-group">
+                        <label class="control-label">Report Type</label>
+                        <div class="controls">
+                            <select id="ReportType" name="ReportType" class="span3">
+                                <option value="value">Value Wise</option>
+                                <option value="percent">Percent Wise</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control-group">
                         <div class="controls">
                             <button type="button" id="btnExport" class="btn btn-primary">
                                 <i class="icon-download"></i> Export to Excel
@@ -95,6 +104,7 @@
             return;
         }
 
-        window.location.href = '@Url.Action("ExportKPIPerformanceReport", "Setup")?FinancialYearID=' + fyid + '&Quarter=' + encodeURIComponent(quarter) + '&RegionalHeadID=' + rhid;
+        var reportType = $('#ReportType').val();
+        window.location.href = '@Url.Action("ExportKPIPerformanceReport", "Setup")?FinancialYearID=' + fyid + '&Quarter=' + encodeURIComponent(quarter) + '&RegionalHeadID=' + rhid + '&ReportType=' + reportType;
     });
 </script>

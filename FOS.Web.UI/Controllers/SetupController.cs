@@ -3371,57 +3371,9 @@ namespace FOS.Web.UI.Controllers
             return View(model);
         }
 
-        public ActionResult ExportKPIPerformanceReport(int FinancialYearID, string Quarter, int RegionalHeadID)
+        public ActionResult ExportKPIPerformanceReport(int FinancialYearID, string Quarter, int RegionalHeadID, string ReportType = "value")
         {
-            var rows = new List<KPIReportRow>();
-
-            using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
-            using (var cmd = new SqlCommand("dbo.usp_GetKPIExcelReport", conn))
-            {
-                cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@FinancialYearID", FinancialYearID);
-                cmd.Parameters.AddWithValue("@Quarter", Quarter ?? "");
-                cmd.Parameters.AddWithValue("@RegionalHeadID", RegionalHeadID);
-                conn.Open();
-                using (var reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        rows.Add(new KPIReportRow
-                        {
-                            Sr                      = Convert.ToInt32(reader["Sr"]),
-                            HeadName                = reader["HeadName"].ToString(),
-                            SOName                  = reader["SOName"].ToString(),
-                            SalesTarget             = Convert.ToInt32(reader["SalesTarget"]),
-                            SalesActual             = Convert.ToInt32(reader["SalesActual"]),
-                            PlatinumTarget          = Convert.ToInt32(reader["PlatinumTarget"]),
-                            PlatinumActual          = Convert.ToInt32(reader["PlatinumActual"]),
-                            PremiumTarget           = Convert.ToInt32(reader["PremiumTarget"]),
-                            PremiumActual           = Convert.ToInt32(reader["PremiumActual"]),
-                            DealerVisitsTarget      = Convert.ToInt32(reader["DealerVisitsTarget"]),
-                            DealerVisitsActual      = Convert.ToInt32(reader["DealerVisitsActual"]),
-                            SiteVisitsTarget        = Convert.ToInt32(reader["SiteVisitsTarget"]),
-                            SiteVisitsActual        = Convert.ToInt32(reader["SiteVisitsActual"]),
-                            ContractorVisitsTarget  = Convert.ToInt32(reader["ContractorVisitsTarget"]),
-                            ContractorVisitsActual  = Convert.ToInt32(reader["ContractorVisitsActual"]),
-                            CustSatisfactionTarget  = Convert.ToInt32(reader["CustSatisfactionTarget"]),
-                            CustSatisfactionActual  = Convert.ToInt32(reader["CustSatisfactionActual"]),
-                            AreaCoverageTarget      = Convert.ToInt32(reader["AreaCoverageTarget"]),
-                            AreaCoverageActual      = Convert.ToInt32(reader["AreaCoverageActual"]),
-                            AttendanceTarget        = Convert.ToInt32(reader["AttendanceTarget"]),
-                            AttendanceActual        = Convert.ToInt32(reader["AttendanceActual"]),
-                            ProdKnowTarget          = Convert.ToInt32(reader["ProdKnowTarget"]),
-                            ProdKnowActual          = Convert.ToInt32(reader["ProdKnowActual"]),
-                            TrainingTarget          = Convert.ToInt32(reader["TrainingTarget"]),
-                            TrainingActual          = Convert.ToInt32(reader["TrainingActual"]),
-                            CompFeedTarget          = Convert.ToInt32(reader["CompFeedTarget"]),
-                            CompFeedActual          = Convert.ToInt32(reader["CompFeedActual"]),
-                            TotalTarget             = Convert.ToInt32(reader["TotalTarget"]),
-                            TotalActual             = Convert.ToInt32(reader["TotalActual"])
-                        });
-                    }
-                }
-            }
+            bool isPercent = (ReportType ?? "value").ToLower() == "percent";
 
             var sb = new System.Text.StringBuilder();
             sb.Append(@"<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:x='urn:schemas-microsoft-com:office:excel' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -3454,25 +3406,77 @@ namespace FOS.Web.UI.Controllers
   <td class='hdr1'>Competitors Activities</td>
   <td class='hdr1'>Total</td>
 </tr>
-<tr>
-  <td class='hdr2'>Target / Actual</td>
-  <td class='hdr2'>Target / Actual</td>
-  <td class='hdr2'>Target / Actual</td>
-  <td class='hdr2'>Target / Actual</td>
-  <td class='hdr2'>Target / Actual</td>
-  <td class='hdr2'>Target / Actual</td>
-  <td class='hdr2'>Target / Actual</td>
-  <td class='hdr2'>Target / Actual</td>
-  <td class='hdr2'>Target / Actual</td>
-  <td class='hdr2'>Target / Actual</td>
-  <td class='hdr2'>Target / Actual</td>
-  <td class='hdr2'>Target / Actual</td>
-  <td class='hdr2'>Target / Actual</td>
-</tr>
 ");
-            foreach (var r in rows)
+            string subHdr = isPercent ? "Target % / Actual %" : "Target / Actual";
+            sb.AppendFormat(@"<tr>
+  <td class='hdr2'>{0}</td>
+  <td class='hdr2'>{0}</td>
+  <td class='hdr2'>{0}</td>
+  <td class='hdr2'>{0}</td>
+  <td class='hdr2'>{0}</td>
+  <td class='hdr2'>{0}</td>
+  <td class='hdr2'>{0}</td>
+  <td class='hdr2'>{0}</td>
+  <td class='hdr2'>{0}</td>
+  <td class='hdr2'>{0}</td>
+  <td class='hdr2'>{0}</td>
+  <td class='hdr2'>{0}</td>
+  <td class='hdr2'>{0}</td>
+</tr>
+", subHdr);
+
+            using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
+            using (var cmd = new SqlCommand(isPercent ? "dbo.usp_GetKPIPercentageReport" : "dbo.usp_GetKPIExcelReport", conn))
             {
-                sb.AppendFormat(@"<tr>
+                cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@FinancialYearID", FinancialYearID);
+                cmd.Parameters.AddWithValue("@Quarter", Quarter ?? "");
+                cmd.Parameters.AddWithValue("@RegionalHeadID", RegionalHeadID);
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        if (isPercent)
+                        {
+                            sb.AppendFormat(@"<tr>
+  <td>{0}</td>
+  <td class='left'>{1}</td>
+  <td class='left'>{2}</td>
+  <td>{3:0.##}% / {4:0.##}%</td>
+  <td>{5:0.##}% / {6:0.##}%</td>
+  <td>{7:0.##}% / {8:0.##}%</td>
+  <td>{9:0.##}% / {10:0.##}%</td>
+  <td>{11:0.##}% / {12:0.##}%</td>
+  <td>{13:0.##}% / {14:0.##}%</td>
+  <td>{15:0.##}% / {16:0.##}%</td>
+  <td>{17:0.##}% / {18:0.##}%</td>
+  <td>{19:0.##}% / {20:0.##}%</td>
+  <td>{21:0.##}% / {22:0.##}%</td>
+  <td>{23:0.##}% / {24:0.##}%</td>
+  <td>{25:0.##}% / {26:0.##}%</td>
+  <td>{27:0.##}% / {28:0.##}%</td>
+</tr>
+",
+                                Convert.ToInt32(reader["Sr"]),
+                                reader["HeadName"], reader["SOName"],
+                                Convert.ToDecimal(reader["SalesTargetPct"]),         Convert.ToDecimal(reader["SalesActualPct"]),
+                                Convert.ToDecimal(reader["PlatinumTargetPct"]),      Convert.ToDecimal(reader["PlatinumActualPct"]),
+                                Convert.ToDecimal(reader["PremiumTargetPct"]),       Convert.ToDecimal(reader["PremiumActualPct"]),
+                                Convert.ToDecimal(reader["DealerVisitsTargetPct"]),  Convert.ToDecimal(reader["DealerVisitsActualPct"]),
+                                Convert.ToDecimal(reader["SiteVisitsTargetPct"]),    Convert.ToDecimal(reader["SiteVisitsActualPct"]),
+                                Convert.ToDecimal(reader["ContractorVisitsTargetPct"]), Convert.ToDecimal(reader["ContractorVisitsActualPct"]),
+                                Convert.ToDecimal(reader["CustSatisfactionTargetPct"]), Convert.ToDecimal(reader["CustSatisfactionActualPct"]),
+                                Convert.ToDecimal(reader["AreaCoverageTargetPct"]),  Convert.ToDecimal(reader["AreaCoverageActualPct"]),
+                                Convert.ToDecimal(reader["AttendanceTargetPct"]),    Convert.ToDecimal(reader["AttendanceActualPct"]),
+                                Convert.ToDecimal(reader["ProdKnowTargetPct"]),      Convert.ToDecimal(reader["ProdKnowActualPct"]),
+                                Convert.ToDecimal(reader["TrainingTargetPct"]),      Convert.ToDecimal(reader["TrainingActualPct"]),
+                                Convert.ToDecimal(reader["CompFeedTargetPct"]),      Convert.ToDecimal(reader["CompFeedActualPct"]),
+                                Convert.ToDecimal(reader["TotalTargetPct"]),         Convert.ToDecimal(reader["TotalActualPct"]));
+                        }
+                        else
+                        {
+                            sb.AppendFormat(@"<tr>
   <td>{0}</td>
   <td class='left'>{1}</td>
   <td class='left'>{2}</td>
@@ -3491,25 +3495,31 @@ namespace FOS.Web.UI.Controllers
   <td>{27} / {28}</td>
 </tr>
 ",
-                    r.Sr, r.HeadName, r.SOName,
-                    r.SalesTarget, r.SalesActual,
-                    r.PlatinumTarget, r.PlatinumActual,
-                    r.PremiumTarget, r.PremiumActual,
-                    r.DealerVisitsTarget, r.DealerVisitsActual,
-                    r.SiteVisitsTarget, r.SiteVisitsActual,
-                    r.ContractorVisitsTarget, r.ContractorVisitsActual,
-                    r.CustSatisfactionTarget, r.CustSatisfactionActual,
-                    r.AreaCoverageTarget, r.AreaCoverageActual,
-                    r.AttendanceTarget, r.AttendanceActual,
-                    r.ProdKnowTarget, r.ProdKnowActual,
-                    r.TrainingTarget, r.TrainingActual,
-                    r.CompFeedTarget, r.CompFeedActual,
-                    r.TotalTarget, r.TotalActual);
+                                Convert.ToInt32(reader["Sr"]),
+                                reader["HeadName"], reader["SOName"],
+                                Convert.ToInt32(reader["SalesTarget"]),         Convert.ToInt32(reader["SalesActual"]),
+                                Convert.ToInt32(reader["PlatinumTarget"]),      Convert.ToInt32(reader["PlatinumActual"]),
+                                Convert.ToInt32(reader["PremiumTarget"]),       Convert.ToInt32(reader["PremiumActual"]),
+                                Convert.ToInt32(reader["DealerVisitsTarget"]),  Convert.ToInt32(reader["DealerVisitsActual"]),
+                                Convert.ToInt32(reader["SiteVisitsTarget"]),    Convert.ToInt32(reader["SiteVisitsActual"]),
+                                Convert.ToInt32(reader["ContractorVisitsTarget"]), Convert.ToInt32(reader["ContractorVisitsActual"]),
+                                Convert.ToInt32(reader["CustSatisfactionTarget"]), Convert.ToInt32(reader["CustSatisfactionActual"]),
+                                Convert.ToInt32(reader["AreaCoverageTarget"]),  Convert.ToInt32(reader["AreaCoverageActual"]),
+                                Convert.ToInt32(reader["AttendanceTarget"]),    Convert.ToInt32(reader["AttendanceActual"]),
+                                Convert.ToInt32(reader["ProdKnowTarget"]),      Convert.ToInt32(reader["ProdKnowActual"]),
+                                Convert.ToInt32(reader["TrainingTarget"]),      Convert.ToInt32(reader["TrainingActual"]),
+                                Convert.ToInt32(reader["CompFeedTarget"]),      Convert.ToInt32(reader["CompFeedActual"]),
+                                Convert.ToInt32(reader["TotalTarget"]),         Convert.ToInt32(reader["TotalActual"]));
+                        }
+                    }
+                }
             }
+
             sb.Append("</table></body></html>");
 
+            string suffix = isPercent ? "Percentage" : "Value";
             byte[] bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
-            return File(bytes, "application/vnd.ms-excel", "KPIPerformanceReport_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".xls");
+            return File(bytes, "application/vnd.ms-excel", "KPIPerformanceReport_" + suffix + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".xls");
         }
 
         private KPIReportModel BuildKPIReportModel()
