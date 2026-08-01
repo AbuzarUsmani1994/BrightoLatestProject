@@ -4,29 +4,44 @@
 --   1. Employee Profile  -> SaleOfficers + RegionalHeads + Regions + Cities
 --   2. Customer Data     -> Retailers assigned to SO, BusinessStatus, Housing
 --   3. KPI Data          -> Tbl_MasterKPIS / Tbl_DetailKPI (same source as KPIPerformanceReport)
---   4. CCR Data          -> sp_GetCallSummaryReport_Simple logic (SO-wise pivot)
+--   4. CCR Data          -> Housing visits SO-wise (same source as CallSummaryDetailedReport)
 --
 -- Parameters:
---   @SOID           INT          -- 0 = all SOs under the head
---   @RegionalHeadID INT          -- 0 = all heads in the zone
---   @StartDate      DATE
---   @EndDate        DATE
+--   @SOID            INT           -- 0 = all SOs under the head
+--   @RegionalHeadID  INT           -- 0 = all heads in the zone
 --   @FinancialYearID INT
---   @Quarter        NVARCHAR(20)
+--   @Quarter         NVARCHAR(20)  -- e.g. 'Q1', 'Q2', 'Q3', 'Q4'
+--
+-- Date range is resolved automatically from Tbl_Quarters.
 -- =============================================
 CREATE OR ALTER PROCEDURE dbo.usp_GetEmployeePerformanceReport
     @SOID            INT          = 0,
     @RegionalHeadID  INT          = 0,
-    @StartDate       DATE,
-    @EndDate         DATE,
     @FinancialYearID INT,
     @Quarter         NVARCHAR(20)
 AS
 BEGIN
     SET NOCOUNT ON;
 
+    -- ── Resolve Quarter to date range (same pattern as usp_GetKPIExcelReport) ───
+    DECLARE @StartDate DATE, @EndDate DATE;
+
+    SELECT TOP 1
+        @StartDate = StartDate,
+        @EndDate   = EndDate
+    FROM dbo.Tbl_Quarters
+    WHERE FinancialYearID        = @FinancialYearID
+      AND Name                   = @Quarter
+      AND ISNULL(IsDeleted, 0)  = 0
+      AND ISNULL(IsActive,  1)  = 1;
+
+    IF @StartDate IS NULL
+    BEGIN
+        SELECT 'No quarter found for the given FinancialYearID and Quarter' AS ErrorMessage;
+        RETURN;
+    END
+
     -- ── 1. Candidate SOs ────────────────────────────────────────────────────────
-    -- Collect the SOs we need to report on into a temp table for reuse
     CREATE TABLE #SOs (
         SOID            INT,
         SOName          NVARCHAR(200),
@@ -43,7 +58,7 @@ BEGIN
         so.ID,
         so.Name,
         ISNULL(so.ECode, ''),
-        rh.ID,
+        ISNULL(rh.ID, 0),
         ISNULL(rh.Name, ''),
         ISNULL(reg.Name, ''),
         ISNULL(c1.Name, ''),
@@ -55,63 +70,57 @@ BEGIN
     LEFT JOIN  dbo.Cities        c2  ON c2.ID   = so.SecondaryCityID
     WHERE  ISNULL(so.IsActive,  1) = 1
       AND  ISNULL(so.IsDeleted, 0) = 0
-      AND  (@SOID           = 0 OR so.ID            = @SOID)
+      AND  (@SOID           = 0 OR so.ID             = @SOID)
       AND  (@RegionalHeadID = 0 OR so.RegionalHeadID = @RegionalHeadID);
 
     -- ── 2. Customer / Retailer Counts (per SO) ──────────────────────────────────
     CREATE TABLE #CustomerData (
-        SOID            INT,
-        TotalCustomers  INT,
-        ActiveCount     INT,
-        LostCount       INT,
-        CompletedCount  INT,
+        SOID             INT,
+        TotalCustomers   INT,
+        ActiveCount      INT,
+        LostCount        INT,
+        CompletedCount   INT,
         ResidentialCount INT,
         CommercialCount  INT,
-        NewCustomers    INT,
-        SitesWon        INT,
-        OnlineVisits    INT,
-        OfflineVisits   INT
+        NewCustomers     INT,
+        SitesWon         INT,
+        OnlineVisits     INT,
+        OfflineVisits    INT
     );
 
     INSERT INTO #CustomerData
     SELECT
         s.SOID,
-        -- Total assigned retailers
-        COUNT(DISTINCT r.ID)                                               AS TotalCustomers,
-        -- Active = BusinessStatus name like 'Active'
+        COUNT(DISTINCT r.ID)                                                        AS TotalCustomers,
         SUM(CASE WHEN bs.Name LIKE '%Active%'
-                  AND ISNULL(bs.IsActive, 1) = 1 THEN 1 ELSE 0 END)      AS ActiveCount,
-        -- Lost
-        SUM(CASE WHEN bs.Name LIKE '%Lost%'    THEN 1 ELSE 0 END)         AS LostCount,
-        -- Completed
-        SUM(CASE WHEN bs.Name LIKE '%Complet%' THEN 1 ELSE 0 END)         AS CompletedCount,
-        -- Residential
-        SUM(CASE WHEN r.CustomerType = 'Residential' THEN 1 ELSE 0 END)   AS ResidentialCount,
-        -- Commercial
-        SUM(CASE WHEN r.CustomerType = 'Commercial'  THEN 1 ELSE 0 END)   AS CommercialCount,
-        -- New Customers registered in date range
+                  AND ISNULL(bs.IsActive,1) = 1 THEN 1 ELSE 0 END)                AS ActiveCount,
+        SUM(CASE WHEN bs.Name LIKE '%Lost%'    THEN 1 ELSE 0 END)                  AS LostCount,
+        SUM(CASE WHEN bs.Name LIKE '%Complet%' THEN 1 ELSE 0 END)                  AS CompletedCount,
+        SUM(CASE WHEN r.CustomerType = 'Residential' THEN 1 ELSE 0 END)            AS ResidentialCount,
+        SUM(CASE WHEN r.CustomerType = 'Commercial'  THEN 1 ELSE 0 END)            AS CommercialCount,
+        -- New customers registered within the quarter
         SUM(CASE WHEN CAST(r.CreatedDate AS DATE) BETWEEN @StartDate
                                                        AND @EndDate THEN 1 ELSE 0 END) AS NewCustomers,
-        -- Sites Won = Housing visits within date range for this SO
+        -- Sites Won = housing visits in the quarter for this SO
         ISNULL((SELECT COUNT(*)
                 FROM   dbo.Tbl_HousingVisits hv
                 WHERE  hv.SOID = s.SOID
                   AND  CAST(hv.CreatedAt AS DATE) BETWEEN @StartDate AND @EndDate
-                  AND  ISNULL(hv.IsActive, 1) = 1), 0)                    AS SitesWon,
-        -- Online visits (AllPurpose) in date range
+                  AND  ISNULL(hv.IsActive, 1) = 1), 0)                             AS SitesWon,
+        -- Online visits (AllPurpose) in the quarter
         ISNULL((SELECT COUNT(*)
                 FROM   dbo.Tbl_AllPurposeVisits apv
                 WHERE  apv.SOID = s.SOID
                   AND  CAST(apv.CreatedOn AS DATE) BETWEEN @StartDate AND @EndDate
                   AND  apv.OnlineOffline = 1
-                  AND  ISNULL(apv.IsActive, 1) = 1), 0)                   AS OnlineVisits,
-        -- Offline visits (AllPurpose) in date range
+                  AND  ISNULL(apv.IsActive, 1) = 1), 0)                            AS OnlineVisits,
+        -- Offline visits (AllPurpose) in the quarter
         ISNULL((SELECT COUNT(*)
                 FROM   dbo.Tbl_AllPurposeVisits apv
                 WHERE  apv.SOID = s.SOID
                   AND  CAST(apv.CreatedOn AS DATE) BETWEEN @StartDate AND @EndDate
                   AND  apv.OnlineOffline = 0
-                  AND  ISNULL(apv.IsActive, 1) = 1), 0)                   AS OfflineVisits
+                  AND  ISNULL(apv.IsActive, 1) = 1), 0)                            AS OfflineVisits
     FROM       #SOs            s
     LEFT JOIN  dbo.Retailers   r  ON r.SaleOfficerID = s.SOID
                                   AND ISNULL(r.IsDeleted, 0) = 0
@@ -191,7 +200,7 @@ BEGIN
                   AND hv.CreatedAt <= DATEADD(DAY,1,CAST(@EndDate AS DATETIME))
                   AND ISNULL(hv.IsActive,1)=1), 0),
 
-        -- 6. Contractor Visits Target / Actual (Business Affiliates)
+        -- 6. Contractor (Business Affiliate) Visits Target / Actual
         CAST(ISNULL(MAX(CASE WHEN dk.FocusArea = 'Business Affiliate Visit Target'
                               THEN dk.TargetValue END), 0) AS INT),
         1,
@@ -238,136 +247,120 @@ BEGIN
                      WHERE pk.SOID = so.ID AND pk.FinancialYearID = @FinancialYearID
                        AND pk.Quarter = @Quarter AND ISNULL(pk.IsActive,1)=1), 0) AS INT)
 
-    FROM       #SOs           s
+    FROM       #SOs            s
     INNER JOIN dbo.SaleOfficers so ON so.ID = s.SOID
-    -- Join KPI master for this SO (may not exist if targets not set)
-    LEFT JOIN  dbo.Tbl_MasterKPIS mk ON mk.SOID     = so.ID
-                                     AND mk.DateFrom  = @StartDate
-                                     AND mk.DateTo    = @EndDate
+    LEFT JOIN  dbo.Tbl_MasterKPIS mk ON mk.SOID    = so.ID
+                                     AND mk.DateFrom = @StartDate
+                                     AND mk.DateTo   = @EndDate
                                      AND ISNULL(mk.IsActive, 1) = 1
     LEFT JOIN  dbo.Tbl_DetailKPI  dk ON dk.KPIMasterID = mk.ID
     GROUP BY so.ID;
 
-    -- ── 4. CCR Data (Call Summary SO-wise) ──────────────────────────────────────
-    -- Calls are linked via Tbl_AllPurposeVisits.SOID or via the Jobs/HousingVisits
-    -- The existing sp_GetCallSummaryReport_Simple groups by Caller (SO).
-    -- We replicate the same logic here for the SO scope.
+    -- ── 4. CCR Data — Housing Visits SO-wise (same source as CallSummaryDetailedReport) ─
     CREATE TABLE #CCRData (
-        SOID                    INT,
-        TotalCalls              INT,
-        CallAttended            INT,
-        NotAttended             INT,
-        WrongData               INT,
-        OwnerCount              INT,
-        PaintContractorCount    INT,
-        ConstContractorCount    INT,
-        CompetitorCount         INT,
-        ReadyToPaintCount       INT,
-        ConstStageOtherCount    INT,
-        ApplyingBrightoCount    INT
+        SOID                 INT,
+        TotalCalls           INT,
+        CallAttended         INT,
+        NotAttended          INT,
+        WrongData            INT,
+        OwnerCount           INT,
+        PaintContractorCount INT,
+        ConstContractorCount INT,
+        CompetitorCount      INT,
+        ReadyToPaintCount    INT,
+        ConstStageOtherCount INT,
+        ApplyingBrightoCount INT
     );
 
-    -- CCR comes from housing visits classified by their construction stage / contact type.
-    -- ConstructionStageID maps: check Tbl_ConstructionStage names.
-    -- For Call data we use Tbl_HousingVisits in the date range, SO-wise.
     INSERT INTO #CCRData
     SELECT
         s.SOID,
-        -- Total Calls = all housing visits in range
-        COUNT(hv.ID)                                                       AS TotalCalls,
-        -- Call Attended = visits where actual contact made (OnlineOffline = 1)
-        SUM(CASE WHEN ISNULL(hv.OnlineOffline,0) = 1 THEN 1 ELSE 0 END)   AS CallAttended,
-        -- Not Attended = offline / no contact
-        SUM(CASE WHEN ISNULL(hv.OnlineOffline,0) = 0 THEN 1 ELSE 0 END)   AS NotAttended,
-        -- Wrong Data = visits with null/zero customer
-        SUM(CASE WHEN hv.CustomerID IS NULL THEN 1 ELSE 0 END)             AS WrongData,
-        -- Owner = CustomerType 'Owner' on the linked Retailer
-        SUM(CASE WHEN r.CustomerType = 'Owner'             THEN 1 ELSE 0 END) AS OwnerCount,
-        -- Paint Contractor
-        SUM(CASE WHEN r.CustomerType = 'Paint Contractor'  THEN 1 ELSE 0 END) AS PaintContractorCount,
-        -- Const Contractor
-        SUM(CASE WHEN r.CustomerType = 'Const Contractor'  THEN 1 ELSE 0 END) AS ConstContractorCount,
-        -- Competitor
-        SUM(CASE WHEN r.CustomerType = 'Competitor'        THEN 1 ELSE 0 END) AS CompetitorCount,
-        -- Ready to Paint (ConstructionStage name match)
-        SUM(CASE WHEN cs.Name LIKE '%Ready%Paint%'         THEN 1 ELSE 0 END) AS ReadyToPaintCount,
-        -- Construction Stage Other
-        SUM(CASE WHEN cs.Name LIKE '%Other%'               THEN 1 ELSE 0 END) AS ConstStageOtherCount,
-        -- Applying Brighto
+        COUNT(hv.ID)                                                            AS TotalCalls,
+        SUM(CASE WHEN ISNULL(hv.OnlineOffline,0) = 1 THEN 1 ELSE 0 END)        AS CallAttended,
+        SUM(CASE WHEN ISNULL(hv.OnlineOffline,0) = 0 THEN 1 ELSE 0 END)        AS NotAttended,
+        SUM(CASE WHEN hv.CustomerID IS NULL        THEN 1 ELSE 0 END)           AS WrongData,
+        SUM(CASE WHEN r.CustomerType = 'Owner'            THEN 1 ELSE 0 END)    AS OwnerCount,
+        SUM(CASE WHEN r.CustomerType = 'Paint Contractor' THEN 1 ELSE 0 END)    AS PaintContractorCount,
+        SUM(CASE WHEN r.CustomerType = 'Const Contractor' THEN 1 ELSE 0 END)    AS ConstContractorCount,
+        SUM(CASE WHEN r.CustomerType = 'Competitor'       THEN 1 ELSE 0 END)    AS CompetitorCount,
+        SUM(CASE WHEN cs.Name LIKE '%Ready%Paint%'        THEN 1 ELSE 0 END)    AS ReadyToPaintCount,
+        SUM(CASE WHEN cs.Name LIKE '%Other%'              THEN 1 ELSE 0 END)    AS ConstStageOtherCount,
         SUM(CASE WHEN cs.Name LIKE '%Applying%Brighto%'
-              OR cs.Name LIKE '%Applied%Brighto%'          THEN 1 ELSE 0 END) AS ApplyingBrightoCount
+              OR  cs.Name LIKE '%Applied%Brighto%'        THEN 1 ELSE 0 END)    AS ApplyingBrightoCount
     FROM       #SOs            s
-    LEFT JOIN  dbo.Tbl_HousingVisits hv ON hv.SOID = s.SOID
-                                        AND CAST(hv.CreatedAt AS DATE) BETWEEN @StartDate AND @EndDate
-                                        AND ISNULL(hv.IsActive, 1) = 1
-    LEFT JOIN  dbo.Retailers   r   ON r.ID  = hv.CustomerID
-    LEFT JOIN  dbo.Tbl_ConstructionStage cs ON cs.ID = hv.ConstructionStageID
+    LEFT JOIN  dbo.Tbl_HousingVisits       hv ON hv.SOID = s.SOID
+                                              AND CAST(hv.CreatedAt AS DATE) BETWEEN @StartDate AND @EndDate
+                                              AND ISNULL(hv.IsActive, 1) = 1
+    LEFT JOIN  dbo.Retailers               r  ON r.ID  = hv.CustomerID
+    LEFT JOIN  dbo.Tbl_ConstructionStage   cs ON cs.ID = hv.ConstructionStageID
     GROUP BY s.SOID;
 
     -- ── Final SELECT ─────────────────────────────────────────────────────────────
     SELECT
         -- Employee Profile
         s.SOID,
-        s.SOName                    AS EmployeeName,
-        s.ECode                     AS EmployeeCode,
+        s.SOName                     AS EmployeeName,
+        s.ECode                      AS EmployeeCode,
         s.RegionalHeadID,
-        s.HeadName                  AS RegionalHead,
-        s.RegionName                AS Region,
+        s.HeadName                   AS RegionalHead,
+        s.RegionName                 AS Region,
         s.PrimaryTown,
         s.SecondaryTown,
-        @StartDate                  AS PeriodFrom,
-        @EndDate                    AS PeriodTo,
+        @FinancialYearID             AS FinancialYearID,
+        @Quarter                     AS Quarter,
+        @StartDate                   AS PeriodFrom,
+        @EndDate                     AS PeriodTo,
 
         -- Customer Profile
-        ISNULL(cd.TotalCustomers,  0) AS TotalCustomers,
-        ISNULL(cd.ActiveCount,     0) AS ActiveCustomers,
-        ISNULL(cd.LostCount,       0) AS LostCustomers,
-        ISNULL(cd.CompletedCount,  0) AS CompletedCustomers,
-        ISNULL(cd.ResidentialCount,0) AS ResidentialCustomers,
-        ISNULL(cd.CommercialCount, 0) AS CommercialCustomers,
-        ISNULL(cd.NewCustomers,    0) AS NewCustomers,
-        ISNULL(cd.SitesWon,        0) AS SitesWon,
-        ISNULL(cd.OnlineVisits,    0) AS OnlineVisits,
-        ISNULL(cd.OfflineVisits,   0) AS OfflineVisits,
+        ISNULL(cd.TotalCustomers,   0) AS TotalCustomers,
+        ISNULL(cd.ActiveCount,      0) AS ActiveCustomers,
+        ISNULL(cd.LostCount,        0) AS LostCustomers,
+        ISNULL(cd.CompletedCount,   0) AS CompletedCustomers,
+        ISNULL(cd.ResidentialCount, 0) AS ResidentialCustomers,
+        ISNULL(cd.CommercialCount,  0) AS CommercialCustomers,
+        ISNULL(cd.NewCustomers,     0) AS NewCustomers,
+        ISNULL(cd.SitesWon,         0) AS SitesWon,
+        ISNULL(cd.OnlineVisits,     0) AS OnlineVisits,
+        ISNULL(cd.OfflineVisits,    0) AS OfflineVisits,
 
         -- KPI Data
-        ISNULL(k.SalesTarget,           0) AS KPI_SalesTarget,
-        ISNULL(k.SalesActual,           0) AS KPI_SalesActual,
-        ISNULL(k.PlatinumTarget,        0) AS KPI_PlatinumTarget,
-        ISNULL(k.PlatinumActual,        0) AS KPI_PlatinumActual,
-        ISNULL(k.PremiumTarget,         0) AS KPI_PremiumTarget,
-        ISNULL(k.PremiumActual,         0) AS KPI_PremiumActual,
-        ISNULL(k.DealerVisitsTarget,    0) AS KPI_DealerVisitTarget,
-        ISNULL(k.DealerVisitsActual,    0) AS KPI_DealerVisitActual,
-        ISNULL(k.SiteVisitsTarget,      0) AS KPI_SiteVisitsTarget,
-        ISNULL(k.SiteVisitsActual,      0) AS KPI_SiteVisitsActual,
-        ISNULL(k.ContractorVisitsTarget,0) AS KPI_ContractorVisitsTarget,
-        ISNULL(k.ContractorVisitsActual,0) AS KPI_ContractorVisitsActual,
-        ISNULL(k.CustSatisfactionTarget,0) AS KPI_CustSatisfactionTarget,
-        ISNULL(k.CustSatisfactionActual,0) AS KPI_CustSatisfactionActual,
-        ISNULL(k.AreaCoverageTarget,    0) AS KPI_AreaCoverageTarget,
-        ISNULL(k.AreaCoverageActual,    0) AS KPI_AreaCoverageActual,
-        ISNULL(k.AttendanceTarget,      0) AS KPI_AttendanceTarget,
-        ISNULL(k.AttendanceActual,      0) AS KPI_AttendanceActual,
-        ISNULL(k.TrainingTarget,        0) AS KPI_TrainingTarget,
-        ISNULL(k.TrainingActual,        0) AS KPI_TrainingActual,
-        ISNULL(k.ProdKnowTarget,        0) AS KPI_ProdKnowTarget,
-        ISNULL(k.ProdKnowActual,        0) AS KPI_ProdKnowActual,
-        ISNULL(k.CompFeedTarget,        0) AS KPI_CompFeedTarget,
-        ISNULL(k.CompFeedActual,        0) AS KPI_CompFeedActual,
+        ISNULL(k.SalesTarget,            0) AS KPI_SalesTarget,
+        ISNULL(k.SalesActual,            0) AS KPI_SalesActual,
+        ISNULL(k.PlatinumTarget,         0) AS KPI_PlatinumTarget,
+        ISNULL(k.PlatinumActual,         0) AS KPI_PlatinumActual,
+        ISNULL(k.PremiumTarget,          0) AS KPI_PremiumTarget,
+        ISNULL(k.PremiumActual,          0) AS KPI_PremiumActual,
+        ISNULL(k.DealerVisitsTarget,     0) AS KPI_DealerVisitTarget,
+        ISNULL(k.DealerVisitsActual,     0) AS KPI_DealerVisitActual,
+        ISNULL(k.SiteVisitsTarget,       0) AS KPI_SiteVisitsTarget,
+        ISNULL(k.SiteVisitsActual,       0) AS KPI_SiteVisitsActual,
+        ISNULL(k.ContractorVisitsTarget, 0) AS KPI_ContractorVisitsTarget,
+        ISNULL(k.ContractorVisitsActual, 0) AS KPI_ContractorVisitsActual,
+        ISNULL(k.CustSatisfactionTarget, 0) AS KPI_CustSatisfactionTarget,
+        ISNULL(k.CustSatisfactionActual, 0) AS KPI_CustSatisfactionActual,
+        ISNULL(k.AreaCoverageTarget,     0) AS KPI_AreaCoverageTarget,
+        ISNULL(k.AreaCoverageActual,     0) AS KPI_AreaCoverageActual,
+        ISNULL(k.AttendanceTarget,       0) AS KPI_AttendanceTarget,
+        ISNULL(k.AttendanceActual,       0) AS KPI_AttendanceActual,
+        ISNULL(k.TrainingTarget,         0) AS KPI_TrainingTarget,
+        ISNULL(k.TrainingActual,         0) AS KPI_TrainingActual,
+        ISNULL(k.ProdKnowTarget,         0) AS KPI_ProdKnowTarget,
+        ISNULL(k.ProdKnowActual,         0) AS KPI_ProdKnowActual,
+        ISNULL(k.CompFeedTarget,         0) AS KPI_CompFeedTarget,
+        ISNULL(k.CompFeedActual,         0) AS KPI_CompFeedActual,
 
         -- CCR Data
-        ISNULL(ccr.TotalCalls,           0) AS CCR_TotalCalls,
-        ISNULL(ccr.CallAttended,         0) AS CCR_CallAttended,
-        ISNULL(ccr.NotAttended,          0) AS CCR_NotAttended,
-        ISNULL(ccr.WrongData,            0) AS CCR_WrongData,
-        ISNULL(ccr.OwnerCount,           0) AS CCR_Owner,
-        ISNULL(ccr.PaintContractorCount, 0) AS CCR_PaintContractor,
-        ISNULL(ccr.ConstContractorCount, 0) AS CCR_ConstContractor,
-        ISNULL(ccr.CompetitorCount,      0) AS CCR_Competitor,
-        ISNULL(ccr.ReadyToPaintCount,    0) AS CCR_ReadyToPaint,
-        ISNULL(ccr.ConstStageOtherCount, 0) AS CCR_ConstStageOther,
-        ISNULL(ccr.ApplyingBrightoCount, 0) AS CCR_ApplyingBrighto
+        ISNULL(ccr.TotalCalls,            0) AS CCR_TotalCalls,
+        ISNULL(ccr.CallAttended,          0) AS CCR_CallAttended,
+        ISNULL(ccr.NotAttended,           0) AS CCR_NotAttended,
+        ISNULL(ccr.WrongData,             0) AS CCR_WrongData,
+        ISNULL(ccr.OwnerCount,            0) AS CCR_Owner,
+        ISNULL(ccr.PaintContractorCount,  0) AS CCR_PaintContractor,
+        ISNULL(ccr.ConstContractorCount,  0) AS CCR_ConstContractor,
+        ISNULL(ccr.CompetitorCount,       0) AS CCR_Competitor,
+        ISNULL(ccr.ReadyToPaintCount,     0) AS CCR_ReadyToPaint,
+        ISNULL(ccr.ConstStageOtherCount,  0) AS CCR_ConstStageOther,
+        ISNULL(ccr.ApplyingBrightoCount,  0) AS CCR_ApplyingBrighto
 
     FROM       #SOs          s
     LEFT JOIN  #CustomerData cd  ON cd.SOID  = s.SOID
@@ -375,7 +368,6 @@ BEGIN
     LEFT JOIN  #CCRData      ccr ON ccr.SOID = s.SOID
     ORDER BY s.HeadName, s.SOName;
 
-    -- Cleanup
     DROP TABLE #SOs;
     DROP TABLE #CustomerData;
     DROP TABLE #KPIData;
@@ -385,14 +377,10 @@ END
 GO
 
 -- ── Test ─────────────────────────────────────────────────────────────────────
--- All SOs, Q1 of FY 1:
+-- All SOs, Q1:
 -- EXEC dbo.usp_GetEmployeePerformanceReport
---     @SOID = 0, @RegionalHeadID = 0,
---     @StartDate = '2025-07-01', @EndDate = '2025-09-30',
---     @FinancialYearID = 1, @Quarter = 'Q1'
+--     @SOID = 0, @RegionalHeadID = 0, @FinancialYearID = 1, @Quarter = 'Q1'
 --
 -- Single SO:
 -- EXEC dbo.usp_GetEmployeePerformanceReport
---     @SOID = 5, @RegionalHeadID = 0,
---     @StartDate = '2025-07-01', @EndDate = '2025-09-30',
---     @FinancialYearID = 1, @Quarter = 'Q1'
+--     @SOID = 5, @RegionalHeadID = 0, @FinancialYearID = 1, @Quarter = 'Q1'
