@@ -2404,6 +2404,9 @@
     <Content Include="Views\Reports\BrightoServicesReport.cshtml" />
     <Content Include="Views\Home\QualityHome.cshtml" />
     <Content Include="Views\Reports\ComplaintSummary.cshtml" />
+    <Content Include="Views\Setup\KPIPerformanceReport.cshtml" />
+    <Content Include="Views\Setup\EmployeePerformanceReport.cshtml" />
+    <Content Include="Views\Setup\EmployeePerformanceReportPrint.cshtml" />
     <None Include="VisitsCount.xsd">
       <Generator>MSDataSetGenerator</Generator>
       <LastGenOutput>VisitsCount.Designer.cs</LastGenOutput>

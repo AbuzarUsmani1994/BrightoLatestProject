@@ -7718,6 +7718,82 @@ namespace FOS.Web.UI.Controllers
 
                 }
 
+               else if (DisID == 5)
+                {
+
+
+
+                    List<Sp_OrderForPDFAllPurposeVisitBackEnd_Result> result = db.Sp_OrderForPDFAllPurposeVisitBackEnd(start, final, TID, 0).ToList();
+
+                    if (result.Count > 0)
+                    {
+
+
+                        string SoName = "";
+                        var SO = db.SaleOfficers.Where(u => u.ID == TID).FirstOrDefault();
+
+                        SoName = SO.Name;
+
+
+                        ReportParameter[] prm = new ReportParameter[10];
+                        prm[0] = new ReportParameter("DistributorName", "Test");
+                        prm[1] = new ReportParameter("Date", (System.DateTime.Now.ToString()));
+                        prm[2] = new ReportParameter("SOName", SoName);
+
+                        prm[3] = new ReportParameter("DateTo", EndingDate);
+                        prm[4] = new ReportParameter("DateFrom", StartingDate);
+
+                        prm[5] = new ReportParameter("CityName", "Test");
+                        prm[6] = new ReportParameter("TotalVisitsToday", "1");
+
+                        prm[7] = new ReportParameter("ProductiveShops", "1");
+                        prm[8] = new ReportParameter("TodayWorkingTime", "1");
+                        prm[9] = new ReportParameter("FollowUps", "1");
+
+
+                        ReportViewer1.ReportPath = Server.MapPath("~\\Views\\Reports\\AllPurposeVisit.rdlc");
+                        ReportViewer1.EnableExternalImages = true;
+                        ReportDataSource dt1 = new ReportDataSource("DataSet1", result);
+
+                        ReportViewer1.SetParameters(prm);
+                        ReportViewer1.DataSources.Clear();
+                        ReportViewer1.DataSources.Add(dt1);
+
+                        ReportViewer1.Refresh();
+
+
+
+                        Warning[] warnings;
+                        string[] streamIds;
+                        string contentType;
+                        string encoding;
+                        string extension;
+
+                        //Export the RDLC Report to Byte Array.
+                        byte[] bytes = ReportViewer1.Render("PDF", null, out contentType, out encoding, out extension, out streamIds, out warnings);
+
+                        //Download the RDLC Report in Word, Excel, PDF and Image formats.
+                        Response.Clear();
+                        Response.Buffer = true;
+                        Response.Charset = "";
+                        Response.Cache.SetCacheability(HttpCacheability.NoCache);
+                        Response.ContentType = contentType;
+                        Response.AddHeader("content-disposition", "attachment;filename=AllPurpose" + DateTime.Now + ".Pdf");
+                        Response.BinaryWrite(bytes);
+                        Response.Flush();
+
+                        Response.End();
+
+
+
+
+                    }
+
+
+
+
+                }
+
 
 
             }

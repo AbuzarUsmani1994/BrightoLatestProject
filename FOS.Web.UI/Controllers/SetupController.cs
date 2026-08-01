@@ -3598,6 +3598,163 @@ namespace FOS.Web.UI.Controllers
 
         #endregion KPIPerformanceReport
 
+        #region EmployeePerformanceReport
+
+        [CustomAuthorize]
+        public ActionResult EmployeePerformanceReport()
+        {
+            var model = BuildKPIReportModel();
+            return View(model);
+        }
+
+        public ActionResult EmployeePerformanceReportPrint(int FinancialYearID, string Quarter, int RegionalHeadID = 0, int SOID = 0)
+        {
+            var rows = new List<EmployeePerformanceRow>();
+
+            using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
+            using (var cmd = new SqlCommand("dbo.usp_GetEmployeePerformanceReport", conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@SOID", SOID);
+                cmd.Parameters.AddWithValue("@RegionalHeadID", RegionalHeadID);
+                cmd.Parameters.AddWithValue("@FinancialYearID", FinancialYearID);
+                cmd.Parameters.AddWithValue("@Quarter", Quarter ?? "");
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        rows.Add(new EmployeePerformanceRow
+                        {
+                            SOID                       = Convert.ToInt32(reader["SOID"]),
+                            EmployeeName                = reader["EmployeeName"].ToString(),
+                            EmployeeCode                = reader["EmployeeCode"].ToString(),
+                            RegionalHead                = reader["RegionalHead"].ToString(),
+                            Region                      = reader["Region"].ToString(),
+                            PrimaryTown                 = reader["PrimaryTown"].ToString(),
+                            SecondaryTown               = reader["SecondaryTown"].ToString(),
+                            Quarter                     = reader["Quarter"].ToString(),
+                            PeriodFrom                  = Convert.ToDateTime(reader["PeriodFrom"]),
+                            PeriodTo                    = Convert.ToDateTime(reader["PeriodTo"]),
+
+                            TotalCustomers              = Convert.ToInt32(reader["TotalCustomers"]),
+                            ActiveCustomers             = Convert.ToInt32(reader["ActiveCustomers"]),
+                            LostCustomers               = Convert.ToInt32(reader["LostCustomers"]),
+                            CompletedCustomers          = Convert.ToInt32(reader["CompletedCustomers"]),
+                            ResidentialCustomers        = Convert.ToInt32(reader["ResidentialCustomers"]),
+                            CommercialCustomers         = Convert.ToInt32(reader["CommercialCustomers"]),
+                            NewCustomers                = Convert.ToInt32(reader["NewCustomers"]),
+                            SitesWon                    = Convert.ToInt32(reader["SitesWon"]),
+                            OnlineVisits                = Convert.ToInt32(reader["OnlineVisits"]),
+                            OfflineVisits               = Convert.ToInt32(reader["OfflineVisits"]),
+
+                            KPI_SalesTarget             = Convert.ToInt32(reader["KPI_SalesTarget"]),
+                            KPI_SalesActual             = Convert.ToInt32(reader["KPI_SalesActual"]),
+                            KPI_PlatinumTarget          = Convert.ToInt32(reader["KPI_PlatinumTarget"]),
+                            KPI_PlatinumActual          = Convert.ToInt32(reader["KPI_PlatinumActual"]),
+                            KPI_PremiumTarget           = Convert.ToInt32(reader["KPI_PremiumTarget"]),
+                            KPI_PremiumActual           = Convert.ToInt32(reader["KPI_PremiumActual"]),
+                            KPI_DealerVisitTarget       = Convert.ToInt32(reader["KPI_DealerVisitTarget"]),
+                            KPI_DealerVisitActual       = Convert.ToInt32(reader["KPI_DealerVisitActual"]),
+                            KPI_SiteVisitsTarget        = Convert.ToInt32(reader["KPI_SiteVisitsTarget"]),
+                            KPI_SiteVisitsActual        = Convert.ToInt32(reader["KPI_SiteVisitsActual"]),
+                            KPI_ContractorVisitsTarget  = Convert.ToInt32(reader["KPI_ContractorVisitsTarget"]),
+                            KPI_ContractorVisitsActual  = Convert.ToInt32(reader["KPI_ContractorVisitsActual"]),
+                            KPI_CustSatisfactionTarget  = Convert.ToInt32(reader["KPI_CustSatisfactionTarget"]),
+                            KPI_CustSatisfactionActual  = Convert.ToInt32(reader["KPI_CustSatisfactionActual"]),
+                            KPI_AreaCoverageTarget      = Convert.ToInt32(reader["KPI_AreaCoverageTarget"]),
+                            KPI_AreaCoverageActual      = Convert.ToInt32(reader["KPI_AreaCoverageActual"]),
+                            KPI_AttendanceTarget        = Convert.ToInt32(reader["KPI_AttendanceTarget"]),
+                            KPI_AttendanceActual        = Convert.ToInt32(reader["KPI_AttendanceActual"]),
+                            KPI_TrainingTarget          = Convert.ToInt32(reader["KPI_TrainingTarget"]),
+                            KPI_TrainingActual          = Convert.ToInt32(reader["KPI_TrainingActual"]),
+                            KPI_ProdKnowTarget          = Convert.ToInt32(reader["KPI_ProdKnowTarget"]),
+                            KPI_ProdKnowActual          = Convert.ToInt32(reader["KPI_ProdKnowActual"]),
+                            KPI_CompFeedTarget          = Convert.ToInt32(reader["KPI_CompFeedTarget"]),
+                            KPI_CompFeedActual          = Convert.ToInt32(reader["KPI_CompFeedActual"]),
+
+                            CCR_TotalCalls              = Convert.ToInt32(reader["CCR_TotalCalls"]),
+                            CCR_CallAttended            = Convert.ToInt32(reader["CCR_CallAttended"]),
+                            CCR_NotAttended             = Convert.ToInt32(reader["CCR_NotAttended"]),
+                            CCR_WrongData               = Convert.ToInt32(reader["CCR_WrongData"]),
+                            CCR_Owner                   = Convert.ToInt32(reader["CCR_Owner"]),
+                            CCR_PaintContractor         = Convert.ToInt32(reader["CCR_PaintContractor"]),
+                            CCR_ConstContractor         = Convert.ToInt32(reader["CCR_ConstContractor"]),
+                            CCR_Competitor              = Convert.ToInt32(reader["CCR_Competitor"]),
+                            CCR_ReadyToPaint            = Convert.ToInt32(reader["CCR_ReadyToPaint"]),
+                            CCR_ConstStageOther         = Convert.ToInt32(reader["CCR_ConstStageOther"]),
+                            CCR_ApplyingBrighto         = Convert.ToInt32(reader["CCR_ApplyingBrighto"])
+                        });
+                    }
+                }
+            }
+
+            return View(rows);
+        }
+
+        public class EmployeePerformanceRow
+        {
+            public int      SOID                 { get; set; }
+            public string   EmployeeName         { get; set; }
+            public string   EmployeeCode         { get; set; }
+            public string   RegionalHead         { get; set; }
+            public string   Region               { get; set; }
+            public string   PrimaryTown          { get; set; }
+            public string   SecondaryTown        { get; set; }
+            public string   Quarter              { get; set; }
+            public DateTime PeriodFrom           { get; set; }
+            public DateTime PeriodTo             { get; set; }
+
+            public int TotalCustomers            { get; set; }
+            public int ActiveCustomers           { get; set; }
+            public int LostCustomers             { get; set; }
+            public int CompletedCustomers        { get; set; }
+            public int ResidentialCustomers      { get; set; }
+            public int CommercialCustomers       { get; set; }
+            public int NewCustomers              { get; set; }
+            public int SitesWon                  { get; set; }
+            public int OnlineVisits              { get; set; }
+            public int OfflineVisits             { get; set; }
+
+            public int KPI_SalesTarget            { get; set; }
+            public int KPI_SalesActual            { get; set; }
+            public int KPI_PlatinumTarget         { get; set; }
+            public int KPI_PlatinumActual         { get; set; }
+            public int KPI_PremiumTarget          { get; set; }
+            public int KPI_PremiumActual          { get; set; }
+            public int KPI_DealerVisitTarget      { get; set; }
+            public int KPI_DealerVisitActual      { get; set; }
+            public int KPI_SiteVisitsTarget       { get; set; }
+            public int KPI_SiteVisitsActual       { get; set; }
+            public int KPI_ContractorVisitsTarget { get; set; }
+            public int KPI_ContractorVisitsActual { get; set; }
+            public int KPI_CustSatisfactionTarget { get; set; }
+            public int KPI_CustSatisfactionActual { get; set; }
+            public int KPI_AreaCoverageTarget     { get; set; }
+            public int KPI_AreaCoverageActual     { get; set; }
+            public int KPI_AttendanceTarget       { get; set; }
+            public int KPI_AttendanceActual       { get; set; }
+            public int KPI_TrainingTarget         { get; set; }
+            public int KPI_TrainingActual         { get; set; }
+            public int KPI_ProdKnowTarget         { get; set; }
+            public int KPI_ProdKnowActual         { get; set; }
+            public int KPI_CompFeedTarget         { get; set; }
+            public int KPI_CompFeedActual         { get; set; }
+
+            public int CCR_TotalCalls             { get; set; }
+            public int CCR_CallAttended           { get; set; }
+            public int CCR_NotAttended            { get; set; }
+            public int CCR_WrongData              { get; set; }
+            public int CCR_Owner                  { get; set; }
+            public int CCR_PaintContractor        { get; set; }
+            public int CCR_ConstContractor        { get; set; }
+            public int CCR_Competitor             { get; set; }
+            public int CCR_ReadyToPaint           { get; set; }
+            public int CCR_ConstStageOther        { get; set; }
+            public int CCR_ApplyingBrighto        { get; set; }
+        }
+
+        #endregion EmployeePerformanceReport
 
     }
 }

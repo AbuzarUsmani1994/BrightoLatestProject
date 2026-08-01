@@ -1,0 +1,148 @@
+@model List<FOS.Web.UI.Controllers.SetupController.EmployeePerformanceRow>
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Employee Performance Report</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #222; margin: 0; padding: 0; background: #e9e9e9; }
+        .page { width: 780px; background: #fff; margin: 15px auto; padding: 20px; page-break-after: always; }
+        .page:last-child { page-break-after: auto; }
+
+        .report-header { display: flex; align-items: center; margin-bottom: 10px; }
+        .report-header img { height: 55px; margin-right: 15px; }
+        .report-title { flex: 1; background: #1E4B8E; color: #fff; text-align: center; padding: 14px 0; font-size: 18px; font-weight: bold; border-radius: 4px; }
+
+        .section-title { background: #2E75B6; color: #fff; font-weight: bold; font-size: 12px; padding: 5px 8px; margin-top: 12px; }
+
+        table.info-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+        table.info-table td { border: 1px solid #ccc; padding: 5px 8px; font-size: 11px; }
+        table.info-table td.label { font-weight: bold; background: #F2F6FB; width: 18%; }
+
+        .two-col { display: flex; gap: 10px; margin-top: 4px; }
+        .two-col > div { flex: 1; }
+
+        table.data-table { width: 100%; border-collapse: collapse; }
+        table.data-table th { background: #D6E4F0; border: 1px solid #ccc; padding: 5px; font-size: 10px; text-align: center; }
+        table.data-table td { border: 1px solid #ccc; padding: 5px; font-size: 10px; }
+        table.data-table td.num { text-align: center; }
+
+        .no-print { text-align: center; margin: 15px 0; }
+        .no-print button { padding: 8px 20px; font-size: 13px; cursor: pointer; }
+
+        @@media print {
+            body { background: #fff; }
+            .no-print { display: none; }
+            .page { margin: 0; padding: 0; width: auto; box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button onclick="window.print()">Print / Save as PDF</button>
+    </div>
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="page">
+            <p style="text-align:center;">No data found for the selected filters.</p>
+        </div>
+    }
+    else
+    {
+        foreach (var r in Model)
+        {
+            <div class="page">
+                <div class="report-header">
+                    <img src="@Url.Content("~/Images/BrightologoNew.png")" alt="Brighto" />
+                    <div class="report-title">Employee Performance Report</div>
+                </div>
+
+                <div class="section-title">EMPLOYEE PROFILE</div>
+                <table class="info-table">
+                    <tr>
+                        <td class="label">Employee Name</td><td>@r.EmployeeName</td>
+                        <td class="label">Employee Code</td><td>@r.EmployeeCode</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Regional Head</td><td>@r.RegionalHead</td>
+                        <td class="label">Region</td><td>@r.Region</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Primary Town</td><td>@r.PrimaryTown</td>
+                        <td class="label">Secondary Town</td><td>@r.SecondaryTown</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Quarter</td><td>@r.Quarter</td>
+                        <td class="label">Period</td><td>@r.PeriodFrom.ToString("dd-MMM-yyyy") - @r.PeriodTo.ToString("dd-MMM-yyyy")</td>
+                    </tr>
+                </table>
+
+                <div class="section-title">CUSTOMER &amp; VISIT PROFILING</div>
+                <div class="two-col">
+                    <div>
+                        <table class="data-table">
+                            <tr><td>Total Customers</td><td class="num">@r.TotalCustomers</td></tr>
+                            <tr><td>Active Customers</td><td class="num">@r.ActiveCustomers</td></tr>
+                            <tr><td>Lost Customers</td><td class="num">@r.LostCustomers</td></tr>
+                            <tr><td>Completed Customers</td><td class="num">@r.CompletedCustomers</td></tr>
+                            <tr><td>Residential Customers</td><td class="num">@r.ResidentialCustomers</td></tr>
+                            <tr><td>Commercial Customers</td><td class="num">@r.CommercialCustomers</td></tr>
+                        </table>
+                    </div>
+                    <div>
+                        <table class="data-table">
+                            <tr><td>New Customers</td><td class="num">@r.NewCustomers</td></tr>
+                            <tr><td>Sites Won</td><td class="num">@r.SitesWon</td></tr>
+                            <tr><td>Online Visits</td><td class="num">@r.OnlineVisits</td></tr>
+                            <tr><td>Offline Visits</td><td class="num">@r.OfflineVisits</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="two-col" style="margin-top:12px;">
+                    <div>
+                        <div class="section-title">KPI PERFORMANCE (TARGET / ACTUAL)</div>
+                        <table class="data-table">
+                            <tr><th>Focus Area</th><th>Target</th><th>Actual</th></tr>
+                            <tr><td>Sales Achievement</td><td class="num">@r.KPI_SalesTarget</td><td class="num">@r.KPI_SalesActual</td></tr>
+                            <tr><td>Platinum Sales</td><td class="num">@r.KPI_PlatinumTarget</td><td class="num">@r.KPI_PlatinumActual</td></tr>
+                            <tr><td>Premium Sales</td><td class="num">@r.KPI_PremiumTarget</td><td class="num">@r.KPI_PremiumActual</td></tr>
+                            <tr><td>Dealer Visits</td><td class="num">@r.KPI_DealerVisitTarget</td><td class="num">@r.KPI_DealerVisitActual</td></tr>
+                            <tr><td>Site Visits</td><td class="num">@r.KPI_SiteVisitsTarget</td><td class="num">@r.KPI_SiteVisitsActual</td></tr>
+                            <tr><td>Contractor Visits</td><td class="num">@r.KPI_ContractorVisitsTarget</td><td class="num">@r.KPI_ContractorVisitsActual</td></tr>
+                            <tr><td>Customer Satisfaction</td><td class="num">@r.KPI_CustSatisfactionTarget</td><td class="num">@r.KPI_CustSatisfactionActual</td></tr>
+                            <tr><td>Area Coverage</td><td class="num">@r.KPI_AreaCoverageTarget</td><td class="num">@r.KPI_AreaCoverageActual</td></tr>
+                            <tr><td>Attendance &amp; Punctuality</td><td class="num">@r.KPI_AttendanceTarget</td><td class="num">@r.KPI_AttendanceActual</td></tr>
+                            <tr><td>Training</td><td class="num">@r.KPI_TrainingTarget</td><td class="num">@r.KPI_TrainingActual</td></tr>
+                            <tr><td>Product Knowledge</td><td class="num">@r.KPI_ProdKnowTarget</td><td class="num">@r.KPI_ProdKnowActual</td></tr>
+                            <tr><td>Competitor Feedback</td><td class="num">@r.KPI_CompFeedTarget</td><td class="num">@r.KPI_CompFeedActual</td></tr>
+                        </table>
+                    </div>
+                    <div>
+                        <div class="section-title">CCR DATA (SO WISE)</div>
+                        <table class="data-table">
+                            <tr><th>Call Type</th><th>Count</th></tr>
+                            <tr><td>Total Calls</td><td class="num">@r.CCR_TotalCalls</td></tr>
+                            <tr><td>Call Attended</td><td class="num">@r.CCR_CallAttended</td></tr>
+                            <tr><td>Not Attended</td><td class="num">@r.CCR_NotAttended</td></tr>
+                            <tr><td>Wrong Data</td><td class="num">@r.CCR_WrongData</td></tr>
+                            <tr><td>Owner</td><td class="num">@r.CCR_Owner</td></tr>
+                            <tr><td>Paint Contractor</td><td class="num">@r.CCR_PaintContractor</td></tr>
+                            <tr><td>Const Contractor</td><td class="num">@r.CCR_ConstContractor</td></tr>
+                            <tr><td>Competitor</td><td class="num">@r.CCR_Competitor</td></tr>
+                            <tr><td>Ready To Paint</td><td class="num">@r.CCR_ReadyToPaint</td></tr>
+                            <tr><td>Construction Stage Other</td><td class="num">@r.CCR_ConstStageOther</td></tr>
+                            <tr><td>Applying Brighto</td><td class="num">@r.CCR_ApplyingBrighto</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</body>
+</html>
