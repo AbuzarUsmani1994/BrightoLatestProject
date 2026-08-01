@@ -91,13 +91,21 @@
 
     $("#RegionalHeadID").change(function () {
         var rhid = $(this).val() || 0;
-        $('#SOID').empty().append('<option value="0">-- All --</option>');
-        $.get('@Url.Action("GetAllSaleOfficerListRelatedToDealerSelectOption", "Job")', { RegionalHeadID: rhid }, function (data) {
-            $.each(data, function (i, so) {
-                $('#SOID').append('<option value="' + so.ID + '">' + so.Name + '</option>');
-            });
+        $('#SOID').empty();
+        $.ajax({
+            type: "POST",
+            url: '@Url.Action("GetAllSaleOfficerSelectOption", "Job")',
+            data: { regionalHeadId: rhid },
+            success: function (data) {
+                $.each(data, function (i, so) {
+                    var text = so.SaleOfficerID == 0 ? '-- All --' : so.SaleOfficerName;
+                    $('#SOID').append('<option value="' + so.SaleOfficerID + '">' + text + '</option>');
+                });
+            }
         });
     });
+
+    $("#RegionalHeadID").trigger("change");
 
     $("#btnGenerate").click(function () {
         var fyid = $('#FinancialYearID').val();
