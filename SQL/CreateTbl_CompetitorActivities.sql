@@ -9,16 +9,14 @@ BEGIN
     );
 
     INSERT INTO dbo.Tbl_CompetitorActivityTypes (Name) VALUES
-    ('Promotional Campaign'),
-    ('Price Reduction'),
+    ('Trade Promotions & Discounts'),
+    ('Consumer Offers & Schemes'),
+    ('In Shop Branding'),
+    ('Out of Home Advertising'),
+    ('Painter & Contractor Engagement'),
+    ('Digital & Local Media'),
     ('New Product Launch'),
-    ('In-Store Display'),
-    ('Trade Scheme'),
-    ('Sampling Activity'),
-    ('Dealer Meeting'),
-    ('Wall Branding'),
-    ('Discount Offer'),
-    ('Other');
+    ('Direct Exhibitions & Activations');
 END
 GO
 
@@ -38,6 +36,8 @@ BEGIN
         VoicePath        NVARCHAR(500) NULL,
         CreatedOn        DATETIME      NOT NULL CONSTRAINT DF_CompetitorActivities_CreatedOn DEFAULT (GETDATE()),
         IsActive         BIT           NOT NULL CONSTRAINT DF_CompetitorActivities_IsActive DEFAULT (1),
+        ZoneID           INT           NULL,
+        CityID           INT           NULL,
         IsDeleted        BIT           NOT NULL CONSTRAINT DF_CompetitorActivities_IsDeleted DEFAULT (0)
     );
 

@@ -198,6 +198,9 @@
     <Compile Include="GetClaimApprovals_Result.cs">
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="GetDailyAttendanceSummary_Result.cs">
+      <DependentUpon>FOSDataModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="GetHousingVisitsByNatureOfWork_Result.cs">
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>
@@ -317,6 +320,9 @@
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>
     <Compile Include="spGetSaleOfficer_Result.cs">
+      <DependentUpon>FOSDataModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="spGetSalesOfficerAttendanceDetail1_Result.cs">
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>
     <Compile Include="spGetSalesOfficerAttendanceDetail_Result.cs">
@@ -1189,6 +1195,9 @@
     <Compile Include="Tbl_AppliedTool.cs">
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Tbl_AreaCoverage.cs">
+      <DependentUpon>FOSDataModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Tbl_BrightoChemicalProducts.cs">
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>
@@ -1214,6 +1223,9 @@
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Tbl_ClaimsApproval.cs">
+      <DependentUpon>FOSDataModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Tbl_CompetitorActivities.cs">
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Tbl_CompititorBrand.cs">
@@ -1253,6 +1265,9 @@
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Tbl_FannanSODirection.cs">
+      <DependentUpon>FOSDataModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Tbl_FinancialYear.cs">
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Tbl_FocusArea.cs">
@@ -1324,6 +1339,9 @@
     <Compile Include="Tbl_PurposeOfVisit.cs">
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Tbl_Quarters.cs">
+      <DependentUpon>FOSDataModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Tbl_RetailerClass.cs">
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>
@@ -1370,6 +1388,9 @@
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Tbl_SOAttendanceandPunctuality.cs">
+      <DependentUpon>FOSDataModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Tbl_SOProdKnowledgeCompFeed.cs">
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Tbl_SOREGIONS.cs">
@@ -1468,7 +1489,9 @@
     <Compile Include="usp_GetDSRForChemical_Result.cs">
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>
-    <Compile Include="usp_GetBusinessAffiliatesDSR_Result.cs" />
+    <Compile Include="usp_GetBusinessAffiliatesDSR_Result.cs">
+      <DependentUpon>FOSDataModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="usp_IncentiveCategorywisegraph_Result.cs">
       <DependentUpon>FOSDataModel.tt</DependentUpon>
     </Compile>

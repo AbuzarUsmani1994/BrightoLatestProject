@@ -1220,7 +1220,7 @@ namespace FOS.Web.UI.Controllers.API
                     }
                 }
             }
-            catch (Exception ex) { Shared.Diagnostics.Logging.Log.Instance.Error(ex, "CompetitorActivityTypesList Failed"); }
+            catch (Exception ex) {Log.Instance.Error(ex, "CompetitorActivityTypesList Failed"); }
             return list;
         }
 

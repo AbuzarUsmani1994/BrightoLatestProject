@@ -51,9 +51,9 @@ namespace FOS.Web.UI.Controllers.API
                 using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
                 using (var cmd = new SqlCommand(
                     @"INSERT INTO dbo.Tbl_CompetitorActivities
-                        (SOID, ActivityDate, CompetitorID, ActivityTypeID, Remarks, PicturePath, VideoPath, VoicePath, CreatedOn, IsActive, IsDeleted)
+                        (SOID, ActivityDate, CompetitorID, ActivityTypeID, Remarks, PicturePath, VideoPath, VoicePath, ZoneID, CityID, CreatedOn, IsActive, IsDeleted)
                       VALUES
-                        (@SOID, @ActivityDate, @CompetitorID, @ActivityTypeID, @Remarks, @PicturePath, @VideoPath, @VoicePath, GETDATE(), 1, 0)", conn))
+                        (@SOID, @ActivityDate, @CompetitorID, @ActivityTypeID, @Remarks, @PicturePath, @VideoPath, @VoicePath, @ZoneID, @CityID, GETDATE(), 1, 0)", conn))
                 {
                     cmd.Parameters.Add(new SqlParameter("@SOID",           SqlDbType.Int)          { Value = rm.SOID });
                     cmd.Parameters.Add(new SqlParameter("@ActivityDate",    SqlDbType.Date)         { Value = rm.ActivityDate.HasValue ? (object)rm.ActivityDate.Value.Date : DBNull.Value });
@@ -63,6 +63,8 @@ namespace FOS.Web.UI.Controllers.API
                     cmd.Parameters.Add(new SqlParameter("@PicturePath",     SqlDbType.NVarChar, 500){ Value = (object)picturePath      ?? DBNull.Value });
                     cmd.Parameters.Add(new SqlParameter("@VideoPath",       SqlDbType.NVarChar, 500){ Value = (object)videoPath        ?? DBNull.Value });
                     cmd.Parameters.Add(new SqlParameter("@VoicePath",       SqlDbType.NVarChar, 500){ Value = (object)voicePath        ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@ZoneID",          SqlDbType.Int)          { Value = (object)rm.ZoneID ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@CityID",          SqlDbType.Int)          { Value = (object)rm.CityID ?? DBNull.Value });
                     conn.Open();
                     cmd.ExecuteNonQuery();
                 }
@@ -105,13 +107,15 @@ namespace FOS.Web.UI.Controllers.API
 
     public class CompetitorActivityRequest
     {
-        public int?     SOID           { get; set; }
-        public DateTime? ActivityDate  { get; set; }
-        public int?     CompetitorID   { get; set; }
-        public int?     ActivityTypeID { get; set; }
-        public string   Remarks        { get; set; }
-        public string   Picture        { get; set; }
-        public string   Video          { get; set; }
-        public string   Voice          { get; set; }
+        public int?      SOID           { get; set; }
+        public DateTime? ActivityDate   { get; set; }
+        public int?      CompetitorID   { get; set; }
+        public int?      ActivityTypeID { get; set; }
+        public string    Remarks        { get; set; }
+        public int?      ZoneID         { get; set; }
+        public int?      CityID         { get; set; }
+        public string    Picture        { get; set; }
+        public string    Video          { get; set; }
+        public string    Voice          { get; set; }
     }
 }

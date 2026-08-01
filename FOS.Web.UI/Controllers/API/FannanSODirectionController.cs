@@ -26,7 +26,7 @@ namespace FOS.Web.UI.Controllers.API
                 JobObj.SOID = rm.SOID;
                 JobObj.Lattitude = rm.Latitude;
                 JobObj.Longitude = rm.Longitude;
-                JobObj.PushTime = rm.PushTime;
+                JobObj.PushTime = DateTimeOffset.FromUnixTimeMilliseconds(rm.PushTime).LocalDateTime;
 
                 JobObj.CreatedOn = DateTime.UtcNow.AddHours(5);
                 db.Tbl_FannanSODirection.Add(JobObj);
@@ -68,7 +68,7 @@ namespace FOS.Web.UI.Controllers.API
 
             public decimal Latitude { get; set; }
             public decimal Longitude { get; set; }
-            public DateTime? PushTime { get; set; }
+            public long PushTime { get; set; }
        
         
         }

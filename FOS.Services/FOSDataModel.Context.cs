@@ -325,6 +325,16 @@ public partial class FOSDataModel : DbContext
 
     public virtual DbSet<Tbl_HousingVisits> Tbl_HousingVisits { get; set; }
 
+    public virtual DbSet<Tbl_AreaCoverage> Tbl_AreaCoverage { get; set; }
+
+    public virtual DbSet<Tbl_CompetitorActivities> Tbl_CompetitorActivities { get; set; }
+
+    public virtual DbSet<Tbl_FinancialYear> Tbl_FinancialYear { get; set; }
+
+    public virtual DbSet<Tbl_Quarters> Tbl_Quarters { get; set; }
+
+    public virtual DbSet<Tbl_SOProdKnowledgeCompFeed> Tbl_SOProdKnowledgeCompFeed { get; set; }
+
 
     [DbFunction("FOSDataModel", "fnStringList2Table")]
     public virtual IQueryable<fnStringList2Table_Result> fnStringList2Table(string list)
@@ -5829,18 +5839,6 @@ public partial class FOSDataModel : DbContext
     }
 
 
-    public virtual ObjectResult<Sp_MyHousinglastVisit_Result> Sp_MyHousinglastVisit(Nullable<int> jobID)
-    {
-
-        var jobIDParameter = jobID.HasValue ?
-            new ObjectParameter("JobID", jobID) :
-            new ObjectParameter("JobID", typeof(int));
-
-
-        return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<Sp_MyHousinglastVisit_Result>("Sp_MyHousinglastVisit", jobIDParameter);
-    }
-
-
     public virtual ObjectResult<spGetSalesOfficerWithLoginDate_Result> spGetSalesOfficerWithLoginDate(Nullable<int> rID, Nullable<System.DateTime> startDate, Nullable<System.DateTime> endDate)
     {
 
@@ -7338,6 +7336,101 @@ public partial class FOSDataModel : DbContext
 
 
         return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<sp_usp_GetComplaintSummary_Result>("sp_usp_GetComplaintSummary", fromDateParameter, endDateParameter, sOIDParameter, regionHeadIDParameter);
+    }
+
+
+    public virtual ObjectResult<spGetSalesOfficerAttendanceDetail1_Result> spGetSalesOfficerAttendanceDetail1(Nullable<int> rID, Nullable<System.DateTime> startDate, Nullable<System.DateTime> endDate)
+    {
+
+        var rIDParameter = rID.HasValue ?
+            new ObjectParameter("RID", rID) :
+            new ObjectParameter("RID", typeof(int));
+
+
+        var startDateParameter = startDate.HasValue ?
+            new ObjectParameter("startDate", startDate) :
+            new ObjectParameter("startDate", typeof(System.DateTime));
+
+
+        var endDateParameter = endDate.HasValue ?
+            new ObjectParameter("endDate", endDate) :
+            new ObjectParameter("endDate", typeof(System.DateTime));
+
+
+        return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetSalesOfficerAttendanceDetail1_Result>("spGetSalesOfficerAttendanceDetail1", rIDParameter, startDateParameter, endDateParameter);
+    }
+
+
+    public virtual ObjectResult<usp_GetBusinessAffiliatesDSR_Result> usp_GetBusinessAffiliatesDSR(Nullable<System.DateTime> dateFrom, Nullable<System.DateTime> dateTo, Nullable<int> sOID)
+    {
+
+        var dateFromParameter = dateFrom.HasValue ?
+            new ObjectParameter("DateFrom", dateFrom) :
+            new ObjectParameter("DateFrom", typeof(System.DateTime));
+
+
+        var dateToParameter = dateTo.HasValue ?
+            new ObjectParameter("DateTo", dateTo) :
+            new ObjectParameter("DateTo", typeof(System.DateTime));
+
+
+        var sOIDParameter = sOID.HasValue ?
+            new ObjectParameter("SOID", sOID) :
+            new ObjectParameter("SOID", typeof(int));
+
+
+        return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<usp_GetBusinessAffiliatesDSR_Result>("usp_GetBusinessAffiliatesDSR", dateFromParameter, dateToParameter, sOIDParameter);
+    }
+
+
+    public virtual ObjectResult<Nullable<int>> usp_GetKPIPercentageReport(Nullable<int> financialYearID, string quarter, Nullable<int> regionalHeadID)
+    {
+
+        var financialYearIDParameter = financialYearID.HasValue ?
+            new ObjectParameter("FinancialYearID", financialYearID) :
+            new ObjectParameter("FinancialYearID", typeof(int));
+
+
+        var quarterParameter = quarter != null ?
+            new ObjectParameter("Quarter", quarter) :
+            new ObjectParameter("Quarter", typeof(string));
+
+
+        var regionalHeadIDParameter = regionalHeadID.HasValue ?
+            new ObjectParameter("RegionalHeadID", regionalHeadID) :
+            new ObjectParameter("RegionalHeadID", typeof(int));
+
+
+        return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<Nullable<int>>("usp_GetKPIPercentageReport", financialYearIDParameter, quarterParameter, regionalHeadIDParameter);
+    }
+
+
+    public virtual ObjectResult<GetDailyAttendanceSummary_Result> GetDailyAttendanceSummary(Nullable<System.DateTime> dateFrom, Nullable<System.DateTime> dateTo)
+    {
+
+        var dateFromParameter = dateFrom.HasValue ?
+            new ObjectParameter("DateFrom", dateFrom) :
+            new ObjectParameter("DateFrom", typeof(System.DateTime));
+
+
+        var dateToParameter = dateTo.HasValue ?
+            new ObjectParameter("DateTo", dateTo) :
+            new ObjectParameter("DateTo", typeof(System.DateTime));
+
+
+        return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetDailyAttendanceSummary_Result>("GetDailyAttendanceSummary", dateFromParameter, dateToParameter);
+    }
+
+
+    public virtual ObjectResult<Sp_MyHousinglastVisit_Result> Sp_MyHousinglastVisit(Nullable<int> jobID)
+    {
+
+        var jobIDParameter = jobID.HasValue ?
+            new ObjectParameter("JobID", jobID) :
+            new ObjectParameter("JobID", typeof(int));
+
+
+        return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<Sp_MyHousinglastVisit_Result>("Sp_MyHousinglastVisit", jobIDParameter);
     }
 
 }

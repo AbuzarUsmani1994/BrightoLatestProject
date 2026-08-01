@@ -558,24 +558,18 @@ namespace FOS.Web.UI.Controllers.API
 
                     byte[] bytes = Convert.FromBase64String(cleanBase64);
 
-                    using (MemoryStream ms = new MemoryStream(bytes))
+                    string fileStorageName = $"{dealerName}_{sendDateTime}_{Guid.NewGuid():N}";
+                    string outputPath = HttpContext.Current.Server.MapPath($@"~/Images/{folderName}/{fileStorageName}.jpg");
+
+                    string directory = Path.GetDirectoryName(outputPath);
+                    if (!Directory.Exists(directory))
                     {
-                        using (Image image = Image.FromStream(ms))
-                        {
-                            string fileStorageName = $"{dealerName}_{sendDateTime}_{Guid.NewGuid():N}";
-                            string outputPath = HttpContext.Current.Server.MapPath($@"~/Images/{folderName}/{fileStorageName}.jpg");
-
-                            string directory = Path.GetDirectoryName(outputPath);
-                            if (!Directory.Exists(directory))
-                            {
-                                Directory.CreateDirectory(directory);
-                            }
-
-                            image.Save(outputPath, ImageFormat.Jpeg);
-                            Log.Instance.Info($"Image saved: {outputPath}");
-                            return $"/Images/{folderName}/{fileStorageName}.jpg";
-                        }
+                        Directory.CreateDirectory(directory);
                     }
+
+                    File.WriteAllBytes(outputPath, bytes);
+                    Log.Instance.Info($"Image saved: {outputPath}");
+                    return $"/Images/{folderName}/{fileStorageName}.jpg";
                 }
                 catch (Exception ex)
                 {

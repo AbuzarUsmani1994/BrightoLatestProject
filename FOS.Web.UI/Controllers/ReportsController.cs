@@ -7936,7 +7936,7 @@ namespace FOS.Web.UI.Controllers
                 DateTime final = end.AddDays(1);
 
                 StringWriter sw = new StringWriter();
-                sw.WriteLine("\"Sr No\",\"Date\",\"Time\",\"Day\",\"Region\",\"Employee Name\",\"Site Name\",\"Attendance Type\",\"Latitude\",\"Longitude\"");
+                sw.WriteLine("\"Sr No\",\"Date\",\"Time\",\"Day\",\"Region\",\"Employee Name\",\"Attendance Type\",\"Latitude\",\"Longitude\"");
 
                 Response.ClearContent();
                 Response.AddHeader("content-disposition", "attachment;filename=AttendanceReport_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv");
@@ -7964,14 +7964,13 @@ namespace FOS.Web.UI.Controllers
                                 : Convert.ToDateTime(dateVal).ToString("dd-MM-yyyy");
 
                             sw.WriteLine(string.Format(
-                                "\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\"",
+                                "\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\"",
                                 reader["Sr No"],
                                 dateStr,
                                 reader["Time"],
                                 reader["Day"],
                                 reader["Region"],
                                 reader["Employee Name"],
-                                reader["Site Name"],
                                 reader["Attendance Type"],
                                 reader["Latitude"] == DBNull.Value ? "" : reader["Latitude"],
                                 reader["Longitude"] == DBNull.Value ? "" : reader["Longitude"]

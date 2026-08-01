@@ -100,7 +100,11 @@
             <div class="widget-body">
                 <div>
                     <div class="clearfix">
-                        <div class="btn-group pull-right"></div>
+                        <div class="btn-group pull-right">
+                            <button type="button" id="btnExportKPI" class="btn btn-success">
+                                <i class="icon-download-alt icon-white" style="padding-right:6px"></i>Export
+                            </button>
+                        </div>
                     </div>
                     <div class="space15"></div>
                     <table class="table table-striped table-hover table-bordered" id="datatab" style="width: 100%;">
@@ -116,6 +120,7 @@
                                 <th>Gold</th>
                                 <th>Creation Date</th>
                                 <th>Total</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -288,7 +293,14 @@
                         return dd + '-' + mm + '-' + d.getFullYear();
                     }
                 },
-                { "data": "TotalTarget" }
+                { "data": "TotalTarget" },
+                {
+                    "data": "ID", "bSortable": false,
+                    "render": function (data) {
+                        return '<button class="btn btn-xs btn-warning" onclick="editKPI(' + data + ')"><i class="icon-pencil"></i> Edit</button> ' +
+                               '<button class="btn btn-xs btn-danger" onclick="deleteKPI(' + data + ')"><i class="icon-trash"></i> Delete</button>';
+                    }
+                }
             ],
             "order": [1, "asc"]
         });
@@ -321,6 +333,29 @@
         });
 
         GenerateDetailGrid();
+
+        $("#btnExportKPI").click(function () {
+            var fy = $('#FinancialYearID').val() || 0;
+            var rh = $('#RegionalHeadID').val() || 0;
+            window.location.href = '@Url.Action("ExportKPIReport", "Setup")?SOID=0&FinancialYearID=' + fy + '&RegionalHeadID=' + rh;
+        });
+
+        $('#btnSaveKpiEdit').click(function () {
+            var id       = $('#editKpiId').val();
+            var platinum = $('#editKpiPlatinum').val();
+            var premium  = $('#editKpiPremium').val();
+            var gold     = $('#editKpiGold').val();
+            var total    = $('#editKpiTotal').val();
+            $.post('@Url.Action("UpdateKPIRecord", "Setup")', { id: id, platinum: platinum, premium: premium, gold: gold, total: total }, function (res) {
+                if (res.success) {
+                    alertify.success('Record updated successfully');
+                    $('#editKpiModal').modal('hide');
+                    $('#datatab').DataTable().ajax.reload();
+                } else {
+                    alertify.error(res.message || 'Update failed');
+                }
+            });
+        });
     });
 
     function ClearForm() {
@@ -356,4 +391,65 @@
             alertify.error(response);
         }
     }
+
+    function deleteKPI(id) {
+        if (!confirm('Are you sure you want to delete this record?')) return;
+        $.post('@Url.Action("DeleteKPIRecord", "Setup")', { id: id }, function (res) {
+            if (res.success) {
+                alertify.success('Record deleted successfully');
+                $('#datatab').DataTable().ajax.reload();
+            } else {
+                alertify.error(res.message || 'Delete failed');
+            }
+        });
+    }
+
+    function editKPI(id) {
+        $.get('@Url.Action("GetKPIRecord", "Setup")', { id: id }, function (res) {
+            if (!res.success) { alertify.error('Failed to load record'); return; }
+            $('#editKpiId').val(res.id);
+            $('#editKpiPlatinum').val(res.platinum);
+            $('#editKpiPremium').val(res.premium);
+            $('#editKpiGold').val(res.gold);
+            $('#editKpiTotal').val(res.total);
+            $('#editKpiModal').modal('show');
+        });
+    }
+
 </script>
+
+<div class="modal hide fade" id="editKpiModal" tabindex="-1" style="width:380px;left:50%;margin-left:-190px;top:20%;height:auto;border-radius:8px;overflow:hidden;">
+    <div class="modal-header" style="background:#8e44ad;padding:11px 15px;">
+        <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:1;font-size:18px;line-height:1;">&times;</button>
+        <h4 style="color:#fff;margin:0;font-size:14px;font-weight:600;"><i class="icon-pencil" style="margin-right:6px;"></i>Edit KPI Targets</h4>
+    </div>
+    <div class="modal-body" style="padding:15px 20px;">
+        <input type="hidden" id="editKpiId" />
+        <table style="width:100%;border-collapse:separate;border-spacing:8px;">
+            <tr>
+                <td style="width:50%;">
+                    <label style="font-size:11px;color:#888;font-weight:700;letter-spacing:1px;margin-bottom:4px;display:block;">PLATINUM</label>
+                    <input type="number" id="editKpiPlatinum" min="0" style="width:100%;padding:7px 10px;font-size:14px;border:2px solid #8e44ad;border-radius:5px;box-sizing:border-box;" />
+                </td>
+                <td style="width:50%;">
+                    <label style="font-size:11px;color:#888;font-weight:700;letter-spacing:1px;margin-bottom:4px;display:block;">PREMIUM</label>
+                    <input type="number" id="editKpiPremium" min="0" style="width:100%;padding:7px 10px;font-size:14px;border:2px solid #8e44ad;border-radius:5px;box-sizing:border-box;" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label style="font-size:11px;color:#888;font-weight:700;letter-spacing:1px;margin-bottom:4px;display:block;">GOLD</label>
+                    <input type="number" id="editKpiGold" min="0" style="width:100%;padding:7px 10px;font-size:14px;border:2px solid #8e44ad;border-radius:5px;box-sizing:border-box;" />
+                </td>
+                <td>
+                    <label style="font-size:11px;color:#888;font-weight:700;letter-spacing:1px;margin-bottom:4px;display:block;">TOTAL</label>
+                    <input type="number" id="editKpiTotal" min="0" style="width:100%;padding:7px 10px;font-size:14px;border:2px solid #8e44ad;border-radius:5px;box-sizing:border-box;" />
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="modal-footer" style="padding:10px 15px;background:#f5f5f5;border-top:1px solid #e0e0e0;text-align:right;">
+        <button class="btn btn-small" data-dismiss="modal" style="margin-right:6px;">Cancel</button>
+        <button class="btn btn-small btn-primary" id="btnSaveKpiEdit" style="background:#8e44ad;border-color:#7d3c98;font-weight:600;padding:5px 18px;">Save</button>
+    </div>
+</div>

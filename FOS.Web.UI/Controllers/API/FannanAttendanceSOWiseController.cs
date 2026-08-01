@@ -43,7 +43,7 @@ namespace FOS.Web.UI.Controllers.API
                             Lattitude=x.Lattitude,
                             Longitude=x.Longitude,
                             Location = x.Lattitude+","+x.Longitude,
-                            CreatedDate=x.CreatedOn
+                            CreatedDate=x.PushTime
 
 
                         }).ToList();

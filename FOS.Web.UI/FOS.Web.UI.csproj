@@ -583,6 +583,7 @@
     <Compile Include="Controllers\API\SaveComplaintController.cs" />
     <Compile Include="Controllers\API\SaveCompetitorActivityController.cs" />
     <Compile Include="Controllers\API\GetCompetitorActivityTypesController.cs" />
+    <Compile Include="Controllers\API\GetCompetitorActivitiesController.cs" />
     <Compile Include="Controllers\API\SubmitSiteAllocationController.cs" />
     <Compile Include="Controllers\API\SubmitCoverageController.cs" />
     <Compile Include="Controllers\API\SubmitChemSalesController.cs" />

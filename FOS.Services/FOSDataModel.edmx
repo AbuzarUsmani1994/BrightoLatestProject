@@ -1194,6 +1194,20 @@
           <Property Name="Name" Type="varchar" MaxLength="50" />
           <Property Name="IsActive" Type="bit" />
         </EntityType>
+        <EntityType Name="Tbl_AreaCoverage">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="RegionalHeadID" Type="int" />
+          <Property Name="SOID" Type="int" />
+          <Property Name="RegionID" Type="int" />
+          <Property Name="CityID" Type="int" />
+          <Property Name="CreatedOn" Type="datetime" Nullable="false" />
+          <Property Name="CreatedBy" Type="int" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
+          <Property Name="AreaID" Type="int" />
+        </EntityType>
         <EntityType Name="Tbl_BrightoChemicalProducts">
           <Key>
             <PropertyRef Name="ID" />
@@ -1345,6 +1359,25 @@
           <Property Name="Remarks" Type="varchar" MaxLength="500" />
           <Property Name="ApprovedStatus" Type="varchar" MaxLength="100" />
           <Property Name="IsActive" Type="bit" />
+        </EntityType>
+        <EntityType Name="Tbl_CompetitorActivities">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="SOID" Type="int" />
+          <Property Name="ActivityDate" Type="date" />
+          <Property Name="CompetitorID" Type="int" />
+          <Property Name="ActivityTypeID" Type="int" />
+          <Property Name="Remarks" Type="nvarchar(max)" />
+          <Property Name="PicturePath" Type="nvarchar" MaxLength="500" />
+          <Property Name="VideoPath" Type="nvarchar" MaxLength="500" />
+          <Property Name="VoicePath" Type="nvarchar" MaxLength="500" />
+          <Property Name="CreatedOn" Type="datetime" Nullable="false" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
+          <Property Name="ZoneID" Type="int" />
+          <Property Name="CityID" Type="int" />
+          <Property Name="IsDeleted" Type="bit" Nullable="false" />
         </EntityType>
         <EntityType Name="Tbl_CompititorBrand">
           <Key>
@@ -1533,6 +1566,15 @@
           <Property Name="Longitude" Type="decimal" Precision="18" Scale="8" />
           <Property Name="CreatedOn" Type="datetime" />
           <Property Name="PushTime" Type="datetime" />
+        </EntityType>
+        <EntityType Name="Tbl_FinancialYear">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Year" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="CreatedOn" Type="datetime" Nullable="false" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
         </EntityType>
         <EntityType Name="Tbl_FocusArea">
           <Key>
@@ -1832,6 +1874,19 @@
           <Property Name="Name" Type="varchar" MaxLength="50" />
           <Property Name="IsActive" Type="bit" />
         </EntityType>
+        <EntityType Name="Tbl_Quarters">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Name" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="StartDate" Type="date" Nullable="false" />
+          <Property Name="EndDate" Type="date" Nullable="false" />
+          <Property Name="FinancialYearID" Type="int" Nullable="false" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
+          <Property Name="IsDeleted" Type="bit" Nullable="false" />
+          <Property Name="CreatedOn" Type="datetime" Nullable="false" />
+        </EntityType>
         <EntityType Name="Tbl_RetailerClass">
           <Key>
             <PropertyRef Name="ID" />
@@ -2043,6 +2098,22 @@
           <Property Name="AttendanceandPunctuality" Type="decimal" Precision="18" Scale="4" />
           <Property Name="IsActive" Type="bit" />
           <Property Name="CreatedOn" Type="datetime" />
+          <Property Name="FinancialYearID" Type="int" />
+          <Property Name="Quarter" Type="nvarchar" MaxLength="5" />
+        </EntityType>
+        <EntityType Name="Tbl_SOProdKnowledgeCompFeed">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" Nullable="false" />
+          <Property Name="SOID" Type="int" />
+          <Property Name="HeadID" Type="int" />
+          <Property Name="ProductKnowledge" Type="decimal" Precision="18" Scale="4" />
+          <Property Name="CompFeed" Type="decimal" Precision="18" Scale="4" />
+          <Property Name="FinancialYearID" Type="int" />
+          <Property Name="Quarter" Type="nvarchar" MaxLength="5" />
+          <Property Name="IsActive" Type="bit" />
+          <Property Name="CreatedOn" Type="datetime" />
         </EntityType>
         <EntityType Name="Tbl_SOREGIONS">
           <Key>
@@ -2064,6 +2135,8 @@
           <Property Name="Training" Type="decimal" Precision="18" Scale="4" />
           <Property Name="IsActive" Type="bit" />
           <Property Name="CreatedOn" Type="datetime" />
+          <Property Name="FinancialYearID" Type="int" />
+          <Property Name="Quarter" Type="nvarchar" MaxLength="5" />
         </EntityType>
         <EntityType Name="tbl_StockDetail">
           <Key>
@@ -3648,6 +3721,10 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
         <Function Name="GetClaimApprovals" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="ClaimID" Type="int" Mode="In" />
         </Function>
+        <Function Name="GetDailyAttendanceSummary" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="DateFrom" Type="date" Mode="In" />
+          <Parameter Name="DateTo" Type="date" Mode="In" />
+        </Function>
         <Function Name="GetHousingVisitsByNatureOfWork" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="DateFrom" Type="date" Mode="In" />
           <Parameter Name="dateTo" Type="date" Mode="In" />
@@ -4805,6 +4882,11 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <Parameter Name="startDate" Type="datetime" Mode="In" />
           <Parameter Name="endDate" Type="datetime" Mode="In" />
         </Function>
+        <Function Name="spGetSalesOfficerAttendanceDetail1" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="RID" Type="int" Mode="In" />
+          <Parameter Name="startDate" Type="datetime" Mode="In" />
+          <Parameter Name="endDate" Type="datetime" Mode="In" />
+        </Function>
         <Function Name="spGetSalesOfficerAttendanceSummary" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="RID" Type="int" Mode="In" />
           <Parameter Name="startDate" Type="datetime" Mode="In" />
@@ -4846,6 +4928,11 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
         <Function Name="usp_CalculateVisitsByDateRange" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="StartDate" Type="date" Mode="In" />
           <Parameter Name="EndDate" Type="date" Mode="In" />
+        </Function>
+        <Function Name="usp_GetBusinessAffiliatesDSR" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="DateFrom" Type="datetime" Mode="In" />
+          <Parameter Name="DateTo" Type="datetime" Mode="In" />
+          <Parameter Name="SOID" Type="int" Mode="In" />
         </Function>
         <Function Name="usp_GetClaimApprovalReportForBackEnd" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="HeadId" Type="int" Mode="In" />
@@ -4953,6 +5040,11 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <Parameter Name="HeadID" Type="int" Mode="In" />
           <Parameter Name="SOID" Type="int" Mode="In" />
         </Function>
+        <Function Name="usp_GetKPIPercentageReport" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="FinancialYearID" Type="int" Mode="In" />
+          <Parameter Name="Quarter" Type="nvarchar" Mode="In" />
+          <Parameter Name="RegionalHeadID" Type="int" Mode="In" />
+        </Function>
         <Function Name="usp_IncentiveCategorywisegraph" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="RegionID" Type="int" Mode="In" />
           <Parameter Name="startdate" Type="date" Mode="In" />
@@ -5046,6 +5138,7 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <EntitySet Name="Tbl_AffiliatesExpertise" EntityType="Self.Tbl_AffiliatesExpertise" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_AllPurposeVisits" EntityType="Self.Tbl_AllPurposeVisits" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_AppliedTool" EntityType="Self.Tbl_AppliedTool" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Tbl_AreaCoverage" EntityType="Self.Tbl_AreaCoverage" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_BrightoChemicalProducts" EntityType="Self.Tbl_BrightoChemicalProducts" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_BusinessAffiliates" EntityType="Self.Tbl_BusinessAffiliates" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_BusinessAffiliatesVisits" EntityType="Self.Tbl_BusinessAffiliatesVisits" Schema="dbo" store:Type="Tables" />
@@ -5055,6 +5148,7 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <EntitySet Name="Tbl_ChemSaleMaster" EntityType="Self.Tbl_ChemSaleMaster" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_ClaimDetail" EntityType="Self.Tbl_ClaimDetail" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_ClaimsApproval" EntityType="Self.Tbl_ClaimsApproval" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Tbl_CompetitorActivities" EntityType="Self.Tbl_CompetitorActivities" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_CompititorBrand" EntityType="Self.Tbl_CompititorBrand" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="TBL_CompititorBrandsForDropDown" EntityType="Self.TBL_CompititorBrandsForDropDown" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_CompititorList" EntityType="Self.Tbl_CompititorList" Schema="dbo" store:Type="Tables" />
@@ -5068,6 +5162,7 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <EntitySet Name="Tbl_FannanCustomer" EntityType="Self.Tbl_FannanCustomer" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_FannanCustomerAssign" EntityType="Self.Tbl_FannanCustomerAssign" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_FannanSODirection" EntityType="Self.Tbl_FannanSODirection" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Tbl_FinancialYear" EntityType="Self.Tbl_FinancialYear" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_FocusArea" EntityType="Self.Tbl_FocusArea" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_FollowupReasons" EntityType="Self.Tbl_FollowupReasons" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_HousingSiteVerification" EntityType="Self.Tbl_HousingSiteVerification" Schema="dbo" store:Type="Tables" />
@@ -5091,6 +5186,7 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <EntitySet Name="Tbl_ProductSubCategory" EntityType="Self.Tbl_ProductSubCategory" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_ProuctCategory" EntityType="Self.Tbl_ProuctCategory" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_PurposeOfVisit" EntityType="Self.Tbl_PurposeOfVisit" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Tbl_Quarters" EntityType="Self.Tbl_Quarters" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_RetailerClass" EntityType="Self.Tbl_RetailerClass" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_RetailerType" EntityType="Self.Tbl_RetailerType" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="TBL_RouteSelection" EntityType="Self.TBL_RouteSelection" Schema="dbo" store:Type="Tables" />
@@ -5107,6 +5203,7 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <EntitySet Name="Tbl_SharedCards" EntityType="Self.Tbl_SharedCards" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_SMSLogs" EntityType="Self.Tbl_SMSLogs" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_SOAttendanceandPunctuality" EntityType="Self.Tbl_SOAttendanceandPunctuality" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Tbl_SOProdKnowledgeCompFeed" EntityType="Self.Tbl_SOProdKnowledgeCompFeed" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_SOREGIONS" EntityType="Self.Tbl_SOREGIONS" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tbl_SOTraining" EntityType="Self.Tbl_SOTraining" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="tbl_StockDetail" EntityType="Self.tbl_StockDetail" Schema="dbo" store:Type="Tables" />
@@ -7340,9 +7437,6 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <FunctionImport Name="Sp_MyCoorporatelastVisit" ReturnType="Collection(FOS_WallCoatModel.Sp_MyCoorporatelastVisit_Result)">
           <Parameter Name="JobID" Mode="In" Type="Int32" />
           </FunctionImport>
-          <FunctionImport Name="Sp_MyHousinglastVisit" ReturnType="Collection(FOS_WallCoatModel.Sp_MyHousinglastVisit_Result)">
-          <Parameter Name="JobID" Mode="In" Type="Int32" />
-          </FunctionImport>
           <EntitySet Name="Tbl_PlotSize" EntityType="FOS_WallCoatModel.Tbl_PlotSize" />
           <EntitySet Name="TradeVisits" EntityType="FOS_WallCoatModel.TradeVisit" />
           <AssociationSet Name="FK_TradeVisits_Retailers" Association="FOS_WallCoatModel.FK_TradeVisits_Retailers">
@@ -7752,6 +7846,33 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
             <Parameter Name="EndDate" Mode="In" Type="DateTime" />
             <Parameter Name="SOID" Mode="In" Type="Int32" />
             <Parameter Name="RegionHeadID" Mode="In" Type="Int32" />
+          </FunctionImport>
+          <EntitySet Name="Tbl_AreaCoverage" EntityType="FOS_WallCoatModel.Tbl_AreaCoverage" />
+          <EntitySet Name="Tbl_CompetitorActivities" EntityType="FOS_WallCoatModel.Tbl_CompetitorActivities" />
+          <EntitySet Name="Tbl_FinancialYear" EntityType="FOS_WallCoatModel.Tbl_FinancialYear" />
+          <EntitySet Name="Tbl_Quarters" EntityType="FOS_WallCoatModel.Tbl_Quarters" />
+          <EntitySet Name="Tbl_SOProdKnowledgeCompFeed" EntityType="FOS_WallCoatModel.Tbl_SOProdKnowledgeCompFeed" />
+          <FunctionImport Name="spGetSalesOfficerAttendanceDetail1" ReturnType="Collection(FOS_WallCoatModel.spGetSalesOfficerAttendanceDetail1_Result)">
+            <Parameter Name="RID" Mode="In" Type="Int32" />
+            <Parameter Name="startDate" Mode="In" Type="DateTime" />
+            <Parameter Name="endDate" Mode="In" Type="DateTime" />
+          </FunctionImport>
+          <FunctionImport Name="usp_GetBusinessAffiliatesDSR" ReturnType="Collection(FOS_WallCoatModel.usp_GetBusinessAffiliatesDSR_Result)">
+            <Parameter Name="DateFrom" Mode="In" Type="DateTime" />
+            <Parameter Name="DateTo" Mode="In" Type="DateTime" />
+            <Parameter Name="SOID" Mode="In" Type="Int32" />
+          </FunctionImport>
+          <FunctionImport Name="usp_GetKPIPercentageReport" ReturnType="Collection(Int32)">
+            <Parameter Name="FinancialYearID" Mode="In" Type="Int32" />
+            <Parameter Name="Quarter" Mode="In" Type="String" />
+            <Parameter Name="RegionalHeadID" Mode="In" Type="Int32" />
+          </FunctionImport>
+          <FunctionImport Name="GetDailyAttendanceSummary" ReturnType="Collection(FOS_WallCoatModel.GetDailyAttendanceSummary_Result)">
+            <Parameter Name="DateFrom" Mode="In" Type="DateTime" />
+            <Parameter Name="DateTo" Mode="In" Type="DateTime" />
+          </FunctionImport>
+          <FunctionImport Name="Sp_MyHousinglastVisit" ReturnType="Collection(FOS_WallCoatModel.Sp_MyHousinglastVisit_Result)">
+            <Parameter Name="JobID" Mode="In" Type="Int32" />
           </FunctionImport>
           </EntityContainer>
         <ComplexType Name="AreasRelatedtoCities_Result">
@@ -12720,24 +12841,6 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <Property Type="Int32" Name="SOID" Nullable="true" />
           <Property Type="Boolean" Name="IsActive" Nullable="true" />
         </ComplexType>
-        <ComplexType Name="Sp_MyHousinglastVisit_Result">
-          <Property Type="Int32" Name="ID" Nullable="false" />
-          <Property Type="Int32" Name="CustomerID" Nullable="true" />
-          <Property Type="String" Name="ArchitectName" Nullable="true" MaxLength="50" />
-          <Property Type="String" Name="ArchitectNumber" Nullable="true" MaxLength="50" />
-          <Property Type="String" Name="ContractorName" Nullable="true" MaxLength="50" />
-          <Property Type="String" Name="ContractorNumber" Nullable="true" MaxLength="50" />
-          <Property Type="Int32" Name="ScopeOfWorkID" Nullable="true" />
-          <Property Type="Int32" Name="NatureOfWorkID" Nullable="true" />
-          <Property Type="Int32" Name="ConstructionStageID" Nullable="true" />
-          <Property Type="Int32" Name="ApproxCoveredArea" Nullable="true" />
-          <Property Type="Decimal" Name="EstimatedValue" Nullable="true" Precision="18" Scale="2" />
-          <Property Type="String" Name="Remarks" Nullable="true" MaxLength="500" />
-          <Property Type="DateTime" Name="NextVisitDate" Nullable="true" Precision="23" />
-          <Property Type="DateTime" Name="CreatedAt" Nullable="true" Precision="23" />
-          <Property Type="Int32" Name="SOID" Nullable="true" />
-          <Property Type="Boolean" Name="IsActive" Nullable="true" />
-        </ComplexType>
         <EntityType Name="Tbl_PlotSize">
           <Key>
             <PropertyRef Name="ID" />
@@ -13893,6 +13996,8 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <Property Name="AttendanceandPunctuality" Type="Decimal" Precision="18" Scale="4" />
           <Property Name="IsActive" Type="Boolean" />
           <Property Name="CreatedOn" Type="DateTime" Precision="3" />
+          <Property Name="FinancialYearID" Type="Int32" />
+          <Property Name="Quarter" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
         </EntityType>
         <EntityType Name="Tbl_SOTraining">
           <Key>
@@ -13904,6 +14009,8 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <Property Name="Training" Type="Decimal" Precision="18" Scale="4" />
           <Property Name="IsActive" Type="Boolean" />
           <Property Name="CreatedOn" Type="DateTime" Precision="3" />
+          <Property Name="FinancialYearID" Type="Int32" />
+          <Property Name="Quarter" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
         </EntityType>
         <ComplexType Name="spGetEmployeeAttendanceTimings_Result">
           <Property Type="DateTime" Name="AttendanceDate" Nullable="true" />
@@ -14470,6 +14577,146 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <Property Type="String" Name="IsVerifiedName" Nullable="true" MaxLength="100" />
           <Property Type="String" Name="Remarks" Nullable="true" MaxLength="1000" />
           <Property Type="DateTime" Name="UpdatedDate" Nullable="true" Precision="23" />
+        </ComplexType>
+        <EntityType Name="Tbl_AreaCoverage">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="RegionalHeadID" Type="Int32" />
+          <Property Name="SOID" Type="Int32" />
+          <Property Name="RegionID" Type="Int32" />
+          <Property Name="CityID" Type="Int32" />
+          <Property Name="CreatedOn" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="CreatedBy" Type="Int32" />
+          <Property Name="IsActive" Type="Boolean" Nullable="false" />
+          <Property Name="AreaID" Type="Int32" />
+        </EntityType>
+        <EntityType Name="Tbl_CompetitorActivities">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="SOID" Type="Int32" />
+          <Property Name="ActivityDate" Type="DateTime" Precision="0" />
+          <Property Name="CompetitorID" Type="Int32" />
+          <Property Name="ActivityTypeID" Type="Int32" />
+          <Property Name="Remarks" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="PicturePath" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="VideoPath" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="VoicePath" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="CreatedOn" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="IsActive" Type="Boolean" Nullable="false" />
+          <Property Name="ZoneID" Type="Int32" />
+          <Property Name="CityID" Type="Int32" />
+          <Property Name="IsDeleted" Type="Boolean" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Tbl_FinancialYear">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Year" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="CreatedOn" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="IsActive" Type="Boolean" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Tbl_Quarters">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Name" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="StartDate" Type="DateTime" Nullable="false" Precision="0" />
+          <Property Name="EndDate" Type="DateTime" Nullable="false" Precision="0" />
+          <Property Name="FinancialYearID" Type="Int32" Nullable="false" />
+          <Property Name="IsActive" Type="Boolean" Nullable="false" />
+          <Property Name="IsDeleted" Type="Boolean" Nullable="false" />
+          <Property Name="CreatedOn" Type="DateTime" Nullable="false" Precision="3" />
+        </EntityType>
+        <EntityType Name="Tbl_SOProdKnowledgeCompFeed">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" />
+          <Property Name="SOID" Type="Int32" />
+          <Property Name="HeadID" Type="Int32" />
+          <Property Name="ProductKnowledge" Type="Decimal" Precision="18" Scale="4" />
+          <Property Name="CompFeed" Type="Decimal" Precision="18" Scale="4" />
+          <Property Name="FinancialYearID" Type="Int32" />
+          <Property Name="Quarter" Type="String" MaxLength="5" FixedLength="false" Unicode="true" />
+          <Property Name="IsActive" Type="Boolean" />
+          <Property Name="CreatedOn" Type="DateTime" Precision="3" />
+        </EntityType>
+        <ComplexType Name="spGetSalesOfficerAttendanceDetail1_Result">
+          <Property Type="Int32" Name="RegionalHeadID" Nullable="true" />
+          <Property Type="String" Name="RegionalHead" Nullable="true" MaxLength="50" />
+          <Property Type="Int32" Name="SOID" Nullable="false" />
+          <Property Type="String" Name="SalesOfficer" Nullable="true" MaxLength="50" />
+          <Property Type="DateTime" Name="DateOfAttendance" Nullable="true" Precision="23" />
+          <Property Type="String" Name="Present" Nullable="false" MaxLength="3" />
+          <Property Type="String" Name="OnLeave" Nullable="false" MaxLength="3" />
+          <Property Type="String" Name="Absent" Nullable="false" MaxLength="3" />
+          <Property Type="Int32" Name="TotalSOCount" Nullable="true" />
+        </ComplexType>
+        <ComplexType Name="usp_GetBusinessAffiliatesDSR_Result">
+          <Property Type="Int32" Name="VisitID" Nullable="false" />
+          <Property Type="DateTime" Name="VisitDate" Nullable="true" Precision="23" />
+          <Property Type="Int32" Name="SOID" Nullable="true" />
+          <Property Type="String" Name="SaleOfficerName" Nullable="true" MaxLength="50" />
+          <Property Type="Int32" Name="BusinessAffiliateID" Nullable="true" />
+          <Property Type="String" Name="BusinessName" Nullable="true" MaxLength="500" />
+          <Property Type="String" Name="ContactPerson" Nullable="true" MaxLength="100" />
+          <Property Type="Int32" Name="ContactNumber" Nullable="true" />
+          <Property Type="String" Name="BusinessAddress" Nullable="true" MaxLength="500" />
+          <Property Type="Int32" Name="RegionID" Nullable="true" />
+          <Property Type="String" Name="RegionName" Nullable="true" MaxLength="80" />
+          <Property Type="Int32" Name="CityID" Nullable="true" />
+          <Property Type="String" Name="CityName" Nullable="true" MaxLength="80" />
+          <Property Type="String" Name="PurposeOfVisit" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="TargetAgreement" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Remarks" Nullable="true" MaxLength="500" />
+          <Property Type="DateTime" Name="CreatedDate" Nullable="true" Precision="23" />
+        </ComplexType>
+        <ComplexType Name="GetDailyAttendanceSummary_Result">
+          <Property Type="Int64" Name="Sr_No" Nullable="true" />
+          <Property Type="String" Name="Date" Nullable="true" MaxLength="4000" />
+          <Property Type="String" Name="Time" Nullable="true" MaxLength="4000" />
+          <Property Type="String" Name="Day" Nullable="true" MaxLength="30" />
+          <Property Type="String" Name="Region" Nullable="true" MaxLength="80" />
+          <Property Type="String" Name="Employee_Name" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Attendance_Type" Nullable="false" MaxLength="9" />
+          <Property Type="String" Name="Latitude" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="Longitude" Nullable="true" MaxLength="50" />
+        </ComplexType>
+        <ComplexType Name="Sp_MyHousinglastVisit_Result">
+          <Property Type="Int32" Name="ID" Nullable="false" />
+          <Property Type="Int32" Name="CustomerID" Nullable="true" />
+          <Property Type="String" Name="ArchitectName" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="ArchitectNumber" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="ContractorName" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="ContractorNumber" Nullable="true" MaxLength="50" />
+          <Property Type="Int32" Name="ScopeOfWorkID" Nullable="true" />
+          <Property Type="Int32" Name="NatureOfWorkID" Nullable="true" />
+          <Property Type="Int32" Name="ConstructionStageID" Nullable="true" />
+          <Property Type="Int32" Name="ApproxCoveredArea" Nullable="true" />
+          <Property Type="Decimal" Name="EstimatedValue" Nullable="true" Precision="18" Scale="2" />
+          <Property Type="String" Name="Remarks" Nullable="true" MaxLength="500" />
+          <Property Type="DateTime" Name="NextVisitDate" Nullable="true" Precision="23" />
+          <Property Type="DateTime" Name="CreatedAt" Nullable="true" Precision="23" />
+          <Property Type="Int32" Name="SOID" Nullable="true" />
+          <Property Type="Boolean" Name="IsActive" Nullable="true" />
+          <Property Type="String" Name="OffTakeFromOthers" Nullable="true" MaxLength="255" />
+          <Property Type="Boolean" Name="ColorScheme" Nullable="true" />
+          <Property Type="Boolean" Name="SiteWon" Nullable="true" />
+          <Property Type="Int32" Name="PlotSize" Nullable="true" />
+          <Property Type="Decimal" Name="Latitude" Nullable="true" Precision="18" Scale="10" />
+          <Property Type="Decimal" Name="Longitude" Nullable="true" Precision="18" Scale="10" />
+          <Property Type="Int32" Name="OrderVolume" Nullable="true" />
+          <Property Type="Int32" Name="OnlineOffline" Nullable="true" />
+          <Property Type="DateTime" Name="SiteWonMonth" Nullable="true" Precision="23" />
+          <Property Type="String" Name="Picture1" Nullable="true" MaxLength="500" />
+          <Property Type="String" Name="Picture2" Nullable="true" MaxLength="500" />
+          <Property Type="String" Name="AgainCall" Nullable="true" MaxLength="100" />
         </ComplexType>
         </Schema>
     </edmx:ConceptualModels>
@@ -18599,28 +18846,6 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>
-          <FunctionImportMapping FunctionImportName="Sp_MyHousinglastVisit" FunctionName="FOS_WallCoatModel.Store.Sp_MyHousinglastVisit">
-            <ResultMapping>
-              <ComplexTypeMapping TypeName="FOS_WallCoatModel.Sp_MyHousinglastVisit_Result">
-                <ScalarProperty Name="ID" ColumnName="ID" />
-                <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
-                <ScalarProperty Name="ArchitectName" ColumnName="ArchitectName" />
-                <ScalarProperty Name="ArchitectNumber" ColumnName="ArchitectNumber" />
-                <ScalarProperty Name="ContractorName" ColumnName="ContractorName" />
-                <ScalarProperty Name="ContractorNumber" ColumnName="ContractorNumber" />
-                <ScalarProperty Name="ScopeOfWorkID" ColumnName="ScopeOfWorkID" />
-                <ScalarProperty Name="NatureOfWorkID" ColumnName="NatureOfWorkID" />
-                <ScalarProperty Name="ConstructionStageID" ColumnName="ConstructionStageID" />
-                <ScalarProperty Name="ApproxCoveredArea" ColumnName="ApproxCoveredArea" />
-                <ScalarProperty Name="EstimatedValue" ColumnName="EstimatedValue" />
-                <ScalarProperty Name="Remarks" ColumnName="Remarks" />
-                <ScalarProperty Name="NextVisitDate" ColumnName="NextVisitDate" />
-                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
-                <ScalarProperty Name="SOID" ColumnName="SOID" />
-                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
-              </ComplexTypeMapping>
-            </ResultMapping>
-          </FunctionImportMapping>
           <EntitySetMapping Name="Tbl_PlotSize">
             <EntityTypeMapping TypeName="FOS_WallCoatModel.Tbl_PlotSize">
               <MappingFragment StoreEntitySet="Tbl_PlotSize">
@@ -19925,6 +20150,8 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
                 <ScalarProperty Name="SOID" ColumnName="SOID" />
                 <ScalarProperty Name="HeadID" ColumnName="HeadID" />
                 <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="FinancialYearID" ColumnName="FinancialYearID" />
+                <ScalarProperty Name="Quarter" ColumnName="Quarter" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -19937,6 +20164,8 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
                 <ScalarProperty Name="SOID" ColumnName="SOID" />
                 <ScalarProperty Name="HeadID" ColumnName="HeadID" />
                 <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="FinancialYearID" ColumnName="FinancialYearID" />
+                <ScalarProperty Name="Quarter" ColumnName="Quarter" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -20559,6 +20788,168 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
                 <ScalarProperty Name="IsVerifiedName" ColumnName="IsVerifiedName" />
                 <ScalarProperty Name="Remarks" ColumnName="Remarks" />
                 <ScalarProperty Name="UpdatedDate" ColumnName="UpdatedDate" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <EntitySetMapping Name="Tbl_AreaCoverage">
+            <EntityTypeMapping TypeName="FOS_WallCoatModel.Tbl_AreaCoverage">
+              <MappingFragment StoreEntitySet="Tbl_AreaCoverage">
+                <ScalarProperty Name="AreaID" ColumnName="AreaID" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="CreatedBy" ColumnName="CreatedBy" />
+                <ScalarProperty Name="CreatedOn" ColumnName="CreatedOn" />
+                <ScalarProperty Name="CityID" ColumnName="CityID" />
+                <ScalarProperty Name="RegionID" ColumnName="RegionID" />
+                <ScalarProperty Name="SOID" ColumnName="SOID" />
+                <ScalarProperty Name="RegionalHeadID" ColumnName="RegionalHeadID" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Tbl_CompetitorActivities">
+            <EntityTypeMapping TypeName="FOS_WallCoatModel.Tbl_CompetitorActivities">
+              <MappingFragment StoreEntitySet="Tbl_CompetitorActivities">
+                <ScalarProperty Name="IsDeleted" ColumnName="IsDeleted" />
+                <ScalarProperty Name="CityID" ColumnName="CityID" />
+                <ScalarProperty Name="ZoneID" ColumnName="ZoneID" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="CreatedOn" ColumnName="CreatedOn" />
+                <ScalarProperty Name="VoicePath" ColumnName="VoicePath" />
+                <ScalarProperty Name="VideoPath" ColumnName="VideoPath" />
+                <ScalarProperty Name="PicturePath" ColumnName="PicturePath" />
+                <ScalarProperty Name="Remarks" ColumnName="Remarks" />
+                <ScalarProperty Name="ActivityTypeID" ColumnName="ActivityTypeID" />
+                <ScalarProperty Name="CompetitorID" ColumnName="CompetitorID" />
+                <ScalarProperty Name="ActivityDate" ColumnName="ActivityDate" />
+                <ScalarProperty Name="SOID" ColumnName="SOID" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Tbl_FinancialYear">
+            <EntityTypeMapping TypeName="FOS_WallCoatModel.Tbl_FinancialYear">
+              <MappingFragment StoreEntitySet="Tbl_FinancialYear">
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="CreatedOn" ColumnName="CreatedOn" />
+                <ScalarProperty Name="Year" ColumnName="Year" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Tbl_Quarters">
+            <EntityTypeMapping TypeName="FOS_WallCoatModel.Tbl_Quarters">
+              <MappingFragment StoreEntitySet="Tbl_Quarters">
+                <ScalarProperty Name="CreatedOn" ColumnName="CreatedOn" />
+                <ScalarProperty Name="IsDeleted" ColumnName="IsDeleted" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="FinancialYearID" ColumnName="FinancialYearID" />
+                <ScalarProperty Name="EndDate" ColumnName="EndDate" />
+                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Tbl_SOProdKnowledgeCompFeed">
+            <EntityTypeMapping TypeName="FOS_WallCoatModel.Tbl_SOProdKnowledgeCompFeed">
+              <MappingFragment StoreEntitySet="Tbl_SOProdKnowledgeCompFeed">
+                <ScalarProperty Name="CreatedOn" ColumnName="CreatedOn" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="Quarter" ColumnName="Quarter" />
+                <ScalarProperty Name="FinancialYearID" ColumnName="FinancialYearID" />
+                <ScalarProperty Name="CompFeed" ColumnName="CompFeed" />
+                <ScalarProperty Name="ProductKnowledge" ColumnName="ProductKnowledge" />
+                <ScalarProperty Name="HeadID" ColumnName="HeadID" />
+                <ScalarProperty Name="SOID" ColumnName="SOID" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <FunctionImportMapping FunctionImportName="spGetSalesOfficerAttendanceDetail1" FunctionName="FOS_WallCoatModel.Store.spGetSalesOfficerAttendanceDetail1">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="FOS_WallCoatModel.spGetSalesOfficerAttendanceDetail1_Result">
+                <ScalarProperty Name="RegionalHeadID" ColumnName="RegionalHeadID" />
+                <ScalarProperty Name="RegionalHead" ColumnName="RegionalHead" />
+                <ScalarProperty Name="SOID" ColumnName="SOID" />
+                <ScalarProperty Name="SalesOfficer" ColumnName="SalesOfficer" />
+                <ScalarProperty Name="DateOfAttendance" ColumnName="DateOfAttendance" />
+                <ScalarProperty Name="Present" ColumnName="Present" />
+                <ScalarProperty Name="OnLeave" ColumnName="OnLeave" />
+                <ScalarProperty Name="Absent" ColumnName="Absent" />
+                <ScalarProperty Name="TotalSOCount" ColumnName="TotalSOCount" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="usp_GetBusinessAffiliatesDSR" FunctionName="FOS_WallCoatModel.Store.usp_GetBusinessAffiliatesDSR">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="FOS_WallCoatModel.usp_GetBusinessAffiliatesDSR_Result">
+                <ScalarProperty Name="VisitID" ColumnName="VisitID" />
+                <ScalarProperty Name="VisitDate" ColumnName="VisitDate" />
+                <ScalarProperty Name="SOID" ColumnName="SOID" />
+                <ScalarProperty Name="SaleOfficerName" ColumnName="SaleOfficerName" />
+                <ScalarProperty Name="BusinessAffiliateID" ColumnName="BusinessAffiliateID" />
+                <ScalarProperty Name="BusinessName" ColumnName="BusinessName" />
+                <ScalarProperty Name="ContactPerson" ColumnName="ContactPerson" />
+                <ScalarProperty Name="ContactNumber" ColumnName="ContactNumber" />
+                <ScalarProperty Name="BusinessAddress" ColumnName="BusinessAddress" />
+                <ScalarProperty Name="RegionID" ColumnName="RegionID" />
+                <ScalarProperty Name="RegionName" ColumnName="RegionName" />
+                <ScalarProperty Name="CityID" ColumnName="CityID" />
+                <ScalarProperty Name="CityName" ColumnName="CityName" />
+                <ScalarProperty Name="PurposeOfVisit" ColumnName="PurposeOfVisit" />
+                <ScalarProperty Name="TargetAgreement" ColumnName="TargetAgreement" />
+                <ScalarProperty Name="Remarks" ColumnName="Remarks" />
+                <ScalarProperty Name="CreatedDate" ColumnName="CreatedDate" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="usp_GetKPIPercentageReport" FunctionName="FOS_WallCoatModel.Store.usp_GetKPIPercentageReport" />
+          <FunctionImportMapping FunctionImportName="GetDailyAttendanceSummary" FunctionName="FOS_WallCoatModel.Store.GetDailyAttendanceSummary">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="FOS_WallCoatModel.GetDailyAttendanceSummary_Result">
+                <ScalarProperty Name="Sr_No" ColumnName="Sr No" />
+                <ScalarProperty Name="Date" ColumnName="Date" />
+                <ScalarProperty Name="Time" ColumnName="Time" />
+                <ScalarProperty Name="Day" ColumnName="Day" />
+                <ScalarProperty Name="Region" ColumnName="Region" />
+                <ScalarProperty Name="Employee_Name" ColumnName="Employee Name" />
+                <ScalarProperty Name="Attendance_Type" ColumnName="Attendance Type" />
+                <ScalarProperty Name="Latitude" ColumnName="Latitude" />
+                <ScalarProperty Name="Longitude" ColumnName="Longitude" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="Sp_MyHousinglastVisit" FunctionName="FOS_WallCoatModel.Store.Sp_MyHousinglastVisit">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="FOS_WallCoatModel.Sp_MyHousinglastVisit_Result">
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
+                <ScalarProperty Name="ArchitectName" ColumnName="ArchitectName" />
+                <ScalarProperty Name="ArchitectNumber" ColumnName="ArchitectNumber" />
+                <ScalarProperty Name="ContractorName" ColumnName="ContractorName" />
+                <ScalarProperty Name="ContractorNumber" ColumnName="ContractorNumber" />
+                <ScalarProperty Name="ScopeOfWorkID" ColumnName="ScopeOfWorkID" />
+                <ScalarProperty Name="NatureOfWorkID" ColumnName="NatureOfWorkID" />
+                <ScalarProperty Name="ConstructionStageID" ColumnName="ConstructionStageID" />
+                <ScalarProperty Name="ApproxCoveredArea" ColumnName="ApproxCoveredArea" />
+                <ScalarProperty Name="EstimatedValue" ColumnName="EstimatedValue" />
+                <ScalarProperty Name="Remarks" ColumnName="Remarks" />
+                <ScalarProperty Name="NextVisitDate" ColumnName="NextVisitDate" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="SOID" ColumnName="SOID" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="OffTakeFromOthers" ColumnName="OffTakeFromOthers" />
+                <ScalarProperty Name="ColorScheme" ColumnName="ColorScheme" />
+                <ScalarProperty Name="SiteWon" ColumnName="SiteWon" />
+                <ScalarProperty Name="PlotSize" ColumnName="PlotSize" />
+                <ScalarProperty Name="Latitude" ColumnName="Latitude" />
+                <ScalarProperty Name="Longitude" ColumnName="Longitude" />
+                <ScalarProperty Name="OrderVolume" ColumnName="OrderVolume" />
+                <ScalarProperty Name="OnlineOffline" ColumnName="OnlineOffline" />
+                <ScalarProperty Name="SiteWonMonth" ColumnName="SiteWonMonth" />
+                <ScalarProperty Name="Picture1" ColumnName="Picture1" />
+                <ScalarProperty Name="Picture2" ColumnName="Picture2" />
+                <ScalarProperty Name="AgainCall" ColumnName="AgainCall" />
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>

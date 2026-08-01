@@ -1133,7 +1133,8 @@ namespace FOS.Setup
                         CityName = dbContext.SaleOfficers.Where(x => x.ID == u.SOID).Select(x => x.Name).FirstOrDefault(),
                         FinancialYearID = u.FinancialYearID,
                         FinancialYearName = u.FinancialYearID.HasValue && fyDict.ContainsKey(u.FinancialYearID.Value) ? fyDict[u.FinancialYearID.Value] : "",
-                        Quarter = u.Quarter
+                        Quarter = u.Quarter,
+                        CreatedOn = u.CreatedOn
                     }).ToList();
                 }
             }
@@ -1176,7 +1177,8 @@ namespace FOS.Setup
                         CityName = dbContext.SaleOfficers.Where(x => x.ID == u.SOID).Select(x => x.Name).FirstOrDefault(),
                         FinancialYearID = u.FinancialYearID,
                         FinancialYearName = u.FinancialYearID.HasValue && fyDict.ContainsKey(u.FinancialYearID.Value) ? fyDict[u.FinancialYearID.Value] : "",
-                        Quarter = u.Quarter
+                        Quarter = u.Quarter,
+                        CreatedOn = u.CreatedOn
                     }).ToList();
                 }
             }

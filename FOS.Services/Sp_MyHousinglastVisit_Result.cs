@@ -49,6 +49,30 @@ public partial class Sp_MyHousinglastVisit_Result
 
     public Nullable<bool> IsActive { get; set; }
 
+    public string OffTakeFromOthers { get; set; }
+
+    public Nullable<bool> ColorScheme { get; set; }
+
+    public Nullable<bool> SiteWon { get; set; }
+
+    public Nullable<int> PlotSize { get; set; }
+
+    public Nullable<decimal> Latitude { get; set; }
+
+    public Nullable<decimal> Longitude { get; set; }
+
+    public Nullable<int> OrderVolume { get; set; }
+
+    public Nullable<int> OnlineOffline { get; set; }
+
+    public Nullable<System.DateTime> SiteWonMonth { get; set; }
+
+    public string Picture1 { get; set; }
+
+    public string Picture2 { get; set; }
+
+    public string AgainCall { get; set; }
+
 }
 
 }

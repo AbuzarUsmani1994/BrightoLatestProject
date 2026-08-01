@@ -15,8 +15,22 @@ namespace FOS.Web.UI.Controllers.API
         {
             try
             {
+                var CheckCustomerID = db.Tbl_HousingVisits
+                    .Where(x => x.ID == CustomerID)
+                    .Select(x => x.CustomerID)
+                    .FirstOrDefault();
+
+                if(CheckCustomerID == null)
+                {
+                    return Ok(new
+                    {
+                        CallHistory = "No Customer Found"
+                    });
+                }
+
                 var callHistory = (from j in db.Tbl_SaveCall
-                                   where j.VisitID == CustomerID
+                                   join hv in db.Tbl_HousingVisits on j.VisitID equals hv.ID
+                                   where hv.CustomerID == CustomerID
                                    orderby j.CreatedOn descending
                                    select new
                                    {
