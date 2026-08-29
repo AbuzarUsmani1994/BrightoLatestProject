@@ -17,28 +17,36 @@ $backupDir = Join-Path $BackupRoot "$stamp`_$shortSha"
 New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
 Write-Host "Backing up files about to be overwritten to $backupDir"
 
-# Back up the current live version of every file this deploy is about to touch,
-# and remember which relative paths are brand new (no prior live file) so a
-# rollback can delete them again instead of leaving them behind.
+# Back up only the live files this deploy will actually change (by content
+# hash, not just presence), and remember which relative paths are brand new
+# (no prior live file) so a rollback can delete them instead of leaving them
+# behind. Files that are byte-identical between live and publish output are
+# left alone entirely - nothing to back up, nothing to roll back.
 $newFiles = Get-ChildItem -Path $PublishDir -Recurse -File
 $relativePaths = @()
-$newlyAddedPaths = @()
+$newlyAddedPaths = New-Object 'System.Collections.Generic.HashSet[string]'
+$changedPaths = New-Object 'System.Collections.Generic.HashSet[string]'
 $backedUpCount = 0
 foreach ($file in $newFiles) {
     $relativePath = $file.FullName.Substring($PublishDir.Length).TrimStart('\')
     $relativePaths += $relativePath
     $liveFile = Join-Path $SiteRoot $relativePath
     if (Test-Path $liveFile) {
-        $backupTarget = Join-Path $backupDir $relativePath
-        New-Item -ItemType Directory -Path (Split-Path $backupTarget) -Force | Out-Null
-        Copy-Item -Path $liveFile -Destination $backupTarget -Force
-        $backedUpCount++
+        $liveHash = (Get-FileHash -Path $liveFile -Algorithm SHA256).Hash
+        $newHash = (Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash
+        if ($liveHash -ne $newHash) {
+            $backupTarget = Join-Path $backupDir $relativePath
+            New-Item -ItemType Directory -Path (Split-Path $backupTarget) -Force | Out-Null
+            Copy-Item -Path $liveFile -Destination $backupTarget -Force
+            $backedUpCount++
+            [void]$changedPaths.Add($relativePath)
+        }
     }
     else {
-        $newlyAddedPaths += $relativePath
+        [void]$newlyAddedPaths.Add($relativePath)
     }
 }
-Write-Host "Backed up $backedUpCount existing file(s)."
+Write-Host "Backed up $backedUpCount changed file(s) out of $($newFiles.Count) published file(s)."
 
 # Gracefully unload the app so locked bin\*.dll files can be replaced. Poll for
 # up to 30s instead of a flat sleep, since IIS can take longer than 5s to
@@ -73,13 +81,14 @@ catch {
     Write-Warning "Deploy failed, rolling back from $backupDir : $_"
     foreach ($relativePath in $relativePaths) {
         $liveTarget = Join-Path $SiteRoot $relativePath
-        if ($newlyAddedPaths -contains $relativePath) {
+        if ($newlyAddedPaths.Contains($relativePath)) {
             Remove-Item -Path $liveTarget -Force -ErrorAction SilentlyContinue
         }
-        else {
+        elseif ($changedPaths.Contains($relativePath)) {
             $backupSource = Join-Path $backupDir $relativePath
             Copy-Item -Path $backupSource -Destination $liveTarget -Force
         }
+        # else: file was byte-identical pre-deploy, nothing to roll back
     }
     Remove-Item $appOffline -Force -ErrorAction SilentlyContinue
     throw
