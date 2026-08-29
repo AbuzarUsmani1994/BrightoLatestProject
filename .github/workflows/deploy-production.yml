@@ -43,6 +43,7 @@ jobs:
       - name: Build and publish FOS.Web.UI
         run: >
           msbuild FOS.Web.UI\FOS.Web.UI.csproj
+          /t:Build;WebPublish
           /p:Configuration=Release
           /p:DeployOnBuild=true
           /p:WebPublishMethod=FileSystem
