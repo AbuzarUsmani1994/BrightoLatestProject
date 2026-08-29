@@ -339,7 +339,7 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 # ---- Sensitive config (excluded by default; review before committing) ----
-Web.config
+/FOS.Web.UI/Web.config
 *.config.user
 appsettings.*.json
 ConnectionStrings.config
