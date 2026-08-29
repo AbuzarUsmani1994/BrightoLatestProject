@@ -118,3 +118,9 @@ catch {
 
 Remove-Item $appOffline -Force -ErrorAction SilentlyContinue
 Write-Host "Deployment complete. Commit $CommitSha is live at $SiteRoot."
+
+# robocopy's own exit code (e.g. 1 = "files copied successfully") is non-zero
+# on success and would otherwise be picked up as this script's exit code by
+# the GitHub Actions PowerShell step wrapper, marking a successful deploy as
+# failed. Reset it now that we've confirmed success ourselves.
+$LASTEXITCODE = 0

@@ -59,3 +59,10 @@ jobs:
           -SiteRoot "E:\BrightoPublish\BrightoPublish"
           -BackupRoot "E:\BrightoPublish\Latestbackup"
           -CommitSha "${{ github.sha }}"
+
+      # Guarantee the live Web.config always matches the canonical secrets file
+      # on APPSRVS, regardless of what MSBuild's config transform or robocopy
+      # produced in the publish output.
+      - name: Sync production Web.config to live site
+        shell: powershell
+        run: Copy-Item -Path "E:\BrightoPublish\Web.config" -Destination "E:\BrightoPublish\BrightoPublish\Web.config" -Force
