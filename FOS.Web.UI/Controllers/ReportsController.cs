@@ -5297,11 +5297,11 @@ namespace FOS.Web.UI.Controllers
                 DateTime end = Convert.ToDateTime(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
                 DateTime final = end.AddDays(1);
                 ManageRetailer objRetailers = new ManageRetailer();
-                List<spGetEmployeeAttendanceTimings_Result> result = objRetailers.TodayPresentSalesOfficerSync(TID, start, end);
+                List<EmployeeAttendanceTimingData> result = objRetailers.TodayPresentSalesOfficerSync(TID, start, end);
                 // Example data
                 StringWriter sw = new StringWriter();
 
-                sw.WriteLine("\"SrNo.\",\"Date\",\"Regional Head\",\"Emp_Code\",\"Emp_Name\",\"Start_Time\",\"End_Time\"");
+                sw.WriteLine("\"SrNo.\",\"Date\",\"Regional Head\",\"Emp_Code\",\"Emp_Name\",\"Start_Time\",\"End_Time\",\"Last_Visit_Time\"");
 
                 Response.ClearContent();
                 Response.AddHeader("content-disposition", "attachment;filename=TodayPresentSOSync" + DateTime.Now + ".csv");
@@ -5311,14 +5311,15 @@ namespace FOS.Web.UI.Controllers
                 int srNo = 1;
                 foreach (var retailer in result)
                 {
-                    sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\"",
+                    sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\"",
                     srNo,
                     retailer.AttendanceDate,
                     retailer.RegionalHead,
                     retailer.Emp_Code,
                     retailer.Emp_Name,
                     retailer.Start_Time,
-                    retailer.End_Time
+                    retailer.End_Time,
+                    retailer.Last_Visit_Time
                     ));
                     srNo++;
                 }

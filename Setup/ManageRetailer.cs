@@ -247,19 +247,43 @@ namespace FOS.Setup
             return RetailerObj;
         }
 
-        public List<spGetEmployeeAttendanceTimings_Result> TodayPresentSalesOfficerSync(int TID, DateTime startDate, DateTime endDate)
+        public List<EmployeeAttendanceTimingData> TodayPresentSalesOfficerSync(int TID, DateTime startDate, DateTime endDate)
         {
-            List<spGetEmployeeAttendanceTimings_Result> RetailerObj = new List<spGetEmployeeAttendanceTimings_Result>();
-            //   var RetailerObj;
+            List<EmployeeAttendanceTimingData> RetailerObj = new List<EmployeeAttendanceTimingData>();
             try
             {
+                using (FOSDataModel dbContext = new FOSDataModel())
+                using (var conn = new System.Data.SqlClient.SqlConnection(dbContext.Database.Connection.ConnectionString))
+                using (var cmd = new System.Data.SqlClient.SqlCommand("dbo.spGetEmployeeAttendanceTimings", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@RID", TID);
+                    cmd.Parameters.AddWithValue("@startDate", startDate);
+                    cmd.Parameters.AddWithValue("@endDate", endDate);
 
-
-                FOSDataModel dbContext = new FOSDataModel();
-
-                RetailerObj = dbContext.spGetEmployeeAttendanceTimings(TID, startDate, endDate).ToList();
-
-
+                    conn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            RetailerObj.Add(new EmployeeAttendanceTimingData
+                            {
+                                AttendanceDate = reader["AttendanceDate"] as DateTime?,
+                                Emp_Code = reader["Emp_Code"] as string,
+                                Emp_Name = reader["Emp_Name"] as string,
+                                Start_Time = reader["Start_Time"] as string,
+                                End_Time = reader["End_Time"] as string,
+                                Last_Visit_Time = reader["Last_Visit_Time"] as string,
+                                Working_Minutes = reader["Working_Minutes"] as int?,
+                                Working_Hours = reader["Working_Hours"] as string,
+                                RegionalHead = reader["RegionalHead"] as string,
+                                City = reader["City"] as string,
+                                MarketStartLatlong = reader["MarketStartLatlong"] as string,
+                                MarketCloseLatlong = reader["MarketCloseLatlong"] as string
+                            });
+                        }
+                    }
+                }
             }
 
             catch (Exception exp)
