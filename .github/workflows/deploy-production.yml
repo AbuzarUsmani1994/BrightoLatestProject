@@ -18,6 +18,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Web.config is gitignored (holds live secrets/connection strings) and kept
+      # only on APPSRVS, outside the git workspace. Restore it after every fresh
+      # checkout so the build has it, without ever committing it to source control.
+      - name: Restore production Web.config
+        shell: powershell
+        run: Copy-Item -Path "E:\BrightoPublish\Web.config" -Destination "FOS.Web.UI\Web.config" -Force
+
       # Hardcoded path instead of microsoft/setup-msbuild@v2: vswhere reports this
       # Build Tools instance as incomplete (pending reboot on APPSRVS), even though
       # MSBuild itself works fine.
