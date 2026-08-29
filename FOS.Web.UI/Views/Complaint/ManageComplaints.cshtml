@@ -44,9 +44,9 @@
 
             </div>
 
-            <div class="container" style="margin-top:2px;">
+            <div class="container-fluid" style="margin-top:2px;">
                 <div class="row">
-                    <form class="form-inline">
+                    <form class="form-inline" style="white-space:nowrap;">
                         <label class="control-label" style="display:inline;margin-left:40px">Starting Date *</label>
                         <input class="text-box single-line" id="StartingDate1" name="StartingDate1" autocomplete="off" style="height: 22px; width: 202px; margin-bottom: 0px;">
                         <label class="control-label" style="display:inline">Ending Date *</label>
@@ -56,6 +56,11 @@
 
                         @Html.DropDownListFor(model => model.RegionalHeadID, new SelectList(Model.RegionalHead, "ID", "Name"), new { @class = "" })
                         @Html.ValidationMessageFor(model => model.RegionalHeadID)
+
+                        <label class="control-label">Nature *</label>
+
+                        @Html.DropDownListFor(model => model.ProductNatureID, new SelectList(Model.ProductNatures, "ID", "Name"), new { @class = "" })
+                        @Html.ValidationMessageFor(model => model.ProductNatureID)
 
                         <button type="button" id="ApplyFilter" class="btn btn-primary">
                             <i class="icon-ok icon-white" style="padding-right: 2px"></i><span style="width:50px">Apply Filter</span>
@@ -235,6 +240,34 @@
                                 </span>
                             </div>
                         </div>
+                        <div class="row" id="QualityDataRow" style="margin-top:15px; width:100%; max-width:100%; overflow-x:auto;">
+                            <table class="table table-bordered" id="QualityDataTable" style="width:100%; max-width:100%; table-layout:fixed; word-wrap:break-word; font-size:12px; margin:0;">
+                                <thead>
+                                    <tr>
+                                        <th>Application Cause</th>
+                                        <th>Substrate Cause</th>
+                                        <th>Product Quality</th>
+                                        <th>Remarks</th>
+                                        <th>Status</th>
+                                        <th>Image</th>
+                                        <th>Video</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td id="qdApplication">-</td>
+                                        <td id="qdSubstrate">-</td>
+                                        <td id="qdQuality">-</td>
+                                        <td id="qdRemarks">-</td>
+                                        <td id="qdStatus">-</td>
+                                        <td id="qdImage">-</td>
+                                        <td id="qdVideo">-</td>
+                                        <td><button type="button" class="btn btn-danger btn-small" id="QualityDeleteBtn" style="display:none">Delete</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -412,6 +445,29 @@
         }
     });
 
+    $("#QualityDeleteBtn").click(function () {
+        var ComplaintID = $("#CompaintID").text();
+        if (!ComplaintID) {
+            return;
+        }
+        if (confirm("Are you sure you want to delete this quality review data?")) {
+            $.ajax({
+                type: "Post",
+                url: "@Url.Action("DeleteComplaintSuggestion", "Complaint")",
+                data: { ComplaintID: ComplaintID },
+                success: function (res) {
+                    if (res == "1") {
+                        alertify.success("Deleted Successfully");
+                        $("#ProductDetail").modal('hide');
+                        ClearFields();
+                        var otable = $("#datatab").DataTable();
+                        otable.ajax.reload();
+                    }
+                }
+            });
+        }
+    });
+
     function GenerateDetailGrid() {
 
         //$('#datatab tfoot th').each(function () {
@@ -437,6 +493,7 @@
                     data.StartingDate1 = $("#StartingDate1").val();
                     data.StartingDate2 = $("#StartingDate2").val();
                     data.RegionalHeadID = $('#RegionalHeadID').val() == null ? 1 : $('#RegionalHeadID').val();
+                    data.ProductNatureID = $('#ProductNatureID').val() == null ? 0 : $('#ProductNatureID').val();
                     return data = JSON.stringify(data);
                 },
             },
@@ -466,6 +523,14 @@
                                     $("#complaintno").text(ComplaintNo);
                                     $("#submitteddate").text(created);
                                     $("#submittedby").text(SoName);
+                                    $("#qdApplication").text('-');
+                                    $("#qdSubstrate").text('-');
+                                    $("#qdQuality").text('-');
+                                    $("#qdRemarks").text('-');
+                                    $("#qdStatus").text('-');
+                                    $("#qdImage").html('-');
+                                    $("#qdVideo").html('-');
+                                    $("#QualityDeleteBtn").hide();
                                     //$("#IsVerified").val(res.IsVerified);
                                     //val = "True";
                                     //$('input[name="IsVerified"][value="' + val + '"]')
@@ -503,6 +568,15 @@
                                     //val = val.charAt(0).toUpperCase() + val.slice(1);
                                     //$('input[name="IsVerified"][value="' + val + '"]')
                                     //    .prop('checked', true);
+
+                                    $("#qdApplication").text(res.ApplicationName || "-");
+                                    $("#qdSubstrate").text(res.SubstrateName || "-");
+                                    $("#qdQuality").text(res.QualityName || "-");
+                                    $("#qdRemarks").text(res.Remarks || "-");
+                                    $("#qdStatus").text(res.IsVerifiedString || "-");
+                                    $("#qdImage").html(res.ImageUrl ? '<a href="' + res.ImageUrl + '" target="_blank">View</a>' : '-');
+                                    $("#qdVideo").html(res.VideoUrl ? '<a href="' + res.VideoUrl + '" target="_blank">View</a>' : '-');
+                                    $("#QualityDeleteBtn").show();
                                 }
                             }
                         });
@@ -587,6 +661,14 @@
         $("#OtherSubstrate1").hide();
         $("#OtherQuality1").hide();
         $("#ComplaintYesNo").val('1');
+        $("#qdApplication").text('-');
+        $("#qdSubstrate").text('-');
+        $("#qdQuality").text('-');
+        $("#qdRemarks").text('-');
+        $("#qdStatus").text('-');
+        $("#qdImage").html('-');
+        $("#qdVideo").html('-');
+        $("#QualityDeleteBtn").hide();
         //val = "True";
         //$('input[name="IsVerified"][value="' + val + '"]')
         //    .prop('checked', true);

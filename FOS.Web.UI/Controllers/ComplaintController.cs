@@ -196,19 +196,20 @@ namespace FOS.Web.UI.Controllers
         {
             ComplaintData data = new ComplaintData();
             data.RegionalHead = ManageComplaint.GetRegionalHeads(0);
+            data.ProductNatures = ManageComplaint.GetProductNatureList();
             data.ApplicationCauses = ManageComplaint.GetApplicationCause();
             data.SubstrateCauses = ManageComplaint.GetSubstrateCause();
             data.ComplaintProducts = ManageComplaint.GetProductQualityCause();
             return View(data);
         }
 
-        public JsonResult ComplaintDataHandler(DTParameters param, int RegionalHeadID)
+        public JsonResult ComplaintDataHandler(DTParameters param, int RegionalHeadID, int ProductNatureID)
         {
             try
             {
                 var dtsource = new List<ComplaintData>();
 
-                dtsource = ManageComplaint.GetComplaintDataForGrid(param.StartingDate1, param.StartingDate2, RegionalHeadID);
+                dtsource = ManageComplaint.GetComplaintDataForGrid(param.StartingDate1, param.StartingDate2, RegionalHeadID, ProductNatureID);
 
 
                 List<String> columnSearch = new List<string>();
@@ -479,6 +480,12 @@ namespace FOS.Web.UI.Controllers
                     complaint.QuaID = data.ProductQualityRetailedID;
                     complaint.Remarks = data.Remarks;
                     complaint.ComplaintYesNo = (int)data.IsVerified;
+                    complaint.ApplicationName = data.ApplicationCaseName;
+                    complaint.SubstrateName = data.SubstrateCaseName;
+                    complaint.QualityName = data.QualityProductName;
+                    complaint.ImageUrl = data.ImageUrl;
+                    complaint.VideoUrl = data.VideoUrl;
+                    complaint.IsVerifiedString = data.IsVerifiedName;
                 }
                 else
                 {
@@ -488,6 +495,21 @@ namespace FOS.Web.UI.Controllers
             }
 
             return Json(complaint, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        public JsonResult DeleteComplaintSuggestion(int ComplaintID)
+        {
+            using (FOSDataModel db = new FOSDataModel())
+            {
+                var add = db.ComplaintSuggesionAddeds.Where(x => x.ComplaintID == ComplaintID).FirstOrDefault();
+                if (add != null)
+                {
+                    db.ComplaintSuggesionAddeds.Remove(add);
+                    db.SaveChanges();
+                }
+            }
+            return Json("1", JsonRequestBehavior.AllowGet);
         }
 
         public void DownloadPDFCompalintReport(string DateTO, string FromTO, int ComplaintID)

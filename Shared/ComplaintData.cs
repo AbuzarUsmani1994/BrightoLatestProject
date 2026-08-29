@@ -36,6 +36,8 @@ namespace FOS.Shared
         public string Remarks { get; set; }
         public int? RegionalHeadID { get; set; }
         public int HiddenRegionalHeadID { get; set; }
+        public int? ProductNatureID { get; set; }
+        public List<ProductNatureData> ProductNatures { get; set; }
 
         //[DataType(DataType.Date)]
         //[Required(ErrorMessage = "* Required")]

@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
@@ -412,7 +414,7 @@ namespace FOS.Setup
                                     ID = u.ID,
                                     Name = u.Name,
                                 }).ToList();
-                    if (UserID == 1119)
+                    if (UserID == 1119 || UserID == 0)
                     {
                         regionalHeadData.Insert(0, new RegionalHeadData
                         {
@@ -437,33 +439,76 @@ namespace FOS.Setup
             return regionalHeadData;
         }
 
-        public static List<ComplaintData> GetComplaintDataForGrid(string FromDate, string EndDate, int RegionheadID)
+        public static List<ComplaintData> GetComplaintDataForGrid(string FromDate, string EndDate, int RegionheadID, int ProductNatureID)
         {
             List<ComplaintData> data = new List<ComplaintData>();
             DateTime start = Convert.ToDateTime(string.IsNullOrEmpty(FromDate) ? DateTime.Now.ToString() : FromDate);
             DateTime End = Convert.ToDateTime(string.IsNullOrEmpty(EndDate) ? DateTime.Now.ToString() : EndDate);
-            using (FOSDataModel db = new FOSDataModel())
+            using (FOSDataModel dbContext = new FOSDataModel())
+            using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
+            using (var cmd = new SqlCommand("dbo.sp_GetComplaintDataForQuality", conn))
             {
-                data = db.sp_GetComplaintDataForQuality(start, End, RegionheadID).ToList()
-                    .Select(u => new ComplaintData
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@FromDate", start);
+                cmd.Parameters.AddWithValue("@EndDate", End);
+                cmd.Parameters.AddWithValue("@RegionalHeadID", RegionheadID);
+                cmd.Parameters.AddWithValue("@ProductNatureID", ProductNatureID);
+
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
                     {
-                        ComplaintID = u.ID,
-                        SaleOfficerName = u.SaleOfficerName,
-                        CustomerName = u.CustomerName,
-                        DealerName = u.DealerName,
-                        ProductDesc = u.ProductDescription,
-                        ProductBatchNo = u.ProductBatchNo,
-                        StartingDate1 = u.CreatedOn.Value.ToString("dd-MMM-yyyy"),
-                        ShakingTime = u.ShakingTime,
-                        ColorCode = u.ColorCode,
-                        Status = u.LaunchStatus,
-                        ComplaintNumber = u.ComplaintNumber ?? "",
-                        StartingDate2 = u.UpdatedComplaint == null ? "" : u.UpdatedComplaint.Value.ToString("dd-MMM-yyyy"),
-                        IsVerifiedString = u.UpdatedComplaint == null ? "" : u.IsVarified
-                    }).ToList();
+                        var updatedComplaint = reader["UpdatedComplaint"] as DateTime?;
+                        data.Add(new ComplaintData
+                        {
+                            ComplaintID = Convert.ToInt32(reader["ID"]),
+                            SaleOfficerName = reader["SaleOfficerName"] as string,
+                            CustomerName = reader["CustomerName"] as string,
+                            DealerName = reader["DealerName"] as string,
+                            ProductDesc = reader["ProductDescription"] as string,
+                            ProductBatchNo = reader["ProductBatchNo"] as string,
+                            StartingDate1 = ((DateTime)reader["CreatedOn"]).ToString("dd-MMM-yyyy"),
+                            ShakingTime = reader["ShakingTime"] as string,
+                            ColorCode = reader["ColorCode"] as string,
+                            Status = reader["LaunchStatus"] as string,
+                            ComplaintNumber = reader["ComplaintNumber"] as string ?? "",
+                            StartingDate2 = updatedComplaint == null ? "" : updatedComplaint.Value.ToString("dd-MMM-yyyy"),
+                            IsVerifiedString = updatedComplaint == null ? "" : reader["IsVarified"] as string
+                        });
+                    }
+                }
             }
 
             return data;
+        }
+
+        public static List<ProductNatureData> GetProductNatureList()
+        {
+            List<ProductNatureData> productNatureData = new List<ProductNatureData>();
+            try
+            {
+                using (FOSDataModel dbContext = new FOSDataModel())
+                {
+                    productNatureData = dbContext.Tbl_ProductNature.Where(u => u.IsActive == true).ToList()
+                            .Select(
+                                u => new ProductNatureData
+                                {
+                                    ID = u.ID,
+                                    Name = u.Name,
+                                }).ToList();
+                    productNatureData.Insert(0, new ProductNatureData
+                    {
+                        ID = 0,
+                        Name = "All"
+                    });
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            return productNatureData;
         }
 
         public static List<ComplaintApplicationCause> GetApplicationCause()
