@@ -26,14 +26,16 @@ $newFiles = Get-ChildItem -Path $PublishDir -Recurse -File
 $relativePaths = @()
 $newlyAddedPaths = New-Object 'System.Collections.Generic.HashSet[string]'
 $changedPaths = New-Object 'System.Collections.Generic.HashSet[string]'
+$publishedHashes = @{}
 $backedUpCount = 0
 foreach ($file in $newFiles) {
     $relativePath = $file.FullName.Substring($PublishDir.Length).TrimStart('\')
     $relativePaths += $relativePath
+    $newHash = (Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash
+    $publishedHashes[$relativePath] = $newHash
     $liveFile = Join-Path $SiteRoot $relativePath
     if (Test-Path $liveFile) {
         $liveHash = (Get-FileHash -Path $liveFile -Algorithm SHA256).Hash
-        $newHash = (Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash
         if ($liveHash -ne $newHash) {
             $backupTarget = Join-Path $backupDir $relativePath
             New-Item -ItemType Directory -Path (Split-Path $backupTarget) -Force | Out-Null
@@ -75,6 +77,26 @@ try {
     robocopy $PublishDir $SiteRoot /E /R:3 /W:5 /NFL /NDL /NJH /NJS /NC /NS
     if ($LASTEXITCODE -ge 8) {
         throw "robocopy failed with exit code $LASTEXITCODE"
+    }
+
+    # robocopy's exit code alone isn't always trustworthy (e.g. an access-denied
+    # error against the destination root itself can exhaust its retries without
+    # the exit code reflecting a hard failure), so confirm on disk that every
+    # file robocopy was supposed to write actually landed with the right content.
+    $verifyFailures = @()
+    foreach ($relativePath in ($changedPaths + $newlyAddedPaths)) {
+        $liveTarget = Join-Path $SiteRoot $relativePath
+        if (-not (Test-Path $liveTarget)) {
+            $verifyFailures += $relativePath
+            continue
+        }
+        $liveHashAfter = (Get-FileHash -Path $liveTarget -Algorithm SHA256).Hash
+        if ($liveHashAfter -ne $publishedHashes[$relativePath]) {
+            $verifyFailures += $relativePath
+        }
+    }
+    if ($verifyFailures.Count -gt 0) {
+        throw "Deploy verification failed: $($verifyFailures.Count) file(s) were not correctly copied to $SiteRoot (robocopy exit code was $LASTEXITCODE). First mismatch: $($verifyFailures[0])"
     }
 }
 catch {
