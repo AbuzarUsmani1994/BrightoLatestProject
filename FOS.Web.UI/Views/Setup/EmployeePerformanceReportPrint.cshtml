@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <title>Employee Performance Report</title>
     <style>
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
         body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #222; margin: 0; padding: 0; background: #e9e9e9; }
         .page { width: 780px; background: #fff; margin: 15px auto; padding: 20px; page-break-after: always; }
         .page:last-child { page-break-after: auto; }
@@ -16,6 +16,9 @@
         .report-header { display: flex; align-items: center; margin-bottom: 10px; }
         .report-header img { height: 55px; margin-right: 15px; }
         .report-title { flex: 1; background: #1E4B8E; color: #fff; text-align: center; padding: 14px 0; font-size: 18px; font-weight: bold; border-radius: 4px; }
+        .profile-row { display: flex; align-items: stretch; gap: 10px; margin-top: 4px; }
+        .profile-row .info-table { flex: 1; margin-top: 0; }
+        .employee-photo { width: 130px; height: 160px; object-fit: cover; border: 1px solid #999; }
 
         .section-title { background: #2E75B6; color: #fff; font-weight: bold; font-size: 12px; padding: 5px 8px; margin-top: 12px; }
 
@@ -34,10 +37,15 @@
         .no-print { text-align: center; margin: 15px 0; }
         .no-print button { padding: 8px 20px; font-size: 13px; cursor: pointer; }
 
+        @@page {
+            margin: 0;
+        }
+
         @@media print {
             body { background: #fff; }
             .no-print { display: none; }
-            .page { margin: 0; padding: 0; width: auto; box-shadow: none; }
+            .page { margin: 0; padding: 15px; width: auto; box-shadow: none; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
         }
     </style>
 </head>
@@ -63,6 +71,7 @@
                 </div>
 
                 <div class="section-title">EMPLOYEE PROFILE</div>
+                <div class="profile-row">
                 <table class="info-table">
                     <tr>
                         <td class="label">Employee Name</td><td>@r.EmployeeName</td>
@@ -81,6 +90,8 @@
                         <td class="label">Period</td><td>@r.PeriodFrom.ToString("dd-MMM-yyyy") - @r.PeriodTo.ToString("dd-MMM-yyyy")</td>
                     </tr>
                 </table>
+                <img class="employee-photo" src="@r.PictureUrl" alt="@r.EmployeeName" />
+                </div>
 
                 <div class="section-title">CUSTOMER &amp; VISIT PROFILING</div>
                 <div class="two-col">
@@ -97,7 +108,7 @@
                     <div>
                         <table class="data-table">
                             <tr><td>New Customers</td><td class="num">@r.NewCustomers</td></tr>
-                            <tr><td>Sites Won</td><td class="num">@r.SitesWon</td></tr>
+                            <tr><td>All Unique Claim Customers</td><td class="num">@r.SitesWon</td></tr>
                             <tr><td>Online Visits</td><td class="num">@r.OnlineVisits</td></tr>
                             <tr><td>Offline Visits</td><td class="num">@r.OfflineVisits</td></tr>
                         </table>

@@ -3689,7 +3689,32 @@ namespace FOS.Web.UI.Controllers
                 }
             }
 
+            foreach (var row in rows)
+            {
+                row.PictureUrl = GetSOPictureUrl(row.EmployeeCode);
+            }
+
             return View(rows);
+        }
+
+        private string GetSOPictureUrl(string employeeCode)
+        {
+            if (string.IsNullOrWhiteSpace(employeeCode))
+            {
+                return Url.Content("~/Images/NoImage.jpg");
+            }
+
+            string[] extensions = { ".jpeg", ".jpg", ".png" };
+            foreach (var ext in extensions)
+            {
+                string relativePath = "~/Images/SOImages/" + employeeCode + ext;
+                if (System.IO.File.Exists(Server.MapPath(relativePath)))
+                {
+                    return Url.Content(relativePath);
+                }
+            }
+
+            return Url.Content("~/Images/NoImage.jpg");
         }
 
         public class EmployeePerformanceRow
@@ -3697,6 +3722,7 @@ namespace FOS.Web.UI.Controllers
             public int      SOID                 { get; set; }
             public string   EmployeeName         { get; set; }
             public string   EmployeeCode         { get; set; }
+            public string   PictureUrl           { get; set; }
             public string   RegionalHead         { get; set; }
             public string   Region               { get; set; }
             public string   PrimaryTown          { get; set; }
