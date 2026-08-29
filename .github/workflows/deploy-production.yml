@@ -18,8 +18,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Hardcoded path instead of microsoft/setup-msbuild@v2: vswhere reports this
+      # Build Tools instance as incomplete (pending reboot on APPSRVS), even though
+      # MSBuild itself works fine.
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+        shell: powershell
+        run: >
+          Add-Content -Path $env:GITHUB_PATH
+          -Value "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin"
 
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v2
