@@ -1,0 +1,47 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: [self-hosted, windows, production]
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Restore NuGet packages
+        run: nuget restore SaleForceApp.sln
+
+      - name: Build and publish FOS.Web.UI
+        run: >
+          msbuild FOS.Web.UI\FOS.Web.UI.csproj
+          /p:Configuration=Release
+          /p:DeployOnBuild=true
+          /p:WebPublishMethod=FileSystem
+          /p:PublishUrl="${{ runner.temp }}\publish"
+          /p:DeleteExistingFiles=false
+          /verbosity:minimal
+
+      - name: Deploy to IIS with pre-deploy backup
+        shell: powershell
+        run: >
+          .\.deploy\Deploy-Production.ps1
+          -PublishDir "${{ runner.temp }}\publish"
+          -SiteRoot "E:\BrightoPublish\BrightoPublish"
+          -BackupRoot "E:\BrightoPublish\Latestbackup"
+          -CommitSha "${{ github.sha }}"
