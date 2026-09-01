@@ -1,0 +1,125 @@
+@model FOS.Shared.JobsData
+
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Content/Style/jquery-ui.min.css" rel="stylesheet" />
+<!-- BEGIN PAGE HEADER-->
+<div class="row-fluid">
+    <div class="span12">
+        <h3 class="page-title"></h3>
+        <ul class="breadcrumb">
+            <li>
+                <a href="#">Business Affiliate Report</a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+
+<div class="row-fluid">
+    <div class="span12">
+        <!-- BEGIN SAMPLE FORMPORTLET-->
+        <div class="widget green" style="min-height: 100px;">
+            <div class="widget-title">
+                <h4>Business Affiliate Report</h4>
+                <span class="tools">
+                </span>
+            </div>
+            <div class="widget-body" style="min-height: 100px;">
+                <div class="span5">
+
+                    <div class="control-group" style="margin-bottom: 14px;">
+                        <label class="control-label">Starting Date *</label>
+                        <div class="controls">
+                            <input class="text-box single-line" id="StartingDate1" name="StartingDate1" style="height: 22px; width: 202px; margin-bottom: 0px;">
+                        </div>
+                    </div>
+
+                    <div class="control-group" style="margin-bottom: 14px;">
+                        <label class="control-label">Ending Date *</label>
+                        <div class="controls">
+                            <input class="text-box single-line" id="StartingDate2" name="StartingDate2" style="height: 22px; width: 202px; margin-bottom: 0px;">
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">Select Head *</label>
+                        <div class="controls">
+                            @Html.DropDownListFor(model => model.RegionalHeadID, new SelectList(Model.RegionalHead, "ID", "Name"), new { @class = "" })
+                            @Html.ValidationMessageFor(model => model.RegionalHeadID)
+                            @Html.HiddenFor(model => model.HiddenRegionalHeadID)
+                        </div>
+                    </div>
+
+                    <div class="control-group" style="margin-bottom: 14px;">
+                        <label class="control-label">Sales Officer *</label>
+                        <div class="controls">
+                            @Html.DropDownListFor(model => model.SaleOfficerID, new SelectList(Model.SaleOfficer, "ID", "Name"), new { @class = "" })
+                            @Html.ValidationMessageFor(model => model.SaleOfficerID)
+                        </div>
+                    </div>
+
+                    <div class="control-group" style="border-top: 1px solid #e5e5e5;">
+                        <div class="form-actions" style="padding-left: 130px; padding-right: 0px;">
+                            <button type="button" id="btnNew" class="btn btn-primary">
+                                <i class="icon-ok icon-white" style="padding-right: 8px"></i><span id="create">Generate Report</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="span5">
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+
+        $('#StartingDate1').datepicker(
+        {
+            dateFormat: 'dd-M-yy',
+            changeMonth: true,
+            changeYear: true,
+            yearRange: '1950:2100'
+        });
+
+        $('#StartingDate2').datepicker(
+        {
+            dateFormat: 'dd-M-yy',
+            changeMonth: true,
+            changeYear: true,
+            yearRange: '1950:2100'
+        });
+
+        $('#btnNew').click(function () {
+
+            var $TID = $("#RegionalHeadID").val();
+            if ($TID == null) {
+                $TID = $("#HiddenRegionalHeadID").val();
+            }
+            var $sdate = $("#StartingDate1").val();
+            var $edate = $("#StartingDate2").val();
+            if ($sdate == "") {
+                alertify.error("Please Enter Starting Date");
+            }
+            else if ($edate == "") {
+                alertify.error("Please Enter Ending Date");
+            }
+            else {
+                var $fosid = $("#SaleOfficerID").val();
+
+                window.open("@Url.Action("BusinessAffiliateReportRpt", "Reports")" + "?StartingDate=" + $sdate + "&EndingDate=" + $edate + "&TID=" + $TID + "&fosid=" + $fosid);
+            }
+        });
+
+    });
+</script>

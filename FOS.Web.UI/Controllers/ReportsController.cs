@@ -33,6 +33,21 @@ namespace FOS.Web.UI.Controllers
     {
         FOSDataModel db = new FOSDataModel();
 
+        private static string GetSafeString(IDataReader reader, string columnName)
+        {
+            var ordinal = reader.GetOrdinal(columnName);
+            if (reader.IsDBNull(ordinal))
+            {
+                return string.Empty;
+            }
+            var value = reader.GetValue(ordinal);
+            if (value is DateTime)
+            {
+                return ((DateTime)value).ToString("dd-MMM-yyyy hh:mm tt");
+            }
+            return value.ToString();
+        }
+
 
     
     #region FOS Wise Date/Month Wise Intake Delivered Report-1A
@@ -2878,6 +2893,248 @@ namespace FOS.Web.UI.Controllers
 
         }
 
+
+        #region Business Affiliate Report
+
+        public ActionResult BusinessAffiliateReport()
+        {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            int RHID = FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser();
+            var ranges = FOS.Setup.ManageRegion.GetRangesRelatedToZSM(userID);
+            var rangeid = ranges.Select(r => r.ID).FirstOrDefault();
+            List<RegionalHeadData> regionalHeadData = new List<RegionalHeadData>();
+            regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
+            if (userID == 1)
+            {
+                regionalHeadData.Insert(0, new RegionalHeadData
+                {
+                    ID = 0,
+                    Name = "All"
+                });
+            }
+            int regId = 0;
+            if (FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser() == 0)
+            {
+                regId = regionalHeadData.Select(r => r.ID).FirstOrDefault();
+            }
+            else
+            {
+                regId = FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser();
+            }
+            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regId, true);
+
+            SaleOfficerObj.Insert(0, new SaleOfficer
+            {
+                ID = 0,
+                Name = "All"
+            });
+
+            if (SaleOfficerObj == null)
+            {
+                return View();
+            }
+
+            var objJob = new JobsData();
+
+            objJob.RegionalHeadTypeData = FOS.Setup.ManageRegion.GetRegionalHeadsType();
+            objJob.SaleOfficer = SaleOfficerObj;
+            objJob.RegionalHead = regionalHeadData;
+            objJob.Range = ranges;
+            return View(objJob);
+        }
+
+        public void BusinessAffiliateReportRpt(string StartingDate, string EndingDate, int TID, int fosid)
+        {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
+            try
+            {
+                DateTime start = Convert.ToDateTime(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
+                DateTime end = Convert.ToDateTime(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
+                DateTime final = end.AddDays(1);
+
+                StringWriter sw = new StringWriter();
+
+                sw.WriteLine("\"Created Date\",\"Visit Date\",\"Regional Head\",\"SO Name\",\"Zone\",\"City\",\"Business Name\",\"Contact Person\",\"Contact Number\",\"Address\",\"Business Type\",\"Expertise\",\"Classification\",\"Nature of Client\",\"Competitors\",\"Affiliate Remarks\",\"Customer LatLong\",\"Purpose of Visit\",\"Target Agreement\",\"Visit Remarks\"");
+
+                using (FOSDataModel dbContext = new FOSDataModel())
+                using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
+                using (var cmd = new SqlCommand("dbo.usp_GetBusinessAffiliateReport", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@DateFrom", start);
+                    cmd.Parameters.AddWithValue("@DateTo", final);
+                    cmd.Parameters.AddWithValue("@SOID", fosid);
+                    cmd.Parameters.AddWithValue("@RegionalHeadID", TID);
+
+                    conn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\",\"{13}\",\"{14}\",\"{15}\",\"{16}\",\"{17}\",\"{18}\",\"{19}\"",
+                            EscapeCsvValue(GetSafeString(reader, "CreatedDate")),
+                            EscapeCsvValue(GetSafeString(reader, "VisitDate")),
+                            EscapeCsvValue(GetSafeString(reader, "RegionalHead")),
+                            EscapeCsvValue(GetSafeString(reader, "SOName")),
+                            EscapeCsvValue(GetSafeString(reader, "Zone")),
+                            EscapeCsvValue(GetSafeString(reader, "City")),
+                            EscapeCsvValue(GetSafeString(reader, "BusinessName")),
+                            EscapeCsvValue(GetSafeString(reader, "ContactPerson")),
+                            EscapeCsvValue(GetSafeString(reader, "ContactNumber")),
+                            EscapeCsvValue(GetSafeString(reader, "Address")),
+                            EscapeCsvValue(GetSafeString(reader, "BusinessType")),
+                            EscapeCsvValue(GetSafeString(reader, "Expertise")),
+                            EscapeCsvValue(GetSafeString(reader, "Classification")),
+                            EscapeCsvValue(GetSafeString(reader, "NatureOfClient")),
+                            EscapeCsvValue(GetSafeString(reader, "Competitors")),
+                            EscapeCsvValue(GetSafeString(reader, "AffiliateRemarks")),
+                            EscapeCsvValue(GetSafeString(reader, "CustomerLatLong")),
+                            EscapeCsvValue(GetSafeString(reader, "PurposeOfVisit")),
+                            EscapeCsvValue(GetSafeString(reader, "TargetAgreement")),
+                            EscapeCsvValue(GetSafeString(reader, "VisitRemarks"))
+                            ));
+                        }
+                    }
+                }
+
+                Response.ClearContent();
+                Response.AddHeader("content-disposition", "attachment;filename=BusinessAffiliateReport" + DateTime.Now + ".csv");
+                Response.ContentType = "application/octet-stream";
+                Response.Write(sw.ToString());
+                Response.End();
+            }
+            catch (Exception exp)
+            {
+                Log.Instance.Error(exp, "Report Not Working");
+                // return null;
+            }
+
+        }
+
+        #endregion
+
+
+        #region Competitor Report
+
+        public ActionResult CompetitorReport()
+        {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            int RHID = FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser();
+            var ranges = FOS.Setup.ManageRegion.GetRangesRelatedToZSM(userID);
+            var rangeid = ranges.Select(r => r.ID).FirstOrDefault();
+            List<RegionalHeadData> regionalHeadData = new List<RegionalHeadData>();
+            regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
+            if (userID == 1)
+            {
+                regionalHeadData.Insert(0, new RegionalHeadData
+                {
+                    ID = 0,
+                    Name = "All"
+                });
+            }
+            int regId = 0;
+            if (FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser() == 0)
+            {
+                regId = regionalHeadData.Select(r => r.ID).FirstOrDefault();
+            }
+            else
+            {
+                regId = FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser();
+            }
+            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regId, true);
+
+            SaleOfficerObj.Insert(0, new SaleOfficer
+            {
+                ID = 0,
+                Name = "All"
+            });
+
+            if (SaleOfficerObj == null)
+            {
+                return View();
+            }
+
+            var objJob = new JobsData();
+
+            objJob.RegionalHeadTypeData = FOS.Setup.ManageRegion.GetRegionalHeadsType();
+            objJob.SaleOfficer = SaleOfficerObj;
+            objJob.RegionalHead = regionalHeadData;
+            objJob.Range = ranges;
+            return View(objJob);
+        }
+
+        public void CompetitorReportRpt(string StartingDate, string EndingDate, int TID, int fosid)
+        {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
+            try
+            {
+                DateTime start = Convert.ToDateTime(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
+                DateTime end = Convert.ToDateTime(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
+                DateTime final = end.AddDays(1);
+
+                StringWriter sw = new StringWriter();
+
+                sw.WriteLine("\"Submitted Date\",\"Regional Head\",\"SO Name\",\"Zone\",\"City\",\"Activity Type\",\"Competitor Name\",\"Remarks\",\"Video URL\"");
+
+                using (FOSDataModel dbContext = new FOSDataModel())
+                using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
+                using (var cmd = new SqlCommand("dbo.usp_GetCompetitorReport", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@DateFrom", start);
+                    cmd.Parameters.AddWithValue("@DateTo", final);
+                    cmd.Parameters.AddWithValue("@SOID", fosid);
+                    cmd.Parameters.AddWithValue("@RegionalHeadID", TID);
+
+                    conn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\"",
+                            EscapeCsvValue(GetSafeString(reader, "SubmittedDate")),
+                            EscapeCsvValue(GetSafeString(reader, "RegionalHead")),
+                            EscapeCsvValue(GetSafeString(reader, "SOName")),
+                            EscapeCsvValue(GetSafeString(reader, "Zone")),
+                            EscapeCsvValue(GetSafeString(reader, "City")),
+                            EscapeCsvValue(GetSafeString(reader, "ActivityType")),
+                            EscapeCsvValue(GetSafeString(reader, "CompetitorName")),
+                            EscapeCsvValue(GetSafeString(reader, "Remarks")),
+                            EscapeCsvValue(GetSafeString(reader, "VideoUrl"))
+                            ));
+                        }
+                    }
+                }
+
+                Response.ClearContent();
+                Response.AddHeader("content-disposition", "attachment;filename=CompetitorReport" + DateTime.Now + ".csv");
+                Response.ContentType = "application/octet-stream";
+                Response.Write(sw.ToString());
+                Response.End();
+            }
+            catch (Exception exp)
+            {
+                Log.Instance.Error(exp, "Report Not Working");
+                // return null;
+            }
+
+        }
+
+        #endregion
 
 
         #region ClaimSummaryReport
