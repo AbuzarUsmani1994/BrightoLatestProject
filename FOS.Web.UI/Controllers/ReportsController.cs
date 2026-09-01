@@ -2904,14 +2904,6 @@ namespace FOS.Web.UI.Controllers
             var rangeid = ranges.Select(r => r.ID).FirstOrDefault();
             List<RegionalHeadData> regionalHeadData = new List<RegionalHeadData>();
             regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
-            if (userID == 1)
-            {
-                regionalHeadData.Insert(0, new RegionalHeadData
-                {
-                    ID = 0,
-                    Name = "All"
-                });
-            }
             int regId = 0;
             if (FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser() == 0)
             {
@@ -3031,14 +3023,6 @@ namespace FOS.Web.UI.Controllers
             var rangeid = ranges.Select(r => r.ID).FirstOrDefault();
             List<RegionalHeadData> regionalHeadData = new List<RegionalHeadData>();
             regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
-            if (userID == 1)
-            {
-                regionalHeadData.Insert(0, new RegionalHeadData
-                {
-                    ID = 0,
-                    Name = "All"
-                });
-            }
             int regId = 0;
             if (FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser() == 0)
             {
