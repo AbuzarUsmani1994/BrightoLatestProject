@@ -9263,5 +9263,91 @@ namespace FOS.Web.UI.Controllers
         }
         #endregion
 
+        #region SO Wise Target Allocation Report
+
+        [HttpGet]
+        public ActionResult SOWiseTargetAllocationReport()
+        {
+            var financialYears = db.Tbl_FinancialYear
+                .Where(x => x.IsActive)
+                .OrderByDescending(x => x.ID)
+                .Select(x => new FinancialYearListItem { ID = x.ID, Year = x.Year })
+                .ToList();
+
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
+            var activeRHIds = new HashSet<int>(db.RegionalHeads.Where(x => x.IsActive && !x.IsDeleted).Select(x => x.ID));
+            regionalHeadData = regionalHeadData.Where(r => r.ID != 0 && activeRHIds.Contains(r.ID)).ToList();
+
+            var saleOfficers = FOS.Setup.ManageSaleOffice.GetAllSaleOfficerListRelatedtoregionalHeadID(0, false);
+            saleOfficers.Insert(0, new SaleOfficer { ID = 0, Name = "All" });
+
+            var model = new CityData
+            {
+                FinancialYears = financialYears,
+                RegionalHeads = regionalHeadData,
+                SaleOfficers = saleOfficers
+            };
+            return View(model);
+        }
+
+        public JsonResult SOWiseTargetAllocationDataHandler(DTParameters param, int SOID, int FinancialYearID, int RegionalHeadID)
+        {
+            try
+            {
+                var dtsource = ManageCity.GetKPIForGrid(SOID, FinancialYearID, RegionalHeadID);
+
+                var columnSearch = new List<string>();
+                foreach (var col in param.Columns)
+                    columnSearch.Add(col.Search.Value);
+
+                var data = ManageCity.GetResult(param.Search.Value, param.SortOrder, param.Start, param.Length, dtsource, columnSearch);
+
+                foreach (var itm in data)
+                {
+                    if (itm.LastUpdate.HasValue)
+                        itm.FormattedDate = Convert.ToDateTime(itm.LastUpdate).ToString("dd-MM-yyyy");
+                }
+
+                int count = ManageCity.Count(param.Search.Value, dtsource, columnSearch);
+                var result = new DTResult<CityData>
+                {
+                    draw = param.Draw,
+                    data = data,
+                    recordsFiltered = count,
+                    recordsTotal = count
+                };
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { error = ex.Message });
+            }
+        }
+
+        public ActionResult ExportSOWiseTargetAllocationReport(int SOID, int FinancialYearID, int RegionalHeadID)
+        {
+            var data = ManageCity.GetKPIForGrid(SOID, FinancialYearID, RegionalHeadID);
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("\"Sr No\",\"Financial Year\",\"Regional Head\",\"SO Name\",\"Platinum\",\"Premium\",\"Gold\",\"Total\"");
+            int sr = 1;
+            foreach (var row in data)
+            {
+                sb.AppendLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\"",
+                    sr++,
+                    row.FinancialYearName,
+                    row.RegionalHeadName,
+                    row.SOName,
+                    row.CoatingTarget,
+                    row.ACTDTarget,
+                    row.ReadyMixTarget,
+                    row.TotalTarget));
+            }
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+            return File(bytes, "application/vnd.ms-excel", "SOWiseTargetAllocationReport_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv");
+        }
+
+        #endregion SO Wise Target Allocation Report
+
     }
 }
