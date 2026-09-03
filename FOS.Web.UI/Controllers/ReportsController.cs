@@ -3149,7 +3149,7 @@ namespace FOS.Web.UI.Controllers
                 regId = FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser();
             }
             //List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageSaleOffice.GetAllSaleOfficerListRelatedtoregionalHeadID(0);
-            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regId, true);
+            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regId, true).Where(s => s.IsActive == true).ToList();
 
             SaleOfficerObj.Insert(0, new SaleOfficer
             {
@@ -3344,7 +3344,7 @@ namespace FOS.Web.UI.Controllers
                 regId = FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser();
             }
             //List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageSaleOffice.GetAllSaleOfficerListRelatedtoregionalHeadID(0);
-            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regId, true);
+            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regId, true).Where(s => s.IsActive == true).ToList();
 
             SaleOfficerObj.Insert(0, new SaleOfficer
             {
@@ -3821,7 +3821,7 @@ namespace FOS.Web.UI.Controllers
                 regId = FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser();
             }
             //List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageSaleOffice.GetAllSaleOfficerListRelatedtoregionalHeadID(0);
-            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regId, true);
+            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regId, true).Where(s => s.IsActive == true).ToList();
 
             SaleOfficerObj.Insert(0, new SaleOfficer
             {
@@ -4024,7 +4024,7 @@ namespace FOS.Web.UI.Controllers
                 regId = FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser();
             }
             //List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageSaleOffice.GetAllSaleOfficerListRelatedtoregionalHeadID(0);
-            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regId, true);
+            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regId, true).Where(s => s.IsActive == true).ToList();
 
             SaleOfficerObj.Insert(0, new SaleOfficer
             {
@@ -4180,7 +4180,7 @@ namespace FOS.Web.UI.Controllers
                 regId = FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser();
             }
             //List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageSaleOffice.GetAllSaleOfficerListRelatedtoregionalHeadID(0);
-            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regId, true);
+            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regId, true).Where(s => s.IsActive == true).ToList();
 
             SaleOfficerObj.Insert(0, new SaleOfficer
             {
@@ -4341,7 +4341,7 @@ namespace FOS.Web.UI.Controllers
                 regId = FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser();
             }
             //List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageSaleOffice.GetAllSaleOfficerListRelatedtoregionalHeadID(0);
-            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regId, true);
+            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regId, true).Where(s => s.IsActive == true).ToList();
 
             SaleOfficerObj.Insert(0, new SaleOfficer
             {
@@ -7396,7 +7396,7 @@ namespace FOS.Web.UI.Controllers
             var rangeid = objSaleOffice.ranges.Select(r => r.ID).FirstOrDefault();
             objSaleOffice.RegionalHead = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
             var regionid = objSaleOffice.RegionalHead.FirstOrDefault();
-            objSaleOffice.SaleOfficer = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regionid.ID, true);
+            objSaleOffice.SaleOfficer = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regionid.ID, true).Where(s => s.IsActive == true).ToList();
             var regionids = objSaleOffice.ranges.FirstOrDefault();
             objSaleOffice.dealerdata = ManageDealer.GetReportType();
             return View(objSaleOffice);

@@ -506,7 +506,7 @@
                 $.ajax({
                     type: "POST",
                     data: { RegionalHeadID: RegionalHeadID, selectOption: true },
-                    url: "@Url.Action("GetAllSaleOfficerListRelatedToDealerSelectOption", "Job")",
+                    url: "@Url.Action("GetAllSaleOfficerListRelatedToHeadrSelectOption", "Job")",
                     success: function (json) {
 
                         var $el = $("#SaleOfficerID");
