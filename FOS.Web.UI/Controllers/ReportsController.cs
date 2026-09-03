@@ -3190,7 +3190,7 @@ namespace FOS.Web.UI.Controllers
             return View(objJob);
         }
 
-        public void ClaimSummaryRpt(string StartingDate, string EndingDate, int TID, int fosid)
+        public void ClaimSummaryRpt(string StartingDate, string EndingDate, int TID, int fosid, string SubmissionType = "All")
         {
             try
             {
@@ -3206,6 +3206,13 @@ namespace FOS.Web.UI.Controllers
 
                 // Get data from database
                 var result = db.usp_GetClaimSummaryReportTraderWiseForBackEnd(TID, fosid, start, final, 0).ToList();
+
+                // Late submission = punched after the 10th of the month following the claim's own month
+                // (e.g. a February claim is due by 10-Mar; punched 11-Mar or later is late)
+                if (string.Equals(SubmissionType, "Late", StringComparison.OrdinalIgnoreCase))
+                {
+                    result = result.Where(r => IsLateSubmission(r.CreatedDate, r.PunchingDate)).ToList();
+                }
 
                 // Set up CSV response
                 Response.ClearContent();
@@ -3294,6 +3301,17 @@ namespace FOS.Web.UI.Controllers
                 return string.Empty;
 
             return value.Replace("\"", "\"\""); // Escape double quotes in CSV
+        }
+
+        // A claim for month M is late once it's punched on or after the 11th of month M+1
+        // (e.g. a February claim must be punched by 10-Mar; 11-Mar or later is late).
+        private bool IsLateSubmission(DateTime? claimDate, DateTime? punchingDate)
+        {
+            if (!claimDate.HasValue || !punchingDate.HasValue)
+                return false;
+
+            DateTime deadline = new DateTime(claimDate.Value.Year, claimDate.Value.Month, 1).AddMonths(1).AddDays(9);
+            return punchingDate.Value.Date > deadline.Date;
         }
         #endregion
 
@@ -3809,7 +3827,7 @@ namespace FOS.Web.UI.Controllers
             return View(objJob);
         }
 
-        public void ClaimDetailRpt(string StartingDate, string EndingDate, int TID, int fosid)
+        public void ClaimDetailRpt(string StartingDate, string EndingDate, int TID, int fosid, string SubmissionType = "All")
         {
             var userID = Convert.ToInt32(Session["UserID"]);
             var remoteIpAddress = "";
@@ -3832,6 +3850,13 @@ namespace FOS.Web.UI.Controllers
 
 
                 List<usp_GetClaimSummaryReportForBackEnd_Result> result = db.usp_GetClaimSummaryReportForBackEnd(TID, fosid, start, final).ToList();
+
+                // Late submission = punched after the 10th of the month following the claim's own month
+                // (e.g. a February claim is due by 10-Mar; punched 11-Mar or later is late)
+                if (string.Equals(SubmissionType, "Late", StringComparison.OrdinalIgnoreCase))
+                {
+                    result = result.Where(r => IsLateSubmission(r.CreatedDate, r.PunchingDate)).ToList();
+                }
 
 
 
