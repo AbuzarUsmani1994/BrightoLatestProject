@@ -3385,7 +3385,7 @@ namespace FOS.Web.UI.Controllers
             return View(objJob);
         }
 
-        public void ClaimSummarySOWiseRpt(string StartingDate, string EndingDate, int TID, int fosid)
+        public void ClaimSummarySOWiseRpt(string StartingDate, string EndingDate, int TID, int fosid, string SubmissionType = "All")
         {
             try
             {
@@ -3399,8 +3399,43 @@ namespace FOS.Web.UI.Controllers
                 DateTime end = DateTime.Parse(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
                 DateTime final = end.AddDays(1);
 
-                // Get data from database
-                var result = db.usp_GetClaimSummaryReportSOWise(TID, fosid, start, final).ToList();
+                // Get data from database - raw ADO.NET (proc now takes a 5th @SubmissionType
+                // param not known to the EDMX function import, so call it directly instead of
+                // editing the fragile .edmx)
+                var result = new List<usp_GetClaimSummaryReportSOWise_Result>();
+                using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+                using (var cmd = new SqlCommand("dbo.usp_GetClaimSummaryReportSOWise", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@headID", TID);
+                    cmd.Parameters.AddWithValue("@SaleOfficerId", fosid);
+                    cmd.Parameters.AddWithValue("@startdate", start);
+                    cmd.Parameters.AddWithValue("@enddate", final);
+                    cmd.Parameters.AddWithValue("@SubmissionType", string.IsNullOrEmpty(SubmissionType) ? "All" : SubmissionType);
+
+                    conn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Add(new usp_GetClaimSummaryReportSOWise_Result
+                            {
+                                Head_Name = reader["Head Name"] as string,
+                                SO_Name = reader["SO Name"] as string,
+                                Region_Name = reader["Region Name"] as string,
+                                SaleValue = reader["SaleValue"] as string,
+                                Total_Liters = reader["Total Liters"] as string,
+                                Target_Liters = reader["Target Liters"] == DBNull.Value ? 0 : Convert.ToInt32(reader["Target Liters"]),
+                                Target_Balance = reader["Target Balance"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(reader["Target Balance"]),
+                                IncentiveValue = reader["IncentiveValue"] as string,
+                                TotalPrice = reader["TotalPrice"] as string,
+                                SalesTax = reader["SalesTax"] as string,
+                                MRPValue = reader["MRPValue"] as string,
+                                Disc__age = reader["Disc %age"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(reader["Disc %age"])
+                            });
+                        }
+                    }
+                }
 
                 // Set up CSV response
                 Response.ClearContent();
