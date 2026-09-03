@@ -2600,7 +2600,7 @@ namespace FOS.Setup
                         doneJobData = (from jd in dbContext.Tbl_SalesClaimMaster
                                        join
                                        r in dbContext.Retailers on jd.CustomerID equals r.ID
-                                       where ( jd.IsActive == true && jd.CreatedOn >= FromDate && jd.CreatedOn <= ToDate  && jd.SOID == SOID)
+                                       where ( jd.IsActive == true && jd.DateSelected >= FromDate && jd.DateSelected <= ToDate  && jd.SOID == SOID)
                                        select new JobsDetailData
                                        //u => new JobsDetailData
                                        {
