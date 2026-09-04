@@ -9328,15 +9328,30 @@ namespace FOS.Web.UI.Controllers
         [HttpGet]
         public ActionResult SOWiseTargetAllocationReport()
         {
-            var financialYears = db.Tbl_FinancialYear
-                .Where(x => x.IsActive)
-                .OrderByDescending(x => x.ID)
-                .Select(x => new FinancialYearListItem { ID = x.ID, Year = x.Year })
-                .ToList();
+            var financialYears = new List<FinancialYearListItem>();
+            using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+            using (var cmd = new SqlCommand("SELECT ID, [Year] FROM dbo.Tbl_FinancialYear WHERE IsActive = 1 ORDER BY ID DESC", conn))
+            {
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                        financialYears.Add(new FinancialYearListItem { ID = Convert.ToInt32(reader["ID"]), Year = reader["Year"].ToString() });
+                }
+            }
 
             var userID = Convert.ToInt32(Session["UserID"]);
             var regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
-            var activeRHIds = new HashSet<int>(db.RegionalHeads.Where(x => x.IsActive && !x.IsDeleted).Select(x => x.ID));
+            var activeRHIds = new HashSet<int>();
+            using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+            using (var cmd = new SqlCommand("SELECT ID FROM dbo.RegionalHeads WHERE IsActive = 1 AND IsDeleted = 0", conn))
+            {
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read()) activeRHIds.Add(Convert.ToInt32(reader["ID"]));
+                }
+            }
             regionalHeadData = regionalHeadData.Where(r => r.ID != 0 && activeRHIds.Contains(r.ID)).ToList();
 
             var saleOfficers = FOS.Setup.ManageSaleOffice.GetAllSaleOfficerListRelatedtoregionalHeadID(0, false);
