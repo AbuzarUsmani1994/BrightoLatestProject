@@ -9389,12 +9389,13 @@ namespace FOS.Web.UI.Controllers
         {
             var data = ManageCity.GetKPIForGrid(SOID, FinancialYearID, RegionalHeadID);
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("\"Sr No\",\"Financial Year\",\"Regional Head\",\"SO Name\",\"Platinum\",\"Premium\",\"Gold\",\"Total\"");
+            sb.AppendLine("\"Sr No\",\"Created Date\",\"Financial Year\",\"Regional Head\",\"SO Name\",\"Platinum\",\"Premium\",\"Gold\",\"Total\"");
             int sr = 1;
             foreach (var row in data)
             {
-                sb.AppendLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\"",
+                sb.AppendLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\"",
                     sr++,
+                    row.LastUpdate.HasValue ? row.LastUpdate.Value.ToString("dd-MMM-yyyy") : "",
                     row.FinancialYearName,
                     row.RegionalHeadName,
                     row.SOName,

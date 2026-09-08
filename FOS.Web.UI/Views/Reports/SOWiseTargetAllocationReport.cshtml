@@ -51,7 +51,7 @@
                         <label class="control-label">Sales Officer</label>
                         <div class="controls">
                             <select id="SOID" name="SOID" class="span3">
-                                @foreach (var so in (Model.SaleOfficers ?? new List<FOS.Shared.SaleOfficer>()))
+                                @foreach (var so in (Model.SaleOfficers ?? new List<FOS.DataLayer.SaleOfficer>()))
                                 {
                                     <option value="@so.ID">@so.Name</option>
                                 }
@@ -93,6 +93,7 @@
                                 <th>Platinum</th>
                                 <th>Premium</th>
                                 <th>Gold</th>
+                                <th>Creation Date</th>
                                 <th>Total</th>
                             </tr>
                         </thead>
@@ -162,6 +163,7 @@
                 { "data": "CoatingTarget" },
                 { "data": "ACTDTarget" },
                 { "data": "ReadyMixTarget" },
+                { "data": "FormattedDate" },
                 { "data": "TotalTarget" }
             ],
             "order": [1, "asc"]
