@@ -3202,7 +3202,8 @@ namespace FOS.Web.UI.Controllers
                 // Parse dates with proper null handling
                 DateTime start = DateTime.Parse(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
                 DateTime end = DateTime.Parse(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
-                DateTime final = end.AddDays(1);
+                // DateSelected is date-only and compared inclusively in the proc; don't add a day.
+                DateTime final = end;
 
                 // Get data from database
                 var result = db.usp_GetClaimSummaryReportTraderWiseForBackEnd(TID, fosid, start, final, 0).ToList();
@@ -3397,7 +3398,8 @@ namespace FOS.Web.UI.Controllers
                 // Parse dates with proper null handling
                 DateTime start = DateTime.Parse(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
                 DateTime end = DateTime.Parse(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
-                DateTime final = end.AddDays(1);
+                // DateSelected is date-only and compared inclusively (BETWEEN) in the proc; don't add a day.
+                DateTime final = end;
 
                 // Get data from database - raw ADO.NET (proc now takes a 5th @SubmissionType
                 // param not known to the EDMX function import, so call it directly instead of
@@ -3877,7 +3879,8 @@ namespace FOS.Web.UI.Controllers
 
                 DateTime start = Convert.ToDateTime(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
                 DateTime end = Convert.ToDateTime(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
-                DateTime final = end.AddDays(1);
+                // DateSelected is date-only and compared inclusively in the proc; don't add a day.
+                DateTime final = end;
                 ManageRetailer objRetailers = new ManageRetailer();
 
 
@@ -4081,7 +4084,8 @@ namespace FOS.Web.UI.Controllers
 
             DateTime start = Convert.ToDateTime(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
             DateTime end = Convert.ToDateTime(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
-            DateTime final = end.AddDays(1);
+            // DateSelected is date-only and compared inclusively in the proc; don't add a day.
+            DateTime final = end;
             Microsoft.Reporting.WebForms.LocalReport ReportViewer1 = new Microsoft.Reporting.WebForms.LocalReport();
 
 
@@ -4236,7 +4240,8 @@ namespace FOS.Web.UI.Controllers
 
                 DateTime start = Convert.ToDateTime(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
                 DateTime end = Convert.ToDateTime(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
-                DateTime final = end.AddDays(1);
+                // DateSelected is date-only and compared inclusively in the proc; don't add a day.
+                DateTime final = end;
                 ManageRetailer objRetailers = new ManageRetailer();
 
 
@@ -7419,7 +7424,8 @@ namespace FOS.Web.UI.Controllers
 
             DateTime start = Convert.ToDateTime(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
             DateTime end = Convert.ToDateTime(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
-            DateTime final = end.AddDays(1);
+            // DateSelected is date-only and compared inclusively in these procs; don't add a day.
+            DateTime final = end;
             Microsoft.Reporting.WebForms.LocalReport ReportViewer1 = new Microsoft.Reporting.WebForms.LocalReport();
 
             if (type == "Daily")

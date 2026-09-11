@@ -38,7 +38,10 @@ namespace FOS.Web.UI.Controllers.API
                 Microsoft.Reporting.WebForms.LocalReport ReportViewer1 = new Microsoft.Reporting.WebForms.LocalReport();
 
                 DateTime Todate = DateTime.Parse(rm.DateTo);
-                DateTime newDate = Todate.AddDays(1);
+                // NOTE: DateSelected on the underlying claim procs is a date-only column
+                // compared with an inclusive <=/BETWEEN, so do NOT add a day here - that
+                // previously caused claim reports to leak in one extra day of data.
+                DateTime newDate = Todate;
                 DateTime FromDate = DateTime.Parse(rm.DateFrom);
 
                 string DateTO = Todate.ToString("dd-MM-yyyy");
