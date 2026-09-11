@@ -80,7 +80,7 @@ namespace FOS.Web.UI.Controllers.API
                     JobObj.SOID = rm.SOID;
                     JobObj.IsActive = true;
                     JobObj.CreatedAt = DateTime.UtcNow.AddHours(5);
-                    //JobObj.AgainCall = rm.AgainCall;
+                    JobObj.AgainCall = rm.AgainCall;
 
 
                     db.Tbl_HousingVisits.Add(JobObj);
