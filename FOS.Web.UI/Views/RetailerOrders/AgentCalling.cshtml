@@ -82,6 +82,17 @@
                         @Html.HiddenFor(model => model.ID)
                         @Html.HiddenFor(model => model.SelectedRetailers)
 
+                        <span id="CallTimelineWrap" style="display:none">
+                            <label class="control-label">Call Timeline *</label>
+                            <select id="CallTimeline" name="CallTimeline">
+                                <option value="">-- All --</option>
+                                <option value="Immediate">Immediate</option>
+                                <option value="1 week">1 week</option>
+                                <option value="2 week">2 week</option>
+                                <option value="3 week">3 week</option>
+                            </select>
+                        </span>
+
                         <button type="button" id="ApplyFilter" class="btn btn-primary">
                             <i class="icon-ok icon-white" style="padding-right: 2px"></i><span style="width:50px">Apply Filter</span>
                         </button>
@@ -984,6 +995,7 @@
                     data.StartingDate2 = $('#StartingDate2').val();
                     data.ZoneID = $('#RegionalHeadID').val();
                     data.SOID = $('#SaleOfficerID').val();
+                    data.CallTimeline = $('#SaleOfficerID').val() == "4" ? $('#CallTimeline').val() : "";
                    return data = JSON.stringify(data);
                 },
             },
@@ -1503,6 +1515,11 @@ $.ajax({
             });
         $("#liJob,#liCheckJobs").addClass("active");
         GenerateDetailGrid();
+
+        $("#SaleOfficerID").change(function () {
+            $("#CallTimelineWrap").toggle($(this).val() == "4");
+        });
+        $("#CallTimelineWrap").toggle($("#SaleOfficerID").val() == "4");
     });
 
 

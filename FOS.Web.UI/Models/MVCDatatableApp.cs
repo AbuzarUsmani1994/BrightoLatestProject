@@ -89,6 +89,7 @@ namespace FOS.Web.UI.Models
         public int RangeID { get; set; }
         public int FinancialYearID { get; set; }
         public string Quarter { get; set; }
+        public string CallTimeline { get; set; }
         /// <summary>
         /// An array defining all columns in the table.
         /// </summary>

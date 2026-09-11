@@ -2292,7 +2292,8 @@ namespace FOS.Web.UI.Controllers
             {
                 new SaleOfficerData { ID = 1, Name = "First Visit" },
                 new SaleOfficerData { ID = 2, Name = "Sale Feedback" },
-                new SaleOfficerData { ID = 3, Name = "Lost Feedback" }
+                new SaleOfficerData { ID = 3, Name = "Lost Feedback" },
+                new SaleOfficerData { ID = 4, Name = "Call to customer" }
             };
 
             List<RetailerData> RetailerObj = new List<RetailerData>();
@@ -2339,7 +2340,7 @@ namespace FOS.Web.UI.Controllers
 
                 //if (regionalheadID == 0)
                 //{
-                dtsource = ManageJobs.GetAgentCallingDetailForGrid(param.StartingDate1, param.StartingDate2, param.ZoneID, param.SOID);
+                dtsource = ManageJobs.GetAgentCallingDetailForGrid(param.StartingDate1, param.StartingDate2, param.ZoneID, param.SOID, param.CallTimeline);
                 //}
                 //else
                 //{

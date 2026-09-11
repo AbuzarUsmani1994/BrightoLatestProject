@@ -2705,7 +2705,7 @@ namespace FOS.Setup
         }
 
 
-        public static List<JobsDetailData> GetAgentCallingDetailForGrid(string From, string To, int ZoneID, int SOID)
+        public static List<JobsDetailData> GetAgentCallingDetailForGrid(string From, string To, int ZoneID, int SOID, string callTimeline = null)
         {
             List<JobsDetailData> doneJobData = new List<JobsDetailData>();
             DateTime dtFromTodayUtc = DateTime.UtcNow.AddHours(5);
@@ -2818,6 +2818,46 @@ namespace FOS.Setup
                                            CallStatus = latestCall != null ? latestCall.NatureOfCall : null
                                        })
                                        .Where(x => x.JobID != 0)
+                                       .ToList();
+                    }
+                    else if (SOID == 4)
+                    {
+                        // Call to customer: one row per Housing Visit that has a follow-up
+                        // timeline (AgainCall), optionally filtered to a specific timeline
+                        // (Immediate / 1 week / 2 week / 3 week).
+                        doneJobData = (from v in dbContext.Tbl_HousingVisits
+                                       join r in dbContext.Retailers on v.CustomerID equals r.ID
+                                       join s in dbContext.SaleOfficers on r.SaleOfficerID equals s.ID
+                                       where (r.IsActive == true &&
+                                              v.CreatedAt >= FromDate &&
+                                              v.CreatedAt < ToDate &&
+                                              s.RegionalHeadID == ZoneID &&
+                                              v.AgainCall != null && v.AgainCall != "" &&
+                                              (string.IsNullOrEmpty(callTimeline) || v.AgainCall == callTimeline)
+                                              )
+                                       select new JobsDetailData
+                                       {
+                                           ID = r.ID,
+                                           JobID = v.ID,
+                                           SaleOfficerID = (int)r.SaleOfficerID,
+                                           SaleOfficerName = s.Name,
+                                           OwnerName = r.Name,
+                                           OwnerMob = r.Phone1,
+                                           RetailerName = r.ShopName,
+                                           ShopName = r.ShopName,
+                                           CustomerStatus = r.Status == true ? "Active" : "InActive",
+                                           RegionID = r.RegionID,
+                                           RegionName = dbContext.Regions
+                                                       .Where(p => p.ID == r.RegionID)
+                                                       .Select(p => p.Name)
+                                                       .FirstOrDefault(),
+                                           RetailerAddress = r.Address,
+                                           ClaimDate = r.LastUpdate,
+                                           AssignDate = v.NextVisitDate,
+                                           CallDate = v.CreatedAt,
+                                           CallerName = s.Name,
+                                           CallStatus = v.AgainCall
+                                       })
                                        .ToList();
                     }
                 }
