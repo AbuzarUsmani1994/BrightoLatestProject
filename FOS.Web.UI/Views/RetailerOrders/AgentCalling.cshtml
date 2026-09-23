@@ -398,7 +398,7 @@
                     <div style="margin-bottom: 20px;">
                         <label style="font-weight: 600; color: #376892; display: block; margin-bottom: 8px; font-size: 14px;">Send SMS to Customer</label>
                         <textarea class="form-control" id="sms" rows="3" style="width: 400px; height: 250px; padding: 8px 12px; resize: vertical; font-size: 13px;"></textarea>
-                        <button type="submit" class="btn btn-primary" style="padding: 6px 25px; font-weight: 600; font-size: 14px;">Submit SMS</button>
+                        <button type="button" id="submitSmsBtn" class="btn btn-primary" style="padding: 6px 25px; font-weight: 600; font-size: 14px;">Submit SMS</button>
                     </div>
 
                     <div style="margin-bottom: 20px;">
@@ -1628,6 +1628,45 @@ $.ajax({
         // $("#constructionStage").val('');
         // etc.
     }
+
+    $("#submitSmsBtn").on("click", function (e) {
+        e.preventDefault();
+
+        var jobID = $("#JobID").val();
+        var smsMessage = $("#sms").val();
+
+        if (!smsMessage || !smsMessage.trim()) {
+            alertify.error("Please enter a message to send.");
+            return;
+        }
+
+        var smsBtn = $(this);
+        smsBtn.html('<i class="fas fa-spinner fa-spin"></i> Sending...').prop('disabled', true);
+
+        $.ajax({
+            type: "POST",
+            url: "@Url.Action("SendCustomerSMS", "RetailerOrders")",
+            data: {
+                JobID: jobID,
+                Message: smsMessage
+            },
+            success: function (response) {
+                smsBtn.html('Submit SMS').prop('disabled', false);
+
+                if (response.success) {
+                    alertify.success(response.message || 'SMS sent successfully!');
+                    $("#sms").val('');
+                } else {
+                    alertify.error(response.message || 'Failed to send SMS');
+                }
+            },
+            error: function (xhr, status, error) {
+                smsBtn.html('Submit SMS').prop('disabled', false);
+                alertify.error('An error occurred while sending the SMS');
+                console.error("AJAX Error:", error);
+            }
+        });
+    });
 
 
 

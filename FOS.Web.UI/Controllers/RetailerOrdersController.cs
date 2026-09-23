@@ -2570,6 +2570,99 @@ namespace FOS.Web.UI.Controllers
             }
         }
 
+        // Sends a quick SMS to the customer tied to this Agent Calling job, via the
+        // Zong CBS "Send Quick SMS" REST API (CBS_API_Documentation_v2.pdf).
+        [HttpPost]
+        public JsonResult SendCustomerSMS(int JobID, string Message)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(Message))
+                {
+                    return Json(new { success = false, message = "Please enter a message." });
+                }
+
+                var customerID = db.Tbl_HousingVisits.Where(x => x.ID == JobID).Select(x => x.CustomerID).FirstOrDefault();
+                var phone = db.Retailers.Where(x => x.ID == customerID).Select(x => x.Phone1).FirstOrDefault();
+
+                if (string.IsNullOrWhiteSpace(phone))
+                {
+                    return Json(new { success = false, message = "No contact number found for this customer." });
+                }
+
+                var destination = NormalizePhoneForCBS(phone);
+                var rawResponse = SendQuickSMSViaCBS(destination, Message);
+                var parts = (rawResponse ?? string.Empty).Split('|');
+                var statusCode = parts.Length > 0 ? parts[0].Trim() : string.Empty;
+
+                if (statusCode == "0")
+                {
+                    return Json(new { success = true, message = "SMS sent successfully." });
+                }
+
+                var description = parts.Length > 1 ? parts[1] : rawResponse;
+                return Json(new { success = false, message = "Failed to send SMS: " + description });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error: " + ex.Message });
+            }
+        }
+
+        // Converts a locally-formatted PK mobile number (e.g. "0311xxxxxxx") to the
+        // "92xxxxxxxxxx" format the CBS API expects as Destination.
+        private string NormalizePhoneForCBS(string phone)
+        {
+            var digits = new string(phone.Where(char.IsDigit).ToArray());
+            if (digits.StartsWith("0"))
+            {
+                digits = "92" + digits.Substring(1);
+            }
+            else if (!digits.StartsWith("92") && digits.Length == 10)
+            {
+                digits = "92" + digits;
+            }
+            return digits;
+        }
+
+        private string SendQuickSMSViaCBS(string destination, string message)
+        {
+            const string cbsUrl = "https://cbs.zong.com.pk/reachrestapi/home/SendQuickSMS";
+            // Credentials live in FOS.Web.UI/Web.config <appSettings> (CBSLoginId /
+            // CBSLoginPassword / CBSMask) on the server only - that file is gitignored
+            // and never committed, so the CBS account password never ends up in git history.
+            var cbsLoginId = System.Configuration.ConfigurationManager.AppSettings["CBSLoginId"];
+            var cbsLoginPassword = System.Configuration.ConfigurationManager.AppSettings["CBSLoginPassword"];
+            var cbsMask = System.Configuration.ConfigurationManager.AppSettings["CBSMask"];
+
+            if (string.IsNullOrEmpty(cbsLoginId) || string.IsNullOrEmpty(cbsLoginPassword) || string.IsNullOrEmpty(cbsMask))
+            {
+                throw new InvalidOperationException("CBSLoginId / CBSLoginPassword / CBSMask are not configured in Web.config <appSettings>.");
+            }
+
+            var payload = new
+            {
+                loginId = cbsLoginId,
+                loginPassword = cbsLoginPassword,
+                Destination = destination,
+                Mask = cbsMask,
+                Message = message,
+                UniCode = "0",
+                ShortCodePrefered = "N"
+            };
+
+            using (var client = new HttpClient())
+            {
+                var content = new StringContent(
+                    Newtonsoft.Json.JsonConvert.SerializeObject(payload),
+                    System.Text.Encoding.UTF8,
+                    "application/json");
+
+                var response = client.PostAsync(cbsUrl, content).Result;
+                return response.Content.ReadAsStringAsync().Result;
+            }
+        }
+
         public JsonResult CustomerCallDetail(int JobID)
         {
             try
