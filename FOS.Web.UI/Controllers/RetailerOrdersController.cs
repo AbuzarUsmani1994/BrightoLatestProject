@@ -2605,7 +2605,15 @@ namespace FOS.Web.UI.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Error: " + ex.Message });
+                // HttpClient's .Result wraps the real failure in an AggregateException whose
+                // own Message is just "One or more errors occurred." - unwrap it so the actual
+                // cause (e.g. a TLS/connection failure) is visible instead of that generic text.
+                var actual = ex;
+                while (actual is AggregateException && actual.InnerException != null)
+                {
+                    actual = actual.InnerException;
+                }
+                return Json(new { success = false, message = "Error: " + actual.Message });
             }
         }
 
@@ -2650,6 +2658,12 @@ namespace FOS.Web.UI.Controllers
                 UniCode = "0",
                 ShortCodePrefered = "N"
             };
+
+            // This legacy .NET Framework app defaults to SSL3/TLS1.0, which cbs.zong.com.pk
+            // (like most modern HTTPS endpoints) rejects - without this, PostAsync faults
+            // with a connection error that surfaces as the unhelpful "One or more errors
+            // occurred." AggregateException message.
+            System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
             using (var client = new HttpClient())
             {
