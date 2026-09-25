@@ -126,6 +126,12 @@
                         @Html.HiddenFor(model => model.ID)
                         @Html.HiddenFor(model => model.SelectedRetailers)
 
+                        <label class="control-label">Doc Type *</label>
+                        <select id="DocType" name="DocType">
+                            <option value="Claims">Claims</option>
+                            <option value="DealerVerification">Dealer Verification Form</option>
+                        </select>
+
                         <button type="button" id="ApplyFilter" class="btn btn-primary">
                             <i class="icon-ok icon-white" style="padding-right: 2px"></i><span style="width:50px">Apply Filter</span>
                         </button>
@@ -806,6 +812,15 @@
                 $(".view").on("click", function () {
                     debugger;
 
+                    if ($("#DocType").val() === "DealerVerification") {
+                        var dealerVerificationImage = $(this).attr("data-dealerverification");
+                        if (dealerVerificationImage) {
+                            showFullImage(dealerVerificationImage);
+                        } else {
+                            alertify.error("No dealer verification image found for this claim.");
+                        }
+                        return;
+                    }
 
                         //Left Values
 
@@ -1191,6 +1206,7 @@ function getStatusBadgeClass(status) {
                        ' data-visiteddate="' + row.VisitedDate + '"' +
                        ' data-visitdate="' + row.VisitDate + '"' +
                        ' data-address="' + row.Address + '"' +
+                       ' data-dealerverification="' + (row.DealerVerification || '') + '"' +
                        '>Details</button>'
                        +
 

@@ -163,6 +163,7 @@ namespace FOS.Shared
         public decimal? TotalSale { get; set; }
         public string JobTitle { get; set; }
         public int JobID { get; set; }
+        public string DealerVerification { get; set; }
         public Nullable<int> RetailerID { get; set; }
         public string RetailerName { get; set; }
         public string ShopName { get; set; }
