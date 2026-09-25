@@ -3113,7 +3113,15 @@ namespace FOS.Web.UI.Controllers
             catch (Exception exp)
             {
                 Log.Instance.Error(exp, "Report Not Working");
-                // return null;
+                // Previously swallowed silently, leaving the "Generate Report" tab
+                // blank with no indication anything went wrong (e.g. if
+                // usp_GetCompetitorReport or its underlying tables aren't deployed
+                // on this DB). Surface it instead.
+                Response.Clear();
+                Response.ContentType = "text/plain";
+                Response.StatusCode = 500;
+                Response.Write("Failed to generate Competitor Report: " + exp.Message);
+                Response.End();
             }
 
         }

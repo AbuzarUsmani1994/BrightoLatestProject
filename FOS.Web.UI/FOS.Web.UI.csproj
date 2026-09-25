@@ -577,6 +577,8 @@
     <Compile Include="Controllers\API\MyVisitsSOWiseController.cs" />
     <Compile Include="Controllers\API\ClaimReportController.cs" />
     <Compile Include="Controllers\API\BusinessAffiliatesRegistrationController.cs" />
+    <Compile Include="Controllers\API\GetBusinessAffiliateController.cs" />
+    <Compile Include="Controllers\API\UpdateBusinessAffiliateController.cs" />
     <Compile Include="Controllers\API\ChemicalRetailerEditController.cs" />
     <Compile Include="Controllers\API\FannanSODirectionController.cs" />
     <Compile Include="Controllers\API\SaveBrightoServicesCustomerController.cs" />
