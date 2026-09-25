@@ -1304,16 +1304,41 @@ namespace FOS.Web.UI.Controllers
         #endregion
 
         [HttpPost]
-        public JsonResult UpdateClaimStatus(int claimId, string status, string remarks)
+        public JsonResult UpdateClaimStatus(int claimId, string status, string remarks, string docType = null)
         {
             try
             {
-                var data = db.Tbl_SalesClaimMaster.Where(u => u.ID == claimId).SingleOrDefault();
-                data.ClaimManagerLatestStatus = status;
-                data.ClaimManagerLatestRemarks = remarks;
-                data.ClaimManagerDate = DateTime.UtcNow.AddHours(5);
-          
-                 db.SaveChanges();
+                // Claims (Tbl_SalesClaimMaster) and Dealer Verification Form (Tbl_DealerVerification)
+                // have separate ID sequences, so which table to update must come from docType,
+                // not be assumed - a Dealer Verification row's ID could collide with an
+                // unrelated claim's ID. docType defaults to Claims for existing callers that
+                // don't send it.
+                if (docType == "DealerVerification")
+                {
+                    using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+                    using (var cmd = new SqlCommand(@"
+                        UPDATE dbo.Tbl_DealerVerification
+                        SET ClaimManagerLatestStatus = @Status, ClaimManagerLatestRemarks = @Remarks, ClaimManagerDate = @ClaimManagerDate
+                        WHERE ID = @ID", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Status", (object)status ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@Remarks", (object)remarks ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@ClaimManagerDate", DateTime.UtcNow.AddHours(5));
+                        cmd.Parameters.AddWithValue("@ID", claimId);
+
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                else
+                {
+                    var data = db.Tbl_SalesClaimMaster.Where(u => u.ID == claimId).SingleOrDefault();
+                    data.ClaimManagerLatestStatus = status;
+                    data.ClaimManagerLatestRemarks = remarks;
+                    data.ClaimManagerDate = DateTime.UtcNow.AddHours(5);
+
+                    db.SaveChanges();
+                }
 
                 // Also add to approval history if needed
 

@@ -4,6 +4,7 @@ using Shared.Diagnostics.Logging;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -18,6 +19,16 @@ namespace FOS.Web.UI.Controllers.API
 
         public Result<SuccessResponse> Post(DailyActivityRequest rm)
         { // This controller is for retailers orders.
+
+            // DocType defaults to "Claims" (existing callers that don't send it get the
+            // original, untouched Claims behavior below). Only "DealerVerification" takes
+            // the separate branch, saving to Tbl_DealerVerification instead - no
+            // SaleValue/items there, only the verification picture.
+            if (rm.DocType == "DealerVerification")
+            {
+                return PostDealerVerification(rm);
+            }
+
             Tbl_ClaimDetail jobDet = new Tbl_ClaimDetail();
             var JobObj = new Tbl_SalesClaimMaster();
             var RemObj = new TblReminder();
@@ -159,6 +170,61 @@ namespace FOS.Web.UI.Controllers.API
             }
         }
 
+        // Tbl_DealerVerification isn't in the .edmx, so this is raw ADO.NET rather
+        // than an EF insert, matching SubmitDealerVerificationController.
+        private Result<SuccessResponse> PostDealerVerification(DailyActivityRequest rm)
+        {
+            try
+            {
+                string picturePath = null;
+                if (!string.IsNullOrEmpty(rm.pic1))
+                {
+                    picturePath = ConvertIntoByte(rm.pic1, "Retailer", DateTime.Now.ToString("dd-mm-yyyy hhmmss").Replace(" ", ""), "RetailerImages");
+                }
+
+                using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+                using (var cmd = new SqlCommand(@"
+                    INSERT INTO dbo.Tbl_DealerVerification
+                        (SOID, SegmentID, CustomerID, TradePartyID, TradeEmployeeID, DateSelected, Picture, Status, CreatedOn, IsActive)
+                    VALUES
+                        (@SOID, @SegmentID, @CustomerID, @TradePartyID, @TradeEmployeeID, @DateSelected, @Picture, @Status, GETDATE(), 1)", conn))
+                {
+                    cmd.Parameters.AddWithValue("@SOID", rm.SaleOfficerId);
+                    cmd.Parameters.AddWithValue("@SegmentID", rm.SegmentID);
+                    cmd.Parameters.AddWithValue("@CustomerID", rm.CustomerID);
+                    cmd.Parameters.AddWithValue("@TradePartyID", rm.TradePartyID);
+                    cmd.Parameters.AddWithValue("@TradeEmployeeID", rm.TradeEmployeeID);
+                    cmd.Parameters.AddWithValue("@DateSelected", rm.DateSelected);
+                    cmd.Parameters.AddWithValue("@Picture", (object)picturePath ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Status", "InProgress");
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+
+                return new Result<SuccessResponse>
+                {
+                    Data = null,
+                    Message = "Dealer Verification Submitted Successfully",
+                    ResultType = ResultType.Success,
+                    Exception = null,
+                    ValidationErrors = null
+                };
+            }
+            catch (Exception ex)
+            {
+                Log.Instance.Error(ex, "Dealer Verification API Failed");
+                return new Result<SuccessResponse>
+                {
+                    Data = null,
+                    Message = "Dealer Verification API Failed",
+                    ResultType = ResultType.Exception,
+                    Exception = ex,
+                    ValidationErrors = null
+                };
+            }
+        }
+
         public string ConvertIntoByte(string Base64, string DealerName, string SendDateTime, string folderName)
         {
             byte[] bytes = Convert.FromBase64String(Base64);
@@ -197,6 +263,9 @@ namespace FOS.Web.UI.Controllers.API
             public decimal TotalLiters { get; set; }
             public decimal SalesValue { get; set; }
             public string pic1 { get; set; }
+            // "Claims" (default/omitted) or "DealerVerification". Existing callers that
+            // don't send this at all get the original Claims behavior, unchanged.
+            public string DocType { get; set; }
 
             public List<JobItemModel> ProductDetails { get; set; }
 

@@ -585,6 +585,7 @@
 
             <div class="modal-body" style="padding: 25px;">
                 <input type="hidden" id="claimIdForStatus" />
+                <input type="hidden" id="docTypeForStatus" />
 
                 <div class="form-group mb-4">
                     <label for="statusSelect" class="form-label" style="font-weight: 600; color: #376892; margin-bottom: 8px;">
@@ -778,6 +779,13 @@
 
 <script>
 
+    // Tracks which Doc Type the currently-rendered grid rows were actually loaded
+    // with. Read this (via each row's data-doctype attribute), not the live
+    // #DocType dropdown, when deciding how to act on a row - the user can change
+    // the dropdown without reloading, and the dropdown would then no longer match
+    // what's on screen.
+    var lastLoadedDocType = "Claims";
+
     function GenerateDetailGrid() {
 
         var oTable = $('#datatab').DataTable({
@@ -802,6 +810,7 @@
                     data.ZoneID = $('#RegionalHeadID').val();
                     data.SOID = $('#SaleOfficerID').val();
                     data.DocType = $('#DocType').val();
+                    lastLoadedDocType = data.DocType || "Claims";
                    return data = JSON.stringify(data);
                 },
             },
@@ -813,7 +822,7 @@
                 $(".view").on("click", function () {
                     debugger;
 
-                    if ($("#DocType").val() === "DealerVerification") {
+                    if ($(this).attr("data-doctype") === "DealerVerification") {
                         var dealerVerificationImage = $(this).attr("data-dealerverification");
                         if (dealerVerificationImage) {
                             showFullImage(dealerVerificationImage);
@@ -1048,6 +1057,7 @@ $(".status-update").on("click", function () {
 
     // Set values in the modal
     $("#claimIdForStatus").val(claimId);
+    $("#docTypeForStatus").val($(this).attr("data-doctype") || "Claims");
     $("#currentStatusDisplay").text(currentStatus);
     $("#currentStatusDisplay").removeClass().addClass("badge " + getStatusBadgeClass(currentStatus));
 
@@ -1208,16 +1218,17 @@ function getStatusBadgeClass(status) {
                        ' data-visitdate="' + row.VisitDate + '"' +
                        ' data-address="' + row.Address + '"' +
                        ' data-dealerverification="' + (row.DealerVerification || '') + '"' +
+                       ' data-doctype="' + lastLoadedDocType + '"' +
                        '>Details</button>'
                        +
-                       // Dealer Verification rows have IDs from a different table
-                       // (Tbl_DealerVerification) than Claims (Tbl_SalesClaimMaster).
-                       // Approve looks a claim up by that same numeric ID, so it must
-                       // never be shown here - it could silently update an unrelated claim.
-                       ($("#DocType").val() === "DealerVerification" ? "" :
+                       // data-doctype tells UpdateClaimStatus which table this row's ID
+                       // belongs to (Tbl_SalesClaimMaster vs Tbl_DealerVerification) - those
+                       // are separate ID sequences, so this must never be left out or the
+                       // wrong record could get updated.
                        '<button class="' + approveButtonClass + '" data-id="' + row.JobID + '"' +
+                       ' data-doctype="' + lastLoadedDocType + '"' +
                        ' ' + approveButtonDisabled + ' ' + approveButtonStyle + '>' +
-                       approveButtonIcon + '</button>');
+                       approveButtonIcon + '</button>';
 
 
 
@@ -1273,6 +1284,7 @@ function getStatusBadgeClass(status) {
         debugger;
 
         var claimId = $("#claimIdForStatus").val();
+        var docType = $("#docTypeForStatus").val() || "Claims";
         var newStatus = $("#statusSelect").val();
         var remarks = $("#remarksText").val();
 
@@ -1306,6 +1318,7 @@ function getStatusBadgeClass(status) {
             url: "@Url.Action("UpdateClaimStatus", "Job")", // You'll need to create this action
             data: {
                 claimId: claimId,
+                docType: docType,
                 status: newStatus,
                 remarks: remarks
             },
