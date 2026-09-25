@@ -2891,23 +2891,42 @@ namespace FOS.Setup
                     }
                     else if (SOID == 4)
                     {
-                        // Call to customer: one row per Housing Visit that has a follow-up
-                        // timeline (AgainCall), optionally filtered to a specific timeline
-                        // (Immediate / 1 week / 2 week / 3 week).
-                        doneJobData = (from v in dbContext.Tbl_HousingVisits
-                                       join r in dbContext.Retailers on v.CustomerID equals r.ID
+                        // Call to customer: one row per customer (their single latest Housing
+                        // Visit, same "latestVisit" dedup pattern as SOID 1/3 above - a customer
+                        // with several visits was previously showing once per visit), where that
+                        // latest visit has a follow-up timeline (AgainCall) set, optionally
+                        // filtered to a specific timeline (Immediate / 1 week / 2 week / 3 week).
+                        // Last Call Date now comes from an actual logged call (Tbl_SaveCall) and
+                        // is null when no call has been made yet, instead of falling back to the
+                        // visit's own CreatedAt (which made it look like a call had happened when
+                        // none had). Created Date is the visit's own CreatedAt, not the unrelated
+                        // Retailer.LastUpdate, so it's consistent with Next Visit Date.
+                        doneJobData = (from r in dbContext.Retailers
                                        join s in dbContext.SaleOfficers on r.SaleOfficerID equals s.ID
+                                       let latestVisit = dbContext.Tbl_HousingVisits
+                                           .Where(p => p.CustomerID == r.ID)
+                                           .OrderByDescending(p => p.ID)
+                                           .FirstOrDefault()
+                                       let allVisitIds = dbContext.Tbl_HousingVisits
+                                           .Where(p => p.CustomerID == r.ID)
+                                           .Select(p => p.ID)
+                                           .ToList()
+                                       let latestCall = dbContext.Tbl_SaveCall
+                                           .Where(sc => allVisitIds.Contains((int)sc.VisitID))
+                                           .OrderByDescending(sc => sc.CreatedOn)
+                                           .FirstOrDefault()
                                        where (r.IsActive == true &&
-                                              v.CreatedAt >= FromDate &&
-                                              v.CreatedAt < ToDate &&
                                               s.RegionalHeadID == ZoneID &&
-                                              v.AgainCall != null && v.AgainCall != "" &&
-                                              (string.IsNullOrEmpty(callTimeline) || v.AgainCall == callTimeline)
+                                              latestVisit != null &&
+                                              latestVisit.CreatedAt >= FromDate &&
+                                              latestVisit.CreatedAt < ToDate &&
+                                              latestVisit.AgainCall != null && latestVisit.AgainCall != "" &&
+                                              (string.IsNullOrEmpty(callTimeline) || latestVisit.AgainCall == callTimeline)
                                               )
                                        select new JobsDetailData
                                        {
                                            ID = r.ID,
-                                           JobID = v.ID,
+                                           JobID = latestVisit.ID,
                                            SaleOfficerID = (int)r.SaleOfficerID,
                                            SaleOfficerName = s.Name,
                                            OwnerName = r.Name,
@@ -2921,11 +2940,11 @@ namespace FOS.Setup
                                                        .Select(p => p.Name)
                                                        .FirstOrDefault(),
                                            RetailerAddress = r.Address,
-                                           ClaimDate = r.LastUpdate,
-                                           AssignDate = v.NextVisitDate,
-                                           CallDate = v.CreatedAt,
+                                           ClaimDate = latestVisit.CreatedAt,
+                                           AssignDate = latestVisit.NextVisitDate,
+                                           CallDate = latestCall != null ? latestCall.CreatedOn : null,
                                            CallerName = s.Name,
-                                           CallStatus = v.AgainCall
+                                           CallStatus = latestVisit.AgainCall
                                        })
                                        .ToList();
                     }

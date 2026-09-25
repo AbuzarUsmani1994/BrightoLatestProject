@@ -2359,16 +2359,23 @@ namespace FOS.Web.UI.Controllers
                 List<JobsDetailData> data = ManageJobs.GetResult12(param.Search.Value, param.SortOrder, param.Start, param.Length, dtsource, columnSearch/*param.SaleOfficer,param.StartingDate1,param.StartingDate2*/);
                 foreach (var itm in data)
                 {
-                    if (itm.AssignDate.HasValue || itm.ClaimDate.HasValue || itm.CallDate.HasValue)
+                    // Format each date independently - the previous "format all three if any
+                    // one has a value" logic ran Convert.ToDateTime(null) for whichever of
+                    // AssignDate/ClaimDate/CallDate was actually empty, which returns
+                    // DateTime.MinValue (01-01-0001) instead of leaving it blank. That showed
+                    // up as a bogus "Last Call Date" for customers nobody had actually called.
+                    if (itm.AssignDate.HasValue)
                     {
-                        
-
-                        itm.VisitDateFormatted = Convert.ToDateTime(itm.AssignDate).ToString("dd-MM-yyyy");
-                        itm.ClaimDateFormatted = Convert.ToDateTime(itm.ClaimDate).ToString("dd-MM-yyyy");
-                        itm.CallDateFormatted = Convert.ToDateTime(itm.CallDate).ToString("dd-MM-yyyy");
+                        itm.VisitDateFormatted = itm.AssignDate.Value.ToString("dd-MM-yyyy");
                     }
-
-
+                    if (itm.ClaimDate.HasValue)
+                    {
+                        itm.ClaimDateFormatted = itm.ClaimDate.Value.ToString("dd-MM-yyyy");
+                    }
+                    if (itm.CallDate.HasValue)
+                    {
+                        itm.CallDateFormatted = itm.CallDate.Value.ToString("dd-MM-yyyy");
+                    }
                 }
                 int count = ManageJobs.Count12(param.Search.Value, dtsource, columnSearch /*param.SaleOfficer, param.StartingDate1, param.StartingDate2*/);
                 DTResult<JobsDetailData> result = new DTResult<JobsDetailData>
