@@ -11,6 +11,7 @@ using System.Web.UI.WebControls;
 using System.Web.Mvc;
 using System.Globalization;
 using Shared.Diagnostics.Logging;
+using System.Data.SqlClient;
 
 
 namespace FOS.Setup
@@ -2623,10 +2624,36 @@ namespace FOS.Setup
                                            AssignDate = jd.CreatedOn,
                                            TotalLiters=jd.TotalLiters
 
-                                           
+
                                        }).ToList();
 
+                    // DealerVerification isn't in the (stale) .edmx model for Tbl_SalesClaimMaster,
+                    // so it's fetched via raw ADO.NET rather than adding it to the fragile EF mapping.
+                    if (doneJobData.Count > 0)
+                    {
+                        var ids = doneJobData.Select(d => d.JobID).ToList();
+                        var dealerVerificationById = new Dictionary<int, string>();
+                        using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
+                        using (var cmd = new SqlCommand("SELECT ID, DealerVerification FROM dbo.Tbl_SalesClaimMaster WHERE ID IN (" + string.Join(",", ids) + ")", conn))
+                        {
+                            conn.Open();
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    dealerVerificationById[Convert.ToInt32(reader["ID"])] = reader["DealerVerification"] == DBNull.Value ? null : reader["DealerVerification"].ToString();
+                                }
+                            }
+                        }
 
+                        foreach (var item in doneJobData)
+                        {
+                            if (dealerVerificationById.TryGetValue(item.JobID, out var dealerVerificationImage))
+                            {
+                                item.DealerVerification = dealerVerificationImage;
+                            }
+                        }
+                    }
                 }
 
                
