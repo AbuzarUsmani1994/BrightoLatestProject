@@ -2627,36 +2627,10 @@ namespace FOS.Setup
 
                                        }).ToList();
 
-                    // DealerVerification isn't in the (stale) .edmx model for Tbl_SalesClaimMaster,
-                    // so it's fetched via raw ADO.NET rather than adding it to the fragile EF mapping.
-                    if (doneJobData.Count > 0)
-                    {
-                        var ids = doneJobData.Select(d => d.JobID).ToList();
-                        var dealerVerificationById = new Dictionary<int, string>();
-                        using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
-                        using (var cmd = new SqlCommand("SELECT ID, DealerVerification FROM dbo.Tbl_SalesClaimMaster WHERE ID IN (" + string.Join(",", ids) + ")", conn))
-                        {
-                            conn.Open();
-                            using (var reader = cmd.ExecuteReader())
-                            {
-                                while (reader.Read())
-                                {
-                                    dealerVerificationById[Convert.ToInt32(reader["ID"])] = reader["DealerVerification"] == DBNull.Value ? null : reader["DealerVerification"].ToString();
-                                }
-                            }
-                        }
 
-                        foreach (var item in doneJobData)
-                        {
-                            if (dealerVerificationById.TryGetValue(item.JobID, out var dealerVerificationImage))
-                            {
-                                item.DealerVerification = dealerVerificationImage;
-                            }
-                        }
-                    }
                 }
 
-               
+
 
             }
             catch (Exception exp)
@@ -2666,6 +2640,74 @@ namespace FOS.Setup
             }
 
             return doneJobData;
+        }
+
+        // Dealer Verification Form submissions (dbo.Tbl_DealerVerification) - same shape
+        // as the Claims grid above, minus SaleValue/TotalLiters (that table has no items or
+        // sale value, only the verification Picture). Tbl_DealerVerification isn't in the
+        // .edmx, so this is raw ADO.NET rather than an EF query.
+        public static List<JobsDetailData> GetDealerVerificationForGrid(string From, string To, int ZoneID, int SOID)
+        {
+            List<JobsDetailData> data = new List<JobsDetailData>();
+
+            try
+            {
+                DateTime FromDate = Convert.ToDateTime(From);
+                DateTime ToDate = Convert.ToDateTime(To).AddDays(1);
+
+                using (FOSDataModel dbContext = new FOSDataModel())
+                using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
+                using (var cmd = new SqlCommand(@"
+                    SELECT dv.ID, dv.SOID, so.Name AS SaleOfficerName, dv.TradePartyID,
+                           tp.ShopName AS TradePartyName, dv.Picture, r.ShopName, r.Address,
+                           r.RegionID, reg.Name AS RegionName, dv.ClaimManagerLatestStatus,
+                           dv.DateSelected, dv.CreatedOn
+                    FROM dbo.Tbl_DealerVerification dv
+                    JOIN dbo.Retailers r ON dv.CustomerID = r.ID
+                    LEFT JOIN dbo.Retailers tp ON dv.TradePartyID = tp.ID
+                    LEFT JOIN dbo.SaleOfficers so ON dv.SOID = so.ID
+                    LEFT JOIN dbo.Regions reg ON r.RegionID = reg.ID
+                    WHERE dv.IsActive = 1 AND dv.DateSelected >= @FromDate AND dv.DateSelected < @ToDate AND dv.SOID = @SOID", conn))
+                {
+                    cmd.Parameters.AddWithValue("@FromDate", FromDate);
+                    cmd.Parameters.AddWithValue("@ToDate", ToDate);
+                    cmd.Parameters.AddWithValue("@SOID", SOID);
+
+                    conn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            data.Add(new JobsDetailData
+                            {
+                                ID = Convert.ToInt32(reader["ID"]),
+                                JobID = Convert.ToInt32(reader["ID"]),
+                                SaleOfficerID = reader["SOID"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["SOID"]),
+                                SaleOfficerName = reader["SaleOfficerName"] as string,
+                                TradePartyName = reader["TradePartyName"] as string,
+                                DealerVerification = reader["Picture"] as string,
+                                RetailerName = reader["ShopName"] as string,
+                                ShopName = reader["ShopName"] as string,
+                                LatestStatus = reader["ClaimManagerLatestStatus"] as string,
+                                RegionID = reader["RegionID"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["RegionID"]),
+                                RegionName = reader["RegionName"] as string,
+                                RetailerAddress = reader["Address"] as string,
+                                TotalSale = null,
+                                TotalLiters = null,
+                                ClaimDate = reader["DateSelected"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["DateSelected"]),
+                                AssignDate = reader["CreatedOn"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["CreatedOn"])
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception exp)
+            {
+                Log.Instance.Error(exp, "Get Dealer Verification List Failed");
+                throw;
+            }
+
+            return data;
         }
 
 

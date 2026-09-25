@@ -801,6 +801,7 @@
                     data.StartingDate2 = $('#StartingDate2').val();
                     data.ZoneID = $('#RegionalHeadID').val();
                     data.SOID = $('#SaleOfficerID').val();
+                    data.DocType = $('#DocType').val();
                    return data = JSON.stringify(data);
                 },
             },
@@ -1209,13 +1210,14 @@ function getStatusBadgeClass(status) {
                        ' data-dealerverification="' + (row.DealerVerification || '') + '"' +
                        '>Details</button>'
                        +
-
-
+                       // Dealer Verification rows have IDs from a different table
+                       // (Tbl_DealerVerification) than Claims (Tbl_SalesClaimMaster).
+                       // Approve looks a claim up by that same numeric ID, so it must
+                       // never be shown here - it could silently update an unrelated claim.
+                       ($("#DocType").val() === "DealerVerification" ? "" :
                        '<button class="' + approveButtonClass + '" data-id="' + row.JobID + '"' +
                        ' ' + approveButtonDisabled + ' ' + approveButtonStyle + '>' +
-                       approveButtonIcon + '</button>';
-
-                       ;
+                       approveButtonIcon + '</button>');
 
 
 
