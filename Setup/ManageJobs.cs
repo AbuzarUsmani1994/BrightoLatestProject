@@ -2943,8 +2943,13 @@ namespace FOS.Setup
                                            ClaimDate = latestVisit.CreatedAt,
                                            AssignDate = latestVisit.NextVisitDate,
                                            CallDate = latestCall != null ? latestCall.CreatedOn : null,
-                                           CallerName = s.Name,
-                                           CallStatus = latestVisit.AgainCall
+                                           // Same pattern as SOID 1/3 above: reflect the actual logged
+                                           // call, blank when none exists yet - not the assigned SO's
+                                           // name (that's already shown in Sales Officer) and not the
+                                           // AgainCall timeline value (that's the filter criterion, not
+                                           // a call outcome).
+                                           CallerName = latestCall != null ? latestCall.CallerName : null,
+                                           CallStatus = latestCall != null ? latestCall.NatureOfCall : null
                                        })
                                        .ToList();
                     }
