@@ -2509,6 +2509,7 @@ namespace FOS.Web.UI.Controllers
                                         NatureID = j.NatureOfWorkID,
                                         ContractorName=j.ContractorName,
                                         ContractorNumber=j.ContractorNumber,
+                                        Remarks = j.Remarks,
                                         ConstructionStageID = j.ConstructionStageID,
                                         ColorScheme = j.ColorScheme,
                                         OrderVolume = j.OrderVolume,
@@ -2561,7 +2562,8 @@ namespace FOS.Web.UI.Controllers
                     OfftakeFrom = customerData.OfftakeFrom ?? "-",
                     RegionalHeadName = customerData.RegionalHeadName ?? "-",
                     ContractorName = customerData.ContractorName ?? "-",
-                    ContractorNumber = customerData.ContractorNumber ?? "-"
+                    ContractorNumber = customerData.ContractorNumber ?? "-",
+                    Remarks = customerData.Remarks ?? "-"
                 };
 
                 return Json(new[] { response }, JsonRequestBehavior.AllowGet);
