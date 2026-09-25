@@ -533,6 +533,7 @@
     <Compile Include="Controllers\API\BusinessAffiliatesVisitsController.cs" />
     <Compile Include="Controllers\API\BusinessAffiliatesVisitListController.cs" />
     <Compile Include="Controllers\API\BusinessAffiliatesDSRReportController.cs" />
+    <Compile Include="Controllers\API\CompetitorActivitiesDSRReportController.cs" />
     <Compile Include="Controllers\API\ComplaintProgressController.cs" />
     <Compile Include="Controllers\API\ComplaintsPDFController.cs" />
     <Compile Include="Controllers\API\CoverageDSRReportController.cs" />
