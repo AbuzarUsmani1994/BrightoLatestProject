@@ -1201,7 +1201,9 @@ namespace FOS.Web.UI.Controllers
 
                 //if (regionalheadID == 0)
                 //{
-                    dtsource = ManageJobs.GetRetailerJobsDetailForGrid(param.StartingDate1, param.StartingDate2, param.ZoneID,param.SOID);
+                    dtsource = param.DocType == "DealerVerification"
+                        ? ManageJobs.GetDealerVerificationForGrid(param.StartingDate1, param.StartingDate2, param.ZoneID, param.SOID)
+                        : ManageJobs.GetRetailerJobsDetailForGrid(param.StartingDate1, param.StartingDate2, param.ZoneID,param.SOID);
                 //}
                 //else
                 //{
