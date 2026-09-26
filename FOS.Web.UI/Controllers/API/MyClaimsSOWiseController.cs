@@ -16,7 +16,12 @@ namespace FOS.Web.UI.Controllers.API
     {
         FOSDataModel db = new FOSDataModel();
 
-        public IHttpActionResult Get(int SOID,string DateFrom, string DateTo, int SegmentID)
+        // DocType defaults to Claims (existing callers that don't send it get the
+        // original, untouched behavior below). DocType = "DealerVerification" lists
+        // Tbl_DealerVerification instead - it's not in the .edmx, so that branch is
+        // raw ADO.NET rather than an EF query. Unlike Claims, it has no
+        // TotalLiters/SaleValue (that table has neither), so those come back null.
+        public IHttpActionResult Get(int SOID,string DateFrom, string DateTo, int SegmentID, string DocType = null)
         {
             FOSDataModel dbContext = new FOSDataModel();
             try
@@ -36,8 +41,58 @@ namespace FOS.Web.UI.Controllers.API
                     var Url = "http://116.58.33.11:81/";
                     object[] param = { SOID };
 
+                    if (DocType == "DealerVerification")
+                    {
+                        var dvList = new List<object>();
+                        using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
+                        using (var cmd = new SqlCommand(@"
+                            SELECT dv.ID, r.ShopName AS Name, dv.Picture, dv.DateSelected, dv.CreatedOn,
+                                   apso.Name AS ApprovedByName
+                            FROM dbo.Tbl_DealerVerification dv
+                            JOIN dbo.Retailers r ON dv.CustomerID = r.ID
+                            LEFT JOIN dbo.SaleOfficers apso ON dv.ApprovedBy = apso.ID
+                            WHERE dv.SOID = @SOID AND dv.DateSelected >= @DateFrom AND dv.DateSelected <= @DateTo
+                              AND dv.SegmentID = @SegmentID AND dv.IsActive = 1 AND dv.Status = 'InProgress'
+                            ORDER BY r.ShopName", conn))
+                        {
+                            cmd.Parameters.AddWithValue("@SOID", SOID);
+                            cmd.Parameters.AddWithValue("@DateFrom", dtFromToday);
+                            cmd.Parameters.AddWithValue("@DateTo", dtToToday);
+                            cmd.Parameters.AddWithValue("@SegmentID", SegmentID);
 
-                    if (SegmentID == 1)
+                            conn.Open();
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    DateTime? dateSelected = reader["DateSelected"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["DateSelected"]);
+                                    DateTime? createdOn = reader["CreatedOn"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["CreatedOn"]);
+                                    string approvedByName = reader["ApprovedByName"] as string;
+
+                                    dvList.Add(new
+                                    {
+                                        ID = Convert.ToInt32(reader["ID"]),
+                                        Name = reader["Name"] as string,
+                                        TotalLiters = (decimal?)null,
+                                        pic1 = Url + (reader["Picture"] as string),
+                                        SaleValue = (decimal?)null,
+                                        Date = "Verification Date: " + dateSelected?.ToString("yyyy-MM-dd") + Environment.NewLine +
+                                               "Submitted Date: " + createdOn?.ToString("yyyy-MM-dd") + Environment.NewLine +
+                                               "Approved By: " + (approvedByName ?? "")
+                                    });
+                                }
+                            }
+                        }
+
+                        if (dvList.Count > 0)
+                        {
+                            return Ok(new
+                            {
+                                ClaimSummery = dvList
+                            });
+                        }
+                    }
+                    else if (SegmentID == 1)
                     {
                         //var result = dbContext.Tbl_SalesClaimMaster.Where(x => x.SOID == SOID && x.CreatedOn >= dtFromToday && x.CreatedOn <= dtToToday && x.SegmentID==1 &&x.IsActive==true && x.Status== "InProgress").Select(x => new
                         //{
