@@ -3346,11 +3346,6 @@ namespace FOS.Web.UI.Controllers
             }
             try
             {
-                // Log user activity
-                var userID = Convert.ToInt32(Session["UserID"]);
-                var ipAddress = Dns.GetHostAddresses(Dns.GetHostName())
-                                  .FirstOrDefault()?.ToString() ?? "Unknown";
-
                 // Parse dates with proper null handling
                 DateTime start = DateTime.Parse(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
                 DateTime end = DateTime.Parse(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
@@ -3566,11 +3561,6 @@ namespace FOS.Web.UI.Controllers
             }
             try
             {
-                // Log user activity
-                var userID = Convert.ToInt32(Session["UserID"]);
-                var ipAddress = Dns.GetHostAddresses(Dns.GetHostName())
-                                  .FirstOrDefault()?.ToString() ?? "Unknown";
-
                 // Parse dates with proper null handling
                 DateTime start = DateTime.Parse(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
                 DateTime end = DateTime.Parse(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
@@ -3772,11 +3762,6 @@ namespace FOS.Web.UI.Controllers
             }
             try
             {
-                // Log user activity
-                var userID = Convert.ToInt32(Session["UserID"]);
-                var ipAddress = Dns.GetHostAddresses(Dns.GetHostName())
-                                  .FirstOrDefault()?.ToString() ?? "Unknown";
-
                 // Parse dates with proper null handling
                 DateTime start = DateTime.Parse(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
                 DateTime end = DateTime.Parse(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
@@ -3939,11 +3924,6 @@ namespace FOS.Web.UI.Controllers
             }
             try
             {
-                // Log user activity
-                var userID = Convert.ToInt32(Session["UserID"]);
-                var ipAddress = Dns.GetHostAddresses(Dns.GetHostName())
-                                  .FirstOrDefault()?.ToString() ?? "Unknown";
-
                 // Parse dates with proper null handling
                 DateTime start = DateTime.Parse(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
                 DateTime end = DateTime.Parse(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
@@ -8764,23 +8744,6 @@ namespace FOS.Web.UI.Controllers
                         ));
                     }
                 }
-
-                Response.Write(sw.ToString());
-                ManagersLoginHst hst = new ManagersLoginHst();
-                hst.UserID = userID;
-                hst.IPAddress = remoteIpAddress;
-                hst.ReportName = "Call Summery Report";
-                hst.ReportType = "CallSummary";
-                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
-                db.ManagersLoginHsts.Add(hst);
-                db.SaveChanges();
-                Response.End();
-
-
-
-
-
-
 
                 Response.Write(sw.ToString());
                 ManagersLoginHst hst = new ManagersLoginHst();
