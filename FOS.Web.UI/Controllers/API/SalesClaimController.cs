@@ -36,47 +36,39 @@ namespace FOS.Web.UI.Controllers.API
 
             try
             {
-                //// Date validation logic
-                //DateTime currentDate = DateTime.Now;
-                //DateTime selectedDate = rm.DateSelected;
+                // Date validation logic - only applies to real Claims; DocType ==
+                // "DealerVerification" already returned above and never reaches here.
+                DateTime currentDate = DateTime.Now;
+                DateTime selectedDate = rm.DateSelected;
 
-                //// Check if selected date is in previous month
-                //if (selectedDate.Year < currentDate.Year ||
-                //    (selectedDate.Year == currentDate.Year && selectedDate.Month < currentDate.Month))
-                //{
-                //    // For previous month data, only allow if current date is on or before 10th of current month
-                //    if (currentDate.Day > 10)
-                //    {
-                //        return new Result<SuccessResponse>
-                //        {
-                //            Data = null,
-                //            Message = "Previous month data can only be saved until the 10th of current month",
-                //            ResultType = ResultType.Warning,
-                //            Exception = null,
-                //            ValidationErrors = null
-                //        };
-                //    }
-                //}
-
-                //else if (selectedDate > currentDate)
-                //{
-                //    return new Result<SuccessResponse>
-                //    {
-                //        Data = null,
-                //        Message = "Future dates cannot be selected",
-                //        ResultType = ResultType.Warning,
-                //        Exception = null,
-                //        ValidationErrors = null
-                //    };
-                //}
-                //// Check if selected date is in current month
-                //else if (selectedDate.Year == currentDate.Year && selectedDate.Month == currentDate.Month)
-                //{
-                //    // Current month data is always allowed
-                //    // No additional validation needed
-                //}
-                //// Check if selected date is in future
-              
+                // Check if selected date is in previous month
+                if (selectedDate.Year < currentDate.Year ||
+                    (selectedDate.Year == currentDate.Year && selectedDate.Month < currentDate.Month))
+                {
+                    // For previous month data, only allow if current date is on or before 10th of current month
+                    if (currentDate.Day > 10)
+                    {
+                        return new Result<SuccessResponse>
+                        {
+                            Data = null,
+                            Message = "Previous month data can only be saved until the 10th of current month",
+                            ResultType = ResultType.Warning,
+                            Exception = null,
+                            ValidationErrors = null
+                        };
+                    }
+                }
+                else if (selectedDate > currentDate)
+                {
+                    return new Result<SuccessResponse>
+                    {
+                        Data = null,
+                        Message = "Future dates cannot be selected",
+                        ResultType = ResultType.Warning,
+                        Exception = null,
+                        ValidationErrors = null
+                    };
+                }
 
                 // Log incoming request for diagnostics
                 Log.Instance.Info("SalesClaim POST => SOID: " + rm.SaleOfficerId
