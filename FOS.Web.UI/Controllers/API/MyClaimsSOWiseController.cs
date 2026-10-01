@@ -46,14 +46,14 @@ namespace FOS.Web.UI.Controllers.API
                         var dvList = new List<object>();
                         using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
                         using (var cmd = new SqlCommand(@"
-                            SELECT dv.ID, r.ShopName AS Name, dv.Picture, dv.DateSelected, dv.CreatedOn,
+                            SELECT dv.ID, tp.ShopName AS Name, dv.Picture, dv.DateSelected, dv.CreatedOn,
                                    apso.Name AS ApprovedByName
                             FROM dbo.Tbl_DealerVerification dv
-                            JOIN dbo.Retailers r ON dv.CustomerID = r.ID
+                            JOIN dbo.Retailers tp ON dv.TradePartyID = tp.ID
                             LEFT JOIN dbo.SaleOfficers apso ON dv.ApprovedBy = apso.ID
                             WHERE dv.SOID = @SOID AND dv.DateSelected >= @DateFrom AND dv.DateSelected <= @DateTo
                               AND dv.SegmentID = @SegmentID AND dv.IsActive = 1 AND dv.Status = 'InProgress'
-                            ORDER BY r.ShopName", conn))
+                            ORDER BY tp.ShopName", conn))
                         {
                             cmd.Parameters.AddWithValue("@SOID", SOID);
                             cmd.Parameters.AddWithValue("@DateFrom", dtFromToday);
