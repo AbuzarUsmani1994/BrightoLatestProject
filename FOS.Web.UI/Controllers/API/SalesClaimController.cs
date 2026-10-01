@@ -41,11 +41,26 @@ namespace FOS.Web.UI.Controllers.API
                 DateTime currentDate = DateTime.Now;
                 DateTime selectedDate = rm.DateSelected;
 
-                // Check if selected date is in previous month
-                if (selectedDate.Year < currentDate.Year ||
-                    (selectedDate.Year == currentDate.Year && selectedDate.Month < currentDate.Month))
+                // monthsBack = how many whole calendar months before the current month
+                // selectedDate falls in (1 = last month, 2 = two months back, etc).
+                int monthsBack = (currentDate.Year * 12 + currentDate.Month) - (selectedDate.Year * 12 + selectedDate.Month);
+
+                if (monthsBack > 1)
                 {
-                    // For previous month data, only allow if current date is on or before 10th of current month
+                    // Anything older than last month is always too late - its own
+                    // 10th-of-the-following-month window has already closed.
+                    return new Result<SuccessResponse>
+                    {
+                        Data = null,
+                        Message = "Claims older than last month cannot be submitted",
+                        ResultType = ResultType.Warning,
+                        Exception = null,
+                        ValidationErrors = null
+                    };
+                }
+                else if (monthsBack == 1)
+                {
+                    // Last month's data is only allowed through the 10th of this month.
                     if (currentDate.Day > 10)
                     {
                         return new Result<SuccessResponse>
@@ -58,7 +73,7 @@ namespace FOS.Web.UI.Controllers.API
                         };
                     }
                 }
-                else if (selectedDate > currentDate)
+                else if (monthsBack < 0 || (monthsBack == 0 && selectedDate > currentDate))
                 {
                     return new Result<SuccessResponse>
                     {
