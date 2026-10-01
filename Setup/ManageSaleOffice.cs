@@ -34,6 +34,7 @@ namespace FOS.Setup
                 if (RHID == 0 && !selectOption)
                 {
                     saleOfficerData = dbContext.SaleOfficers
+                           .Where(u => u.IsActive == true)
                            .Select(
                                u => new SaleOfficerData
                                {
@@ -51,7 +52,7 @@ namespace FOS.Setup
                 {
                     var list = dbContext.Tbl_SOREGIONS.Where(x => x.RegionID == RHID).Select(x => x.SaleofficerID).ToList();
 
-                    saleOfficerData = dbContext.SaleOfficers.Where(c => list.Contains(c.ID))
+                    saleOfficerData = dbContext.SaleOfficers.Where(c => list.Contains(c.ID) && c.IsActive == true)
                            .Select(
                                u => new SaleOfficerData
                                {
@@ -105,7 +106,7 @@ namespace FOS.Setup
             List<SaleOfficerData> saleOfficerData = new List<SaleOfficerData>();
             using (FOSDataModel dbContext = new FOSDataModel())
             {
-                var list = dbContext.SaleOfficers.ToList();
+                var list = dbContext.SaleOfficers.Where(s => s.IsActive == true).ToList();
 
                 foreach (var so in list)
                 {
@@ -132,7 +133,8 @@ namespace FOS.Setup
 
                 if (userID == 1)
                 {
-                    var list = dbContext.Tbl_SOREGIONS.Where(x => x.RegionID == ID).ToList();
+                    var activeSoIds = dbContext.SaleOfficers.Where(x => x.IsActive == true).Select(x => x.ID).ToList();
+                    var list = dbContext.Tbl_SOREGIONS.Where(x => x.RegionID == ID && activeSoIds.Contains(x.SaleofficerID)).ToList();
 
                     foreach (var so in list)
                     {
@@ -145,7 +147,7 @@ namespace FOS.Setup
                 }
                 else
                 {
-                    var list = dbContext.SaleOfficers.Where(x => x.RegionalHeadID == headID).ToList();
+                    var list = dbContext.SaleOfficers.Where(x => x.RegionalHeadID == headID && x.IsActive == true).ToList();
 
                     foreach (var so in list)
                     {
@@ -166,7 +168,8 @@ namespace FOS.Setup
             List<SaleOfficerData> saleOfficerData = new List<SaleOfficerData>();
             using (FOSDataModel dbContext = new FOSDataModel())
             {
-                var list = dbContext.Tbl_SOREGIONS.Where(x => x.RegionID == ID).ToList();
+                var activeSoIds = dbContext.SaleOfficers.Where(x => x.IsActive == true).Select(x => x.ID).ToList();
+                var list = dbContext.Tbl_SOREGIONS.Where(x => x.RegionID == ID && activeSoIds.Contains(x.SaleofficerID)).ToList();
 
                 foreach (var so in list)
                 {
@@ -231,7 +234,7 @@ namespace FOS.Setup
             List<SaleOfficerData> saleOfficerData = new List<SaleOfficerData>();
             using (FOSDataModel dbContext = new FOSDataModel())
             {
-                var list = dbContext.SaleOfficers.Where(u => u.RegionID == Region).ToList();
+                var list = dbContext.SaleOfficers.Where(u => u.RegionID == Region && u.IsActive == true).ToList();
 
                 foreach (var so in list)
                 {
@@ -250,7 +253,8 @@ namespace FOS.Setup
             List<SaleOfficerData> saleOfficerData = new List<SaleOfficerData>();
             using (FOSDataModel dbContext = new FOSDataModel())
             {
-                var list = dbContext.Tbl_SOREGIONS.Where(u => u.RegionID == Region).ToList();
+                var activeSoIds = dbContext.SaleOfficers.Where(x => x.IsActive == true).Select(x => x.ID).ToList();
+                var list = dbContext.Tbl_SOREGIONS.Where(u => u.RegionID == Region && activeSoIds.Contains(u.SaleofficerID)).ToList();
 
                 foreach (var so in list)
                 {
@@ -300,7 +304,7 @@ namespace FOS.Setup
             {
                 using (FOSDataModel dbContext = new FOSDataModel())
                 {
-                    var list = dbContext.SaleOfficers.Where(u => u.RegionalHeadID == RegionalHeadID && u.IsDeleted == false).ToList()
+                    var list = dbContext.SaleOfficers.Where(u => u.RegionalHeadID == RegionalHeadID && u.IsDeleted == false && u.IsActive == true).ToList()
                             .Select(
                                 u => new SaleOfficerData
                                 {
@@ -331,7 +335,7 @@ namespace FOS.Setup
             {
                 using (FOSDataModel dbContext = new FOSDataModel())
                 {
-                    saleOfficerData = dbContext.SaleOfficers.Where(u => u.RegionalHeadID == RegionalHeadID && u.IsDeleted == false).ToList()
+                    saleOfficerData = dbContext.SaleOfficers.Where(u => u.RegionalHeadID == RegionalHeadID && u.IsDeleted == false && u.IsActive == true).ToList()
                             .Select(
                                 u => new SaleOfficerData
                                 {
@@ -368,7 +372,7 @@ namespace FOS.Setup
                 {
                     if (orderby)
                     {
-                        saleOfficerData = dbContext.SaleOfficers.Where(u => u.IsDeleted == false).ToList()
+                        saleOfficerData = dbContext.SaleOfficers.Where(u => u.IsDeleted == false && u.IsActive == true).ToList()
                             .Select(
                                 u => new SaleOfficerData
                                 {
@@ -389,7 +393,7 @@ namespace FOS.Setup
                     }
                     else
                     {
-                        saleOfficerData = dbContext.SaleOfficers.Where(u => u.IsDeleted == false).ToList()
+                        saleOfficerData = dbContext.SaleOfficers.Where(u => u.IsDeleted == false && u.IsActive == true).ToList()
                             .Select(
                                 u => new SaleOfficerData
                                 {
@@ -520,7 +524,7 @@ namespace FOS.Setup
             List<SaleOfficer> saleOfficerData = new List<SaleOfficer>();
             using (FOSDataModel dbContext = new FOSDataModel())
             {
-                saleOfficerData = dbContext.SaleOfficers.ToList();
+                saleOfficerData = dbContext.SaleOfficers.Where(s => s.IsActive == true).ToList();
             }
             return saleOfficerData;
         }
@@ -530,7 +534,7 @@ namespace FOS.Setup
             List<SaleOfficerData> saleOfficerData = new List<SaleOfficerData>();
             using (FOSDataModel dbContext = new FOSDataModel())
             {
-                var list = dbContext.SaleOfficers.Where(s => s.RegionalHeadID == RHID).ToList();
+                var list = dbContext.SaleOfficers.Where(s => s.RegionalHeadID == RHID && s.IsActive == true).ToList();
 
                 foreach (var so in list)
                 {
@@ -612,7 +616,7 @@ namespace FOS.Setup
                     saleOfficerData = (from jd in dbContext.JobsDetails
                                        join re in dbContext.Retailers on jd.RetailerID equals re.ID
                                        join so in dbContext.SaleOfficers on jd.SalesOficerID equals so.ID
-                                       where re.DealerID == RHID && jd.JobDate >= fromdate && jd.JobDate <= todate && re.RangeID==6
+                                       where re.DealerID == RHID && jd.JobDate >= fromdate && jd.JobDate <= todate && re.RangeID==6 && so.IsActive == true
                                     
 
                                        select new SaleOfficerData
@@ -628,7 +632,7 @@ namespace FOS.Setup
                     saleOfficerData = (from jd in dbContext.JobsDetails
                                        join re in dbContext.Retailers on jd.RetailerID equals re.ID
                                        join so in dbContext.SaleOfficers on jd.SalesOficerID equals so.ID
-                                       where re.RangeBDealer == RHID && jd.JobDate >= fromdate && jd.JobDate <= todate && re.RangeID == 7
+                                       where re.RangeBDealer == RHID && jd.JobDate >= fromdate && jd.JobDate <= todate && re.RangeID == 7 && so.IsActive == true
                                        select new SaleOfficerData
                                        {
                                            ID = so.ID,
@@ -640,7 +644,7 @@ namespace FOS.Setup
                     saleOfficerData = (from jd in dbContext.JobsDetails
                                        join re in dbContext.Retailers on jd.RetailerID equals re.ID
                                        join so in dbContext.SaleOfficers on jd.SalesOficerID equals so.ID
-                                       where re.RangeCDealer == RHID && jd.JobDate >= fromdate && jd.JobDate <= todate && re.RangeID == 10
+                                       where re.RangeCDealer == RHID && jd.JobDate >= fromdate && jd.JobDate <= todate && re.RangeID == 10 && so.IsActive == true
                                        select new SaleOfficerData
                                        {
                                            ID = so.ID,
@@ -1046,7 +1050,7 @@ namespace FOS.Setup
             {
                 using (FOSDataModel dbContext = new FOSDataModel())
                 {
-                    saleOfficerData = dbContext.SaleOfficers.Where(u => u.RegionalHeadID == RegionalHeadID && u.IsDeleted == false).ToList()
+                    saleOfficerData = dbContext.SaleOfficers.Where(u => u.RegionalHeadID == RegionalHeadID && u.IsDeleted == false && u.IsActive == true).ToList()
                             .Select(
                                 u => new SaleOfficerData
                                 {
@@ -1071,7 +1075,7 @@ namespace FOS.Setup
             using (FOSDataModel dbContext = new FOSDataModel())
             {
 
-                saleOfficerData = dbContext.SaleOfficers.OrderBy(p => p.Name).ToList();
+                saleOfficerData = dbContext.SaleOfficers.Where(p => p.IsActive == true).OrderBy(p => p.Name).ToList();
 
 
 

@@ -514,11 +514,11 @@ namespace FOS.Setup
             {
                 if (RHID == 0 && !selectOption)
                 {
-                    saleOfficerData = dbContext.SaleOfficers.OrderBy(p => p.Name).ToList();
+                    saleOfficerData = dbContext.SaleOfficers.Where(p => p.IsActive == true).OrderBy(p => p.Name).ToList();
                 }
                 else
                 {
-                    saleOfficerData = dbContext.SaleOfficers.Where(s => s.RegionalHeadID == RHID).OrderBy(p => p.Name).ToList();
+                    saleOfficerData = dbContext.SaleOfficers.Where(s => s.RegionalHeadID == RHID && s.IsActive == true).OrderBy(p => p.Name).ToList();
                 }
 
             }
