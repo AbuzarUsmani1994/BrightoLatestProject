@@ -3,6 +3,7 @@ using FOS.Setup;
 using Shared.Diagnostics.Logging;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -902,29 +903,29 @@ namespace FOS.Web.UI.Controllers.API
 
         public List<City> PlotSizeList()
         {
+            // SortOrder isn't in the .edmx (Tbl_PlotSize is, but adding a column to an
+            // existing mapped entity means touching the fragile edmx) - raw ADO.NET
+            // instead, same pattern used elsewhere in this app for that reason.
             List<City> MAinCat = new List<City>();
-            City cty;
-            List<City> list;
 
-
-
-            //string SOName = "";
-            var dbMainCat = db.Tbl_PlotSize.Where(c => c.IsActive == true).ToList();
-
-            foreach (var dbCty in dbMainCat)
+            using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+            using (var cmd = new SqlCommand("SELECT ID, Name FROM dbo.Tbl_PlotSize WHERE IsActive = 1 ORDER BY SortOrder, Name", conn))
             {
-                cty = new City();
-                cty.ID = dbCty.ID;
-                cty.Name = dbCty.Name;
-
-                MAinCat.Add(cty);
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        MAinCat.Add(new City
+                        {
+                            ID = Convert.ToInt32(reader["ID"]),
+                            Name = reader["Name"] as string
+                        });
+                    }
+                }
             }
 
-
-
-
-
-            return MAinCat.OrderBy(x => x.Name).ToList();
+            return MAinCat;
         }
         public List<City> IndustryList()
         {
