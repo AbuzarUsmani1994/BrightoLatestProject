@@ -1247,7 +1247,7 @@
           <Property Name="AffExpertiseID" Type="int" />
           <Property Name="AffNatureOfClientID" Type="int" />
           <Property Name="Remarks" Type="varchar" MaxLength="500" />
-          <Property Name="ContactNumber" Type="int" />
+          <Property Name="ContactNumber" Type="varchar" MaxLength="20" />
           <Property Name="SOID" Type="int" />
           <Property Name="Latitude" Type="decimal" Precision="18" Scale="10" />
           <Property Name="Longitude" Type="decimal" Precision="18" Scale="10" />
@@ -13826,7 +13826,7 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <Property Name="AffExpertiseID" Type="Int32" />
           <Property Name="AffNatureOfClientID" Type="Int32" />
           <Property Name="Remarks" Type="String" MaxLength="500" FixedLength="false" Unicode="false" />
-          <Property Name="ContactNumber" Type="Int32" />
+          <Property Name="ContactNumber" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
           <Property Name="SOID" Type="Int32" />
           <Property Name="Latitude" Type="Decimal" Precision="18" Scale="10" />
           <Property Name="Longitude" Type="Decimal" Precision="18" Scale="10" />
@@ -14666,7 +14666,7 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <Property Type="Int32" Name="BusinessAffiliateID" Nullable="true" />
           <Property Type="String" Name="BusinessName" Nullable="true" MaxLength="500" />
           <Property Type="String" Name="ContactPerson" Nullable="true" MaxLength="100" />
-          <Property Type="Int32" Name="ContactNumber" Nullable="true" />
+          <Property Type="String" Name="ContactNumber" Nullable="true" MaxLength="20" />
           <Property Type="String" Name="BusinessAddress" Nullable="true" MaxLength="500" />
           <Property Type="Int32" Name="RegionID" Nullable="true" />
           <Property Type="String" Name="RegionName" Nullable="true" MaxLength="80" />

@@ -31,7 +31,7 @@ public partial class usp_GetBusinessAffiliatesDSR_Result
 
     public string ContactPerson { get; set; }
 
-    public Nullable<int> ContactNumber { get; set; }
+    public string ContactNumber { get; set; }
 
     public string BusinessAddress { get; set; }
 

@@ -143,7 +143,7 @@ namespace FOS.Web.UI.Controllers.API
             public int RetailerID { get; set; }
             public string BusinessName { get; set; }
             public string ContactPerson { get; set; }
-            public int ContactNumber { get; set; }
+            public string ContactNumber { get; set; }
             public int AffiliateBusinessTypeID { get; set; }
             public int AffiliateClassificationID { get; set; }
             public int AffiliateExpertiseID { get; set; }

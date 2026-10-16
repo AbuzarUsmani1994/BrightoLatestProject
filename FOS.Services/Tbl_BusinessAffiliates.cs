@@ -42,7 +42,7 @@ public partial class Tbl_BusinessAffiliates
 
     public string Remarks { get; set; }
 
-    public Nullable<int> ContactNumber { get; set; }
+    public string ContactNumber { get; set; }
 
     public Nullable<int> SOID { get; set; }
 

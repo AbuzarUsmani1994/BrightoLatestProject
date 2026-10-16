@@ -19,6 +19,23 @@ namespace FOS.Web.UI.Controllers.API
         {
             try
             {
+                // rm comes back null when the request body wasn't parsed as JSON (most
+                // often a missing/wrong Content-Type header) - without this check that
+                // surfaces as an opaque EF6 reflection TargetException ("Non-static
+                // method requires a target") from evaluating rm.ID, instead of a clear
+                // message.
+                if (rm == null || rm.ID <= 0)
+                {
+                    return new Result<SuccessResponse>
+                    {
+                        Data = null,
+                        Message = "Request body is missing or invalid - make sure Content-Type: application/json is set and ID is provided.",
+                        ResultType = ResultType.Failure,
+                        Exception = null,
+                        ValidationErrors = null
+                    };
+                }
+
                 var retailerObj = db.Tbl_BusinessAffiliates.Where(x => x.ID == rm.ID).FirstOrDefault();
                 if (retailerObj == null)
                 {
@@ -83,7 +100,7 @@ namespace FOS.Web.UI.Controllers.API
             public int ID { get; set; }
             public string BusinessName { get; set; }
             public string ContactPerson { get; set; }
-            public int ContactNumber { get; set; }
+            public string ContactNumber { get; set; }
             public int AffiliateBusinessTypeID { get; set; }
             public int AffiliateClassificationID { get; set; }
             public int AffiliateExpertiseID { get; set; }
