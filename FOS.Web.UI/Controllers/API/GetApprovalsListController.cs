@@ -3,6 +3,7 @@ using FOS.Setup;
 using Shared.Diagnostics.Logging;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -16,7 +17,7 @@ namespace FOS.Web.UI.Controllers.API
 
         FOSDataModel db = new FOSDataModel();
 
-        public IHttpActionResult Get(int ClaimID,int LoginSOID)
+        public IHttpActionResult Get(int ClaimID,int LoginSOID, string DocType = null)
         {
             FOSDataModel dbContext = new FOSDataModel();
             try
@@ -24,6 +25,45 @@ namespace FOS.Web.UI.Controllers.API
                 List<ApprovalsList> CustomerValidate = new List<ApprovalsList>();
                 ApprovalsList cty;
                 //List<RetailerData> MAinCat = new List<RetailerData>();
+
+                // DocType defaults to Claims (existing callers unaffected).
+                // Tbl_DealerVerification has no Tbl_ClaimsApproval-equivalent
+                // multi-approver chain - just a single "latest reviewer" slot on the
+                // row itself - so this returns at most one synthetic entry instead
+                // of a growing history list.
+                if (DocType == "DealerVerification" && ClaimID > 0)
+                {
+                    using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
+                    using (var cmd = new SqlCommand(@"
+                        SELECT dv.ID, dv.ClaimManagerLatestRemarks, dv.ClaimManagerLatestStatus, dv.ClaimManagerDate, dv.ApprovedBy,
+                               apso.Name AS ApprovedByName
+                        FROM dbo.Tbl_DealerVerification dv
+                        LEFT JOIN dbo.SaleOfficers apso ON dv.ApprovedBy = apso.ID
+                        WHERE dv.ID = @ClaimID", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@ClaimID", ClaimID);
+                        conn.Open();
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read() && reader["ClaimManagerLatestStatus"] != DBNull.Value)
+                            {
+                                var approvedBy = reader["ApprovedBy"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["ApprovedBy"]);
+                                CustomerValidate.Add(new ApprovalsList
+                                {
+                                    ID = Convert.ToInt32(reader["ID"]),
+                                    Remarks = reader["ClaimManagerLatestRemarks"] as string,
+                                    ApprovedStatus = reader["ClaimManagerLatestStatus"] as string,
+                                    ApprovedAt = reader["ClaimManagerDate"] == DBNull.Value ? null : Convert.ToDateTime(reader["ClaimManagerDate"]).ToString("yyyy-MM-dd HH:mm:ss"),
+                                    SOName = reader["ApprovedByName"] as string,
+                                    CanDelete = approvedBy == LoginSOID
+                                });
+                            }
+                        }
+                    }
+
+                    return Ok(new { ApprovalList = CustomerValidate });
+                }
+
                 if (ClaimID > 0)
                 {
                     object[] param = { ClaimID };
