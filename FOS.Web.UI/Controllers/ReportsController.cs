@@ -3334,7 +3334,7 @@ namespace FOS.Web.UI.Controllers
             return View(objJob);
         }
 
-        public void ClaimSummaryRpt(string StartingDate, string EndingDate, int TID, int fosid, string SubmissionType = "All")
+        public void ClaimSummaryRpt(string StartingDate, string EndingDate, int TID, int fosid, string SubmissionType = "All", string DocType = "Claims")
         {
             var userID = Convert.ToInt32(Session["UserID"]);
             var remoteIpAddress = "";
@@ -3353,7 +3353,9 @@ namespace FOS.Web.UI.Controllers
                 DateTime final = end;
 
                 // Get data from database
-                var result = db.usp_GetClaimSummaryReportTraderWiseForBackEnd(TID, fosid, start, final, 0).ToList();
+                var result = string.Equals(DocType, "DealerVerification", StringComparison.OrdinalIgnoreCase)
+                    ? GetDealerVerificationClaimSummaryRows(TID, fosid, start, final)
+                    : db.usp_GetClaimSummaryReportTraderWiseForBackEnd(TID, fosid, start, final, 0).ToList();
 
                 // Late submission = punched after the 10th of the month following the claim's own month
                 // (e.g. a February claim is due by 10-Mar; punched 11-Mar or later is late)
@@ -3431,6 +3433,69 @@ namespace FOS.Web.UI.Controllers
                 db.SaveChanges();
                 Response.End();
             }
+        }
+
+        // DocType = "DealerVerification" reports on Tbl_DealerVerification submissions
+        // instead of Tbl_SalesClaimMaster ones - same toggle already used by the "Claims
+        // Detail" manager grid (RetailerOrdersController.GetClaimsForManager /
+        // ManageJobs.GetDealerVerificationForGrid). Tbl_DealerVerification isn't in the
+        // .edmx, so this is raw ADO.NET, mapped into the same result type the Claims
+        // branch uses above so the CSV writer needs no changes. A Dealer Verification
+        // submission has no sale value/liters/incentive/tax, so those columns come back
+        // "0.00" (CalculateDiscountPercentage already treats "0.00" MRP as 0% discount).
+        private List<usp_GetClaimSummaryReportTraderWiseForBackEnd_Result> GetDealerVerificationClaimSummaryRows(int headID, int saleOfficerId, DateTime start, DateTime end)
+        {
+            var rows = new List<usp_GetClaimSummaryReportTraderWiseForBackEnd_Result>();
+
+            using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+            using (var cmd = new SqlCommand(@"
+                SELECT dv.TradePartyID, dv.DateSelected AS CreatedDate, dv.CreatedOn AS PunchingDate,
+                       head.Name AS HeadName, so.Name AS SOName, reg.Name AS RegionName,
+                       tp.ShopName AS TraderName, city.Name AS CityName, r.ShopName AS CustomerName
+                FROM dbo.Tbl_DealerVerification dv
+                LEFT JOIN dbo.SaleOfficers so ON dv.SOID = so.ID
+                LEFT JOIN dbo.RegionalHeads head ON so.RegionalHeadID = head.ID
+                LEFT JOIN dbo.Regions reg ON so.RegionID = reg.ID
+                LEFT JOIN dbo.Retailers r ON dv.CustomerID = r.ID
+                LEFT JOIN dbo.Cities city ON r.CityID = city.ID
+                LEFT JOIN dbo.Retailers tp ON dv.TradePartyID = tp.ID
+                WHERE dv.IsActive = 1
+                  AND dv.DateSelected BETWEEN @startdate AND @enddate
+                  AND so.RegionalHeadID = CASE WHEN @headID = 0 THEN so.RegionalHeadID ELSE @headID END
+                  AND so.ID = CASE WHEN @SaleOfficerId = 0 THEN so.ID ELSE @SaleOfficerId END", conn))
+            {
+                cmd.Parameters.AddWithValue("@headID", headID);
+                cmd.Parameters.AddWithValue("@SaleOfficerId", saleOfficerId);
+                cmd.Parameters.AddWithValue("@startdate", start);
+                cmd.Parameters.AddWithValue("@enddate", end);
+
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        rows.Add(new usp_GetClaimSummaryReportTraderWiseForBackEnd_Result
+                        {
+                            TradepartyID = reader["TradePartyID"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["TradePartyID"]),
+                            CreatedDate = reader["CreatedDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["CreatedDate"]),
+                            PunchingDate = reader["PunchingDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["PunchingDate"]),
+                            HeadName = reader["HeadName"] as string,
+                            SOName = reader["SOName"] as string,
+                            RegionName = reader["RegionName"] as string,
+                            TraderName = reader["TraderName"] as string,
+                            CityName = reader["CityName"] as string,
+                            CustomerName = reader["CustomerName"] as string,
+                            TotalLiters = "0.00",
+                            IncentiveValue = "0.00",
+                            TotalPrice = "0.00",
+                            SalesTax = "0.00",
+                            MRPValue = "0.00"
+                        });
+                    }
+                }
+            }
+
+            return rows;
         }
 
         private string CalculateDiscountPercentage(string mrpValue, string totalPrice)
@@ -7796,7 +7861,7 @@ namespace FOS.Web.UI.Controllers
 
         }
 
-        public void ApprovalSummary(string StartingDate, string EndingDate,int RHID, int? DisID, int TID)
+        public void ApprovalSummary(string StartingDate, string EndingDate,int RHID, int? DisID, int TID, string DocType = "Claims")
         {
             var userID = Convert.ToInt32(Session["UserID"]);
             var remoteIpAddress = "";
@@ -7827,7 +7892,9 @@ namespace FOS.Web.UI.Controllers
                         
 
                         // Get data from database
-                        var result = db.sp_GetSOClaimsApprovalStatus(RHID, TID, start, final).ToList();
+                        var result = string.Equals(DocType, "DealerVerification", StringComparison.OrdinalIgnoreCase)
+                            ? GetDealerVerificationApprovalStatusRows(RHID, TID, start, final)
+                            : db.sp_GetSOClaimsApprovalStatus(RHID, TID, start, final).ToList();
 
                         // Set up CSV response
                         Response.ClearContent();
@@ -7906,7 +7973,9 @@ namespace FOS.Web.UI.Controllers
 
 
                         // Get data from database
-                        var result = db.sp_GetSOClaimsDetailApproval(RHID, TID, start, final).ToList();
+                        var result = string.Equals(DocType, "DealerVerification", StringComparison.OrdinalIgnoreCase)
+                            ? GetDealerVerificationDetailApprovalRows(RHID, TID, start, final)
+                            : db.sp_GetSOClaimsDetailApproval(RHID, TID, start, final).ToList();
 
                         // Set up CSV response
                         Response.ClearContent();
@@ -7985,6 +8054,111 @@ namespace FOS.Web.UI.Controllers
 
             }
 
+        }
+
+        // DocType = "DealerVerification" counterparts to sp_GetSOClaimsApprovalStatus /
+        // sp_GetSOClaimsDetailApproval, for Tbl_DealerVerification submissions. That table
+        // isn't in the .edmx, so this is raw ADO.NET. Status/ApprovedBy is the SO-level
+        // approve/reject pair set by ApproveClaimsController (DocType = "DealerVerification"
+        // branch: "UPDATE ... SET Status = 'Approved', ApprovedBy = @SOID"), mirroring
+        // Tbl_SalesClaimMaster; ClaimManagerLatestStatus/Remarks/Date is the separate Claim
+        // Manager review set by JobController.UpdateClaimStatus. Both pairs are used below the
+        // same way GetApprovalsListController's existing DealerVerification branch already
+        // reads them.
+        private List<sp_GetSOClaimsApprovalStatus_Result> GetDealerVerificationApprovalStatusRows(int headID, int saleOfficerId, DateTime start, DateTime end)
+        {
+            var rows = new List<sp_GetSOClaimsApprovalStatus_Result>();
+
+            using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+            using (var cmd = new SqlCommand(@"
+                SELECT so.ID AS SOID, MAX(head.Name) AS HeadName, MAX(so.Name) AS SOName,
+                       COUNT(dv.ID) AS TotalClaims,
+                       SUM(CASE WHEN dv.Status = 'Approved' THEN 1 ELSE 0 END) AS ApprovedClaims,
+                       SUM(CASE WHEN ISNULL(dv.Status, '') <> 'Approved' THEN 1 ELSE 0 END) AS NotApprovedClaims
+                FROM dbo.Tbl_DealerVerification dv
+                INNER JOIN dbo.SaleOfficers so ON dv.SOID = so.ID
+                LEFT JOIN dbo.RegionalHeads head ON so.RegionalHeadID = head.ID
+                WHERE dv.IsActive = 1
+                  AND dv.DateSelected BETWEEN @startdate AND @enddate
+                  AND so.RegionalHeadID = CASE WHEN @headID = 0 THEN so.RegionalHeadID ELSE @headID END
+                  AND so.ID = CASE WHEN @SaleOfficerId = 0 THEN so.ID ELSE @SaleOfficerId END
+                GROUP BY so.ID", conn))
+            {
+                cmd.Parameters.AddWithValue("@headID", headID);
+                cmd.Parameters.AddWithValue("@SaleOfficerId", saleOfficerId);
+                cmd.Parameters.AddWithValue("@startdate", start);
+                cmd.Parameters.AddWithValue("@enddate", end);
+
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        rows.Add(new sp_GetSOClaimsApprovalStatus_Result
+                        {
+                            SOID = reader["SOID"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["SOID"]),
+                            HeadName = reader["HeadName"] as string,
+                            SOName = reader["SOName"] as string,
+                            TotalClaims = Convert.ToInt32(reader["TotalClaims"]),
+                            ApprovedClaims = Convert.ToInt32(reader["ApprovedClaims"]),
+                            NotApprovedClaims = Convert.ToInt32(reader["NotApprovedClaims"])
+                        });
+                    }
+                }
+            }
+
+            return rows;
+        }
+
+        private List<sp_GetSOClaimsDetailApproval_Result> GetDealerVerificationDetailApprovalRows(int headID, int saleOfficerId, DateTime start, DateTime end)
+        {
+            var rows = new List<sp_GetSOClaimsDetailApproval_Result>();
+
+            using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+            using (var cmd = new SqlCommand(@"
+                SELECT dv.ID AS ClaimID, so.ID AS SOID, head.Name AS HeadName, so.Name AS SOName,
+                       r.ShopName AS ShopName, dv.DateSelected AS ClaimDate, dv.CreatedOn AS SubmittedDate,
+                       dv.ClaimManagerDate AS ApprovedDate, apso.Name AS ApprovedBy,
+                       dv.ClaimManagerLatestStatus AS ApprovedStatus, dv.ClaimManagerLatestRemarks AS Remarks
+                FROM dbo.Tbl_DealerVerification dv
+                LEFT JOIN dbo.SaleOfficers so ON dv.SOID = so.ID
+                LEFT JOIN dbo.RegionalHeads head ON so.RegionalHeadID = head.ID
+                LEFT JOIN dbo.Retailers r ON dv.CustomerID = r.ID
+                LEFT JOIN dbo.SaleOfficers apso ON dv.ApprovedBy = apso.ID
+                WHERE dv.IsActive = 1
+                  AND dv.DateSelected BETWEEN @startdate AND @enddate
+                  AND so.RegionalHeadID = CASE WHEN @headID = 0 THEN so.RegionalHeadID ELSE @headID END
+                  AND so.ID = CASE WHEN @SaleOfficerId = 0 THEN so.ID ELSE @SaleOfficerId END", conn))
+            {
+                cmd.Parameters.AddWithValue("@headID", headID);
+                cmd.Parameters.AddWithValue("@SaleOfficerId", saleOfficerId);
+                cmd.Parameters.AddWithValue("@startdate", start);
+                cmd.Parameters.AddWithValue("@enddate", end);
+
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        rows.Add(new sp_GetSOClaimsDetailApproval_Result
+                        {
+                            ClaimID = Convert.ToInt32(reader["ClaimID"]),
+                            SOID = reader["SOID"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["SOID"]),
+                            HeadName = reader["HeadName"] as string,
+                            SOName = reader["SOName"] as string,
+                            ShopName = reader["ShopName"] as string,
+                            ClaimDate = reader["ClaimDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["ClaimDate"]),
+                            SubmittedDate = reader["SubmittedDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["SubmittedDate"]),
+                            ApprovedDate = reader["ApprovedDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["ApprovedDate"]),
+                            ApprovedBy = reader["ApprovedBy"] as string,
+                            ApprovedStatus = reader["ApprovedStatus"] as string,
+                            Remarks = reader["Remarks"] as string
+                        });
+                    }
+                }
+            }
+
+            return rows;
         }
 
         #endregion
