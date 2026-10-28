@@ -3370,35 +3370,60 @@ namespace FOS.Web.UI.Controllers
                 Response.ContentType = "text/csv";
 
                 // Create CSV writer
+                bool isDealerVerification = string.Equals(DocType, "DealerVerification", StringComparison.OrdinalIgnoreCase);
                 using (var sw = new StringWriter())
                 {
-                    // Write CSV header
-                    sw.WriteLine("\"Sr#\",\"Head Name\",\"SO Name\",\"Region Name\",\"City Name\",\"Claim Date\",\"Submission Date\",\"Customer Name\",\"Trader Name\",\"Total Liters\",\"Incentive value\",\"Total Price\",\"Sales Tax\",\"MRP Value\",\"Discount % Value\"");
+                    // Dealer Verification has no customer (it's a trade party instead,
+                    // already in "Trader Name") and no sale value, so the Customer Name
+                    // and financial columns don't apply - drop them from the header
+                    // rather than ship them always blank/zero.
+                    if (isDealerVerification)
+                    {
+                        sw.WriteLine("\"Sr#\",\"Head Name\",\"SO Name\",\"Region Name\",\"City Name\",\"Claim Date\",\"Submission Date\",\"Trader Name\"");
+                    }
+                    else
+                    {
+                        sw.WriteLine("\"Sr#\",\"Head Name\",\"SO Name\",\"Region Name\",\"City Name\",\"Claim Date\",\"Submission Date\",\"Customer Name\",\"Trader Name\",\"Total Liters\",\"Incentive value\",\"Total Price\",\"Sales Tax\",\"MRP Value\",\"Discount % Value\"");
+                    }
 
                     if (result != null)
                     {
                         int srNo = 1;
                         foreach (var retailer in result)
                         {
-                            // Calculate discount percentage
-                            string discountPercentage = CalculateDiscountPercentage(retailer.MRPValue, retailer.TotalPrice);
+                            if (isDealerVerification)
+                            {
+                                sw.WriteLine($"\"{srNo}\"," +
+                                            $"\"{EscapeCsvValue(retailer.HeadName)}\"," +
+                                            $"\"{EscapeCsvValue(retailer.SOName)}\"," +
+                                            $"\"{EscapeCsvValue(retailer.RegionName)}\"," +
+                                            $"\"{EscapeCsvValue(retailer.CityName)}\"," +
+                                            $"\"{retailer.CreatedDate}\"," +
+                                            $"\"{retailer.PunchingDate}\"," +
+                                            $"\"{EscapeCsvValue(retailer.TraderName)}\"");
+                            }
+                            else
+                            {
+                                // Calculate discount percentage
+                                string discountPercentage = CalculateDiscountPercentage(retailer.MRPValue, retailer.TotalPrice);
 
-                            // Write CSV line using string interpolation for better readability
-                            sw.WriteLine($"\"{srNo}\"," +
-                                        $"\"{EscapeCsvValue(retailer.HeadName)}\"," +
-                                        $"\"{EscapeCsvValue(retailer.SOName)}\"," +
-                                        $"\"{EscapeCsvValue(retailer.RegionName)}\"," +
-                                        $"\"{EscapeCsvValue(retailer.CityName)}\"," +
-                                        $"\"{retailer.CreatedDate}\"," +
-                                        $"\"{retailer.PunchingDate}\"," +
-                                        $"\"{EscapeCsvValue(retailer.CustomerName)}\"," +
-                                        $"\"{EscapeCsvValue(retailer.TraderName)}\"," +
-                                        $"\"{retailer.TotalLiters}\"," +
-                                        $"\"{retailer.IncentiveValue}\"," +
-                                        $"\"{retailer.TotalPrice}\"," +
-                                        $"\"{retailer.SalesTax}\"," +
-                                        $"\"{retailer.MRPValue}\"," +
-                                        $"\"{discountPercentage}\"");
+                                // Write CSV line using string interpolation for better readability
+                                sw.WriteLine($"\"{srNo}\"," +
+                                            $"\"{EscapeCsvValue(retailer.HeadName)}\"," +
+                                            $"\"{EscapeCsvValue(retailer.SOName)}\"," +
+                                            $"\"{EscapeCsvValue(retailer.RegionName)}\"," +
+                                            $"\"{EscapeCsvValue(retailer.CityName)}\"," +
+                                            $"\"{retailer.CreatedDate}\"," +
+                                            $"\"{retailer.PunchingDate}\"," +
+                                            $"\"{EscapeCsvValue(retailer.CustomerName)}\"," +
+                                            $"\"{EscapeCsvValue(retailer.TraderName)}\"," +
+                                            $"\"{retailer.TotalLiters}\"," +
+                                            $"\"{retailer.IncentiveValue}\"," +
+                                            $"\"{retailer.TotalPrice}\"," +
+                                            $"\"{retailer.SalesTax}\"," +
+                                            $"\"{retailer.MRPValue}\"," +
+                                            $"\"{discountPercentage}\"");
+                            }
 
                             srNo++;
                         }
