@@ -4959,19 +4959,33 @@ namespace FOS.Web.UI.Controllers
                     DateTime final = end.AddDays(1);
                     ManageRetailer objRetailers = new ManageRetailer();
                     List<Sp_OrderForPDFHousingVisitsBackend_Result> result = db.Sp_OrderForPDFHousingVisitsBackend(start, final, fosid,TID).ToList();
+
+                    // Latest call (by CreatedOn) per visit, same "latest only" rule as
+                    // GetCustomerCallDetailController's Android call section - pulled
+                    // into memory first since GroupBy+OrderBy.First() per group isn't
+                    // reliably translatable by EF6 LINQ-to-Entities.
+                    var visitIds = result.Select(r => r.VisitID).Distinct().ToList();
+                    var latestCallByVisit = db.Tbl_SaveCall
+                        .Where(c => c.VisitID.HasValue && visitIds.Contains(c.VisitID.Value))
+                        .ToList()
+                        .GroupBy(c => c.VisitID.Value)
+                        .ToDictionary(g => g.Key, g => g.OrderByDescending(c => c.CreatedOn).First());
+
                     // Example data
                     StringWriter sw = new StringWriter();
 
-                    sw.WriteLine("\"VisitID\",\"CustomerID\",\"Owner Name\",\"Customer Name\",\"Customer CreatedDate\",\"Compititors\",\"Business Status\",\"Regional Head Name\",\"Visit Date\",\"Next Visit Date\",\"SaleOfficer Name\",\"Address\",\"Mobile No\",\"Architect Name\",\"Architect Number\",\"Contractor Name\",\"Contractor Number\",\"Estimated Value\",\"Order Volume\",\"Off take From Others\",\"Scope\",\"Nature\",\"Construction Stage\",\"Plot Size\",\"Color Scheme\",\"Site Won\",\"Remarks\",\"Location\",\"Online OR Offline\"");
+                    sw.WriteLine("\"VisitID\",\"CustomerID\",\"Owner Name\",\"Customer Name\",\"Customer CreatedDate\",\"Compititors\",\"Business Status\",\"Regional Head Name\",\"Visit Date\",\"Next Visit Date\",\"SaleOfficer Name\",\"Address\",\"Mobile No\",\"Architect Name\",\"Architect Number\",\"Contractor Name\",\"Contractor Number\",\"Estimated Value\",\"Order Volume\",\"Off take From Others\",\"Scope\",\"Nature\",\"Construction Stage\",\"Plot Size\",\"Color Scheme\",\"Site Won\",\"Remarks\",\"Location\",\"Online OR Offline\",\"Call to Customer\",\"Call Date\",\"Call Rating\",\"Nature of Call\",\"Site Status\",\"Call Remarks\"");
 
                     Response.ClearContent();
                     Response.AddHeader("content-disposition", "attachment;filename=HousingVisits" + DateTime.Now + ".csv");
                     Response.ContentType = "application/octet-stream";
-                      
+
 
                     foreach (var retailer in result)
                     {
-                        sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\",\"{13}\",\"{14}\",\"{15}\",\"{16}\",\"{17}\",\"{18}\",\"{19}\",\"{20}\",\"{21}\",\"{22}\",\"{23}\",\"{24}\",\"{25}\",\"{26}\",\"{27}\",\"{28}\"",
+                        latestCallByVisit.TryGetValue(retailer.VisitID, out var latestCall);
+
+                        sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\",\"{13}\",\"{14}\",\"{15}\",\"{16}\",\"{17}\",\"{18}\",\"{19}\",\"{20}\",\"{21}\",\"{22}\",\"{23}\",\"{24}\",\"{25}\",\"{26}\",\"{27}\",\"{28}\",\"{29}\",\"{30}\",\"{31}\",\"{32}\",\"{33}\",\"{34}\"",
 
                         retailer.VisitID,
                         retailer.CustomerID,
@@ -4987,7 +5001,7 @@ namespace FOS.Web.UI.Controllers
                         retailer.SaleOfficerName,
                         retailer.Address,
                        retailer.Phone1,
-                       
+
                         retailer.ArchitectName,
 
                               retailer.ArchitectNumber,
@@ -5003,11 +5017,17 @@ namespace FOS.Web.UI.Controllers
                         retailer.ConstructionStage,
                        retailer.PlotSize,
                         retailer.ColorScheme,
-                        
+
                        retailer.SiteWon,
                        retailer.Remarks,
                        retailer.Latitude + "," + retailer.Longitude,
-                       retailer.OnlineOffline
+                       retailer.OnlineOffline,
+                       latestCall?.CallerName,
+                       latestCall?.CreatedOn,
+                       latestCall?.CallRating,
+                       latestCall?.NatureOfCall,
+                       latestCall?.SiteStatus,
+                       latestCall?.CallerRemarks
 
 
 
