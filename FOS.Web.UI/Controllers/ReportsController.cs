@@ -8005,8 +8005,13 @@ namespace FOS.Web.UI.Controllers
                         // Create CSV writer
                         using (var sw = new StringWriter())
                         {
-                            // Write CSV header
-                            sw.WriteLine("\"Sr#\",\"ClaimID\",\"Head Name\",\"SO Name\",\"Customer Name\",\"Claim Date\",\"Submitted Date\",\"Approved Date\",\"Approved By\",\"Approved Status\",\"Remarks\"");
+                            // Write CSV header - Dealer Verification's "customer" column is
+                            // the trade party (dv.TradePartyID), not dv.CustomerID, so it's
+                            // labeled accordingly instead of "Customer Name".
+                            var partyColumnHeader = string.Equals(DocType, "DealerVerification", StringComparison.OrdinalIgnoreCase)
+                                ? "Trade Party Name"
+                                : "Customer Name";
+                            sw.WriteLine($"\"Sr#\",\"ClaimID\",\"Head Name\",\"SO Name\",\"{partyColumnHeader}\",\"Claim Date\",\"Submitted Date\",\"Approved Date\",\"Approved By\",\"Approved Status\",\"Remarks\"");
 
                             if (result != null)
                             {
@@ -8137,13 +8142,13 @@ namespace FOS.Web.UI.Controllers
             using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
             using (var cmd = new SqlCommand(@"
                 SELECT dv.ID AS ClaimID, so.ID AS SOID, head.Name AS HeadName, so.Name AS SOName,
-                       r.ShopName AS ShopName, dv.DateSelected AS ClaimDate, dv.CreatedOn AS SubmittedDate,
+                       tp.ShopName AS ShopName, dv.DateSelected AS ClaimDate, dv.CreatedOn AS SubmittedDate,
                        dv.ClaimManagerDate AS ApprovedDate, apso.Name AS ApprovedBy,
                        dv.ClaimManagerLatestStatus AS ApprovedStatus, dv.ClaimManagerLatestRemarks AS Remarks
                 FROM dbo.Tbl_DealerVerification dv
                 LEFT JOIN dbo.SaleOfficers so ON dv.SOID = so.ID
                 LEFT JOIN dbo.RegionalHeads head ON so.RegionalHeadID = head.ID
-                LEFT JOIN dbo.Retailers r ON dv.CustomerID = r.ID
+                LEFT JOIN dbo.Retailers tp ON dv.TradePartyID = tp.ID
                 LEFT JOIN dbo.SaleOfficers apso ON dv.ApprovedBy = apso.ID
                 WHERE dv.IsActive = 1
                   AND dv.DateSelected BETWEEN @startdate AND @enddate
