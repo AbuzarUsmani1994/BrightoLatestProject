@@ -28,6 +28,10 @@ namespace FOS.Web.UI.Controllers.API
                     });
                 }
 
+                // UI only shows the latest call, not a history - take just the most
+                // recently created row instead of every call ever logged for this
+                // customer. Still wrapped in a list (0 or 1 items) so the response
+                // shape is unchanged for the app.
                 var callHistory = (from j in db.Tbl_SaveCall
                                    join hv in db.Tbl_HousingVisits on j.VisitID equals hv.ID
                                    where hv.CustomerID == CustomerID
@@ -43,7 +47,7 @@ namespace FOS.Web.UI.Controllers.API
                                        NextVisitDate = j.NextExpectedVisit,
                                        NatureOfCall = j.NatureOfCall,
                                        SiteStatus = j.SiteStatus
-                                   }).ToList();
+                                   }).Take(1).ToList();
                 return Ok(new
                 {
                     CallHistory = callHistory
