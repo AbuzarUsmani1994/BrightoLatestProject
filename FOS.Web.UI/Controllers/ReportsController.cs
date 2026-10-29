@@ -9771,14 +9771,14 @@ namespace FOS.Web.UI.Controllers
             {
                 regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
             }
-            //if (userID == 1)
-            //{
-            //    regionalHeadData.Insert(0, new RegionalHeadData
-            //    {
-            //        ID = 0,
-            //        Name = "All"
-            //    });
-            //}
+            if (userID == 1)
+            {
+                regionalHeadData.Insert(0, new RegionalHeadData
+                {
+                    ID = 0,
+                    Name = "All"
+                });
+            }
             int regId = 0;
             if (FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser() == 0)
             {
