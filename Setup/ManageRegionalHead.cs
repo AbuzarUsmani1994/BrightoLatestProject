@@ -285,9 +285,24 @@ namespace FOS.Setup
                         var regionalheadid = dbContext.Users.Where(x => x.ID == userID).Select(x => x.RegionalheadRef).FirstOrDefault();
                         var Regionids = dbContext.RegionalHeadRegions.Where(x => x.RegionHeadID == regionalheadid).Select(x => x.RegionID).ToList();
 
+                        // RegionalHeadRegions isn't reliably maintained for every head
+                        // and can come back empty (seen on Call Summary Detailed Report's
+                        // Region dropdown) - fall back to the regions this head's own
+                        // active Sale Officers actually belong to, the same live data
+                        // every "my Sale Officers" list already depends on (e.g.
+                        // ManageRegion.GetAllSOListRelatedtoregionalHeadID).
+                        if (Regionids == null || Regionids.Count == 0)
+                        {
+                            Regionids = dbContext.SaleOfficers
+                                .Where(s => s.RegionalHeadID == regionalheadid && s.IsActive == true && s.RegionID.HasValue)
+                                .Select(s => s.RegionID.Value)
+                                .Distinct()
+                                .ToList();
+                        }
+
                         foreach (var item in Regionids)
                         {
-                        
+
                             comlist = new RegionalHeadData();
                             comlist.ID = item;
                             comlist.Name = dbContext.Regions.Where(x => x.ID == item).Select(x => x.Name).FirstOrDefault();

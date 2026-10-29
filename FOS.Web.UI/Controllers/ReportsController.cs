@@ -5047,7 +5047,7 @@ namespace FOS.Web.UI.Controllers
                        retailer.Remarks,
                        retailer.Latitude + "," + retailer.Longitude,
                        retailer.OnlineOffline,
-                       latestCall?.CallerName,
+                       latestCall?.NextExpectedVisit,
                        latestCall?.CreatedOn,
                        latestCall?.CallRating,
                        latestCall?.NatureOfCall,
