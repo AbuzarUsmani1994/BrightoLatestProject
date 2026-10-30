@@ -9873,23 +9873,29 @@ namespace FOS.Web.UI.Controllers
 
                     result = db.usp_GetComplaintDetail(start, final, fosid, TID).ToList();
 
+                    var zoneCityByComplaintDetail = GetZoneCityByComplaintID(result.Select(r => r.ComplaintID));
+
                     Response.ClearContent();
                     Response.AddHeader("content-disposition", "attachment;filename=ComplaintDetailReport_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv");
                     Response.ContentType = "text/csv";
 
                     using (StringWriter sw = new StringWriter())
                     {
-                        sw.WriteLine("\"ID\",\"Complaint Number\",\"Complaint Date\",\"SO Name\",\"Customer Name\",\"Phone No\",\"Dealer Name\",\"Product Description\",\"Product Nature\",\"Product Batch No\",\"Shaking Time\",\"Color Code\",\"Quantity\",\"Substrate Color\",\"Tinning Ratio\",\"No of Coasts Applied\",\"Time Duration Within Coats\",\"Thinning Solvant\",\"Applied Tool\",\"Remarks\",\"Type\",\"Attribute Name\",\"Type\",\"Attribute Name\",\"Application Cause\",\"Substrate Cause\",\"Quality of Product\",\"Varified\",\"Quality Review Remarks\",\"Updated At\"");
+                        sw.WriteLine("\"ID\",\"Complaint Number\",\"Complaint Date\",\"SO Name\",\"Zone\",\"City\",\"Customer Name\",\"Phone No\",\"Dealer Name\",\"Product Description\",\"Product Nature\",\"Product Batch No\",\"Shaking Time\",\"Color Code\",\"Quantity\",\"Substrate Color\",\"Tinning Ratio\",\"No of Coasts Applied\",\"Time Duration Within Coats\",\"Thinning Solvant\",\"Applied Tool\",\"Remarks\",\"Type\",\"Attribute Name\",\"Type\",\"Attribute Name\",\"Application Cause\",\"Substrate Cause\",\"Quality of Product\",\"Varified\",\"Quality Review Remarks\",\"Updated At\"");
 
                         if (result.Count > 0)
                         {
                             foreach (var complaint in result)
                             {
-                                sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\",\"{13}\",\"{14}\",\"{15}\",\"{16}\",\"{17}\",\"{18}\",\"{19}\",\"{20}\",\"{21}\",\"{22}\",\"{23}\",\"{24}\",\"{25}\",\"{26}\",\"{27}\",\"{28}\",\"{29}\"",
+                                zoneCityByComplaintDetail.TryGetValue(complaint.ComplaintID, out var zoneCity);
+
+                                sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\",\"{13}\",\"{14}\",\"{15}\",\"{16}\",\"{17}\",\"{18}\",\"{19}\",\"{20}\",\"{21}\",\"{22}\",\"{23}\",\"{24}\",\"{25}\",\"{26}\",\"{27}\",\"{28}\",\"{29}\",\"{30}\",\"{31}\"",
                                     complaint.ComplaintID.ToString(),
                                     complaint.ComplaintNumber,
                                     complaint.ComplaintDate == null ? "" : complaint.ComplaintDate.Value.ToString("yyyy-MM-dd HH:mm:ss"),
                                     complaint.SONAME,
+                                    zoneCity?.ZoneName,
+                                    zoneCity?.CityName,
                                     complaint.CustomerName,
                                     complaint.Phone1,
                                     complaint.DealerName,
@@ -9942,23 +9948,29 @@ namespace FOS.Web.UI.Controllers
                     List<sp_usp_GetComplaintSummary_Result> summary = new List<sp_usp_GetComplaintSummary_Result>();
                     summary = db.sp_usp_GetComplaintSummary(start, final, fosid, TID).ToList();
 
+                    var zoneCityByComplaintSummary = GetZoneCityByComplaintID(summary.Select(r => r.ComplaintID));
+
                     Response.ClearContent();
                     Response.AddHeader("content-disposition", "attachment;filename=ComplaintSummaryReport_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv");
                     Response.ContentType = "text/csv";
 
                     using (StringWriter sw = new StringWriter())
                     {
-                        sw.WriteLine("\"ID\",\"Complaint Number\",\"Complaint Date\",\"SO Name\",\"Customer Name\",\"Phone No\",\"Dealer Name\",\"Product Description\",\"Varified\",\"Quality Review Remarks\",\"Updated At\"");
+                        sw.WriteLine("\"ID\",\"Complaint Number\",\"Complaint Date\",\"SO Name\",\"Zone\",\"City\",\"Customer Name\",\"Phone No\",\"Dealer Name\",\"Product Description\",\"Varified\",\"Quality Review Remarks\",\"Updated At\"");
 
                         if (summary.Count > 0)
                         {
                             foreach (var complaint in summary)
                             {
-                                sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\"",
+                                zoneCityByComplaintSummary.TryGetValue(complaint.ComplaintID, out var zoneCity);
+
+                                sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\"",
                                     complaint.ComplaintID,
                                     complaint.ComplaintNumber,
                                     complaint.CreatedOn == null ? "" : complaint.CreatedOn.Value.ToString("yyyy-MM-dd HH:mm:ss"),
                                     complaint.SOName,
+                                    zoneCity?.ZoneName,
+                                    zoneCity?.CityName,
                                     complaint.CustomerName,
                                     complaint.Phone1,
                                     complaint.DealerName,
@@ -9993,6 +10005,34 @@ namespace FOS.Web.UI.Controllers
                 Log.Instance.Error(exp, "Complaint Summary Report Failed");
                 Response.Write("Error generating report: " + exp.Message);
             }
+        }
+
+        private class ComplaintZoneCity
+        {
+            public string ZoneName { get; set; }
+            public string CityName { get; set; }
+        }
+
+        // usp_GetComplaintDetail/sp_usp_GetComplaintSummary don't return Zone/City,
+        // and their bodies aren't checked into SQL/ to safely alter - so this looks
+        // them up separately via the complained-about customer
+        // (Tbl_SaveComplaints.CustomerID -> Retailers.RegionID/CityID - "Zone" here
+        // is Retailer.RegionID, not Retailer.ZoneID), keyed by the same ComplaintID
+        // (Tbl_SaveComplaints.ID) both procs already return.
+        private Dictionary<int, ComplaintZoneCity> GetZoneCityByComplaintID(IEnumerable<int> complaintIds)
+        {
+            var ids = complaintIds.Distinct().ToList();
+
+            return (from tsc in db.Tbl_SaveComplaints
+                     join r in db.Retailers on tsc.CustomerID equals r.ID into rj
+                     from r in rj.DefaultIfEmpty()
+                     join z in db.Regions on r.RegionID equals z.ID into zj
+                     from z in zj.DefaultIfEmpty()
+                     join c in db.Cities on r.CityID equals c.ID into cj
+                     from c in cj.DefaultIfEmpty()
+                     where ids.Contains(tsc.ID)
+                     select new { tsc.ID, ZoneName = z.Name, CityName = c.Name })
+                    .ToDictionary(x => x.ID, x => new ComplaintZoneCity { ZoneName = x.ZoneName, CityName = x.CityName });
         }
 
         #region Call Summary Detailed Report
