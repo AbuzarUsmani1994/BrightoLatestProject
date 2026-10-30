@@ -9766,18 +9766,15 @@ namespace FOS.Web.UI.Controllers
             if (userID == 1122)
             {
                 regionalHeadData = ManageComplaint.GetRegionalHeads(userID);
-            }
-            else
-            {
-                regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
-            }
-            if (userID == 1)
-            {
                 regionalHeadData.Insert(0, new RegionalHeadData
                 {
                     ID = 0,
                     Name = "All"
                 });
+            }
+            else
+            {
+                regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
             }
             int regId = 0;
             if (FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser() == 0)
