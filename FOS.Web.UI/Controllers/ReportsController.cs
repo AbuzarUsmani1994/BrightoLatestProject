@@ -3142,7 +3142,22 @@ namespace FOS.Web.UI.Controllers
             var ranges = FOS.Setup.ManageRegion.GetRangesRelatedToZSM(userID);
             var rangeid = ranges.Select(r => r.ID).FirstOrDefault();
             List<RegionalHeadData> regionalHeadData = new List<RegionalHeadData>();
-            regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
+            if (userID == 1117)
+            {
+                // This report is userID 1117's one and only screen (their login
+                // dashboard links nowhere else), and they need to drill into any
+                // head's competitor activity, not just their own - so list every
+                // head here instead of GetTerritorialRegionalHeadList's single-head
+                // result for a non-admin user.
+                regionalHeadData = db.RegionalHeads.Where(u => u.IsDeleted == false)
+                    .OrderBy(u => u.Name)
+                    .Select(u => new RegionalHeadData { ID = u.ID, Name = u.Name })
+                    .ToList();
+            }
+            else
+            {
+                regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
+            }
             // usp_GetCompetitorReport's @RegionalHeadID treats 0 as "every head"
             // (same TID=0 convention every other backend report in this controller
             // uses), so make that selectable here too.
