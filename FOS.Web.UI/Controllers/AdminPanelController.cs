@@ -97,6 +97,14 @@ namespace FOS.Web.UI.Controllers
                 pageUrl = string.IsNullOrEmpty(returnUrl) ? string.Format("{0}/Home/Claim", Settings.AppPath) : returnUrl;
             }
 
+            // Dedicated minimal dashboard - matches on userId alone (not Type, since
+            // the other branches' Type checks are per-account and this is a single
+            // specific account) so it isn't missed if UserType doesn't match "Managers".
+            else if (userId == 1117)
+            {
+                pageUrl = string.IsNullOrEmpty(returnUrl) ? string.Format("{0}/Home/CompetitorActivityDashboard", Settings.AppPath) : returnUrl;
+            }
+
             else if (userId == 1120 || userId==1121 && Type == "Managers")
             {
                 pageUrl = string.IsNullOrEmpty(returnUrl) ? string.Format("{0}/Home/AgentDashboard", Settings.AppPath) : returnUrl;

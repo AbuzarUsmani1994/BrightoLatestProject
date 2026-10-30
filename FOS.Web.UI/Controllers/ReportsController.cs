@@ -3143,6 +3143,14 @@ namespace FOS.Web.UI.Controllers
             var rangeid = ranges.Select(r => r.ID).FirstOrDefault();
             List<RegionalHeadData> regionalHeadData = new List<RegionalHeadData>();
             regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
+            // usp_GetCompetitorReport's @RegionalHeadID treats 0 as "every head"
+            // (same TID=0 convention every other backend report in this controller
+            // uses), so make that selectable here too.
+            regionalHeadData.Insert(0, new RegionalHeadData
+            {
+                ID = 0,
+                Name = "All"
+            });
             int regId = 0;
             if (FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser() == 0)
             {
