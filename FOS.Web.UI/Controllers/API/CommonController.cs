@@ -626,19 +626,23 @@ namespace FOS.Web.UI.Controllers.API
             return MAinCat.OrderBy(x => x.Name).ToList();
         }
 
+        // Product dropdown for the Complaint submission screen (sent to the app at
+        // login as BrightoUAEProductCategory - see LoginController). The ID returned
+        // here is what the app sends back as Tbl_SaveComplaints.ProductID on
+        // submission, so it must be a real Tbl_ProductDetail.ID - it previously
+        // returned a 1-based position in the distinct/sorted name list instead,
+        // which doesn't correspond to any actual product.
         public List<City> BrightoUAEcategory()
         {
             return db.Tbl_ProductDetail
                 .Where(c => c.IsActive == true)
-                .Select(c => c.Product_Desc)
-                .Distinct()
-                .OrderBy(name => name)
-                .AsEnumerable()  // Switch to LINQ to Objects
-                .Select((name, index) => new City
+                .GroupBy(c => c.Product_Desc)
+                .Select(g => new City
                 {
-                    ID = index + 1,
-                    Name = name
+                    ID = g.Min(x => x.ID),
+                    Name = g.Key
                 })
+                .OrderBy(c => c.Name)
                 .ToList();
         }
         public List<City> ComplaintStatusList()
