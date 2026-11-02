@@ -62,6 +62,15 @@
                         @Html.DropDownListFor(model => model.ProductNatureID, new SelectList(Model.ProductNatures, "ID", "Name"), new { @class = "" })
                         @Html.ValidationMessageFor(model => model.ProductNatureID)
 
+                        <label class="control-label">Complaint Status *</label>
+                        <select id="ComplaintStatusFilter" name="ComplaintStatusFilter">
+                            <option value="0">All</option>
+                            <option value="1">In Progress</option>
+                            <option value="2">On Hold</option>
+                            <option value="3">Resolved</option>
+                            <option value="4">Duplicate</option>
+                        </select>
+
                         <button type="button" id="ApplyFilter" class="btn btn-primary">
                             <i class="icon-ok icon-white" style="padding-right: 2px"></i><span style="width:50px">Apply Filter</span>
                         </button>
@@ -532,6 +541,7 @@
                     data.StartingDate2 = $("#StartingDate2").val();
                     data.RegionalHeadID = $('#RegionalHeadID').val() == null ? 1 : $('#RegionalHeadID').val();
                     data.ProductNatureID = $('#ProductNatureID').val() == null ? 0 : $('#ProductNatureID').val();
+                    data.ComplaintStatusFilter = $('#ComplaintStatusFilter').val() == null ? 0 : $('#ComplaintStatusFilter').val();
                     return data = JSON.stringify(data);
                 },
             },

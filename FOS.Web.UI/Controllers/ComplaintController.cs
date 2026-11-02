@@ -203,13 +203,13 @@ namespace FOS.Web.UI.Controllers
             return View(data);
         }
 
-        public JsonResult ComplaintDataHandler(DTParameters param, int RegionalHeadID, int ProductNatureID)
+        public JsonResult ComplaintDataHandler(DTParameters param, int RegionalHeadID, int ProductNatureID, int ComplaintStatusFilter = 0)
         {
             try
             {
                 var dtsource = new List<ComplaintData>();
 
-                dtsource = ManageComplaint.GetComplaintDataForGrid(param.StartingDate1, param.StartingDate2, RegionalHeadID, ProductNatureID);
+                dtsource = ManageComplaint.GetComplaintDataForGrid(param.StartingDate1, param.StartingDate2, RegionalHeadID, ProductNatureID, ComplaintStatusFilter);
 
 
                 List<String> columnSearch = new List<string>();

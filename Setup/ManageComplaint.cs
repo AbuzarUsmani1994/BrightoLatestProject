@@ -439,7 +439,7 @@ namespace FOS.Setup
             return regionalHeadData;
         }
 
-        public static List<ComplaintData> GetComplaintDataForGrid(string FromDate, string EndDate, int RegionheadID, int ProductNatureID)
+        public static List<ComplaintData> GetComplaintDataForGrid(string FromDate, string EndDate, int RegionheadID, int ProductNatureID, int ComplaintStatusFilter = 0)
         {
             List<ComplaintData> data = new List<ComplaintData>();
             DateTime start = Convert.ToDateTime(string.IsNullOrEmpty(FromDate) ? DateTime.Now.ToString() : FromDate);
@@ -453,6 +453,7 @@ namespace FOS.Setup
                 cmd.Parameters.AddWithValue("@EndDate", End);
                 cmd.Parameters.AddWithValue("@RegionalHeadID", RegionheadID);
                 cmd.Parameters.AddWithValue("@ProductNatureID", ProductNatureID);
+                cmd.Parameters.AddWithValue("@ComplaintStatus", ComplaintStatusFilter);
 
                 conn.Open();
                 using (var reader = cmd.ExecuteReader())
@@ -474,7 +475,8 @@ namespace FOS.Setup
                             Status = reader["LaunchStatus"] as string,
                             ComplaintNumber = reader["ComplaintNumber"] as string ?? "",
                             StartingDate2 = updatedComplaint == null ? "" : updatedComplaint.Value.ToString("dd-MMM-yyyy"),
-                            IsVerifiedString = updatedComplaint == null ? "" : reader["IsVarified"] as string
+                            IsVerifiedString = updatedComplaint == null ? "" : reader["IsVarified"] as string,
+                            ComplaintStatusString = reader["ComplaintStatus"] as string
                         });
                     }
                 }
