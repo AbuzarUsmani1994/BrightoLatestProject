@@ -124,6 +124,7 @@ namespace FOS.Shared
         public string IsVerifiedString { get; set; }
         public int? ComplaintStatus { get; set; }
         public string ComplaintStatusString { get; set; }
+        public bool IsPublished { get; set; }
         public string ImageUrl { get; set; }
         public string VideoUrl { get; set; }
         public string OtherApplication { get; set; }

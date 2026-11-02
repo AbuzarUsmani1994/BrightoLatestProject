@@ -64,6 +64,8 @@ public partial class ComplaintSuggesionAdded
 
     public string ComplaintStatusName { get; set; }
 
+    public bool IsPublished { get; set; }
+
 }
 
 }

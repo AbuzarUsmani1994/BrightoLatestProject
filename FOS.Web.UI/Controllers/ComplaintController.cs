@@ -454,7 +454,8 @@ namespace FOS.Web.UI.Controllers
                         VideoUrl = data.VideoUrl,
                         IsVerifiedString = data.IsVerifiedName,
                         ComplaintStatus = data.ComplaintStatus,
-                        ComplaintStatusString = data.ComplaintStatusName
+                        ComplaintStatusString = data.ComplaintStatusName,
+                        IsPublished = data.IsPublished
                     });
                 }
             }
@@ -471,6 +472,34 @@ namespace FOS.Web.UI.Controllers
                 if (add != null)
                 {
                     db.ComplaintSuggesionAddeds.Remove(add);
+                    db.SaveChanges();
+                }
+            }
+            return Json("1", JsonRequestBehavior.AllowGet);
+        }
+
+        // Only userID 1124 may publish a Quality Review entry - the Publish button
+        // is hidden client-side for everyone else, but this is the actual gate: the
+        // SO Complaint Summary/Detail reports and the SOComplaints.rdlc PDF report
+        // only surface the latest PUBLISHED entry per complaint (see
+        // AlterSP_usp_GetComplaintDetail_AddIsPublishedFilter.sql and siblings), so
+        // this is what actually controls what reaches those reports.
+        [HttpPost]
+        public JsonResult PublishComplaintSuggestion(int ID)
+        {
+            int userId = 0;
+            int.TryParse(Convert.ToString(Session["UserID"]), out userId);
+            if (userId != 1124)
+            {
+                return Json("0", JsonRequestBehavior.AllowGet);
+            }
+
+            using (FOSDataModel db = new FOSDataModel())
+            {
+                var add = db.ComplaintSuggesionAddeds.Where(x => x.ID == ID).FirstOrDefault();
+                if (add != null)
+                {
+                    add.IsPublished = true;
                     db.SaveChanges();
                 }
             }

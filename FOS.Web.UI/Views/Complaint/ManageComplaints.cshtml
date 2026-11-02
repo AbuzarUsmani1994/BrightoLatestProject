@@ -276,6 +276,11 @@
 </div>
 <script src="~/Scripts/js/preview.js"></script>
 <script>
+    // Publish button on each Quality Review history row is only for userID 1124 -
+    // everyone else never sees it, even though the real gate is server-side
+    // (ComplaintController.PublishComplaintSuggestion checks the same userID).
+    var canPublish = @(Convert.ToString(Session["UserID"]) == "1124" ? "true" : "false");
+
     $(document).ready(function () {
 
         $('#StartingDate1').datepicker(
@@ -469,6 +474,32 @@
                         // The outer grid's "latest status" column may change too.
                         var otable = $("#datatab").DataTable();
                         otable.ajax.reload();
+                    }
+                }
+            });
+        }
+    });
+
+    $(document).on("click", ".quality-publish-btn", function () {
+        var rowID = $(this).data("id");
+        var ComplaintID = $("#CompaintID").text();
+        var ComplaintNo = $("#complaintno").text();
+        var SoName = $("#submittedby").text();
+        var created = $("#submitteddate").text();
+        if (!rowID) {
+            return;
+        }
+        if (confirm("Publish this quality review entry? It will then be included in reports.")) {
+            $.ajax({
+                type: "Post",
+                url: "@Url.Action("PublishComplaintSuggestion", "Complaint")",
+                data: { ID: rowID },
+                success: function (res) {
+                    if (res == "1") {
+                        alertify.success("Published Successfully");
+                        loadQualityHistory(ComplaintID, ComplaintNo, SoName, created);
+                    } else {
+                        alertify.error("You are not authorized to publish.");
                     }
                 }
             });
@@ -698,6 +729,13 @@
                         ? '<a href="' + escapeHtml(item.VideoUrl) + '" target="_blank">View</a>'
                         : '-';
 
+                    var publishCell = '';
+                    if (canPublish) {
+                        publishCell = item.IsPublished
+                            ? '<button type="button" class="btn btn-small" disabled>Published</button>'
+                            : '<button type="button" class="btn btn-success btn-small quality-publish-btn" data-id="' + escapeHtml(item.ID) + '">Publish</button>';
+                    }
+
                     rowsHtml += '<tr>' +
                         '<td>' + escapeHtml(item.ApplicationName || '-') + '</td>' +
                         '<td>' + escapeHtml(item.SubstrateName || '-') + '</td>' +
@@ -707,7 +745,7 @@
                         '<td>' + escapeHtml(item.ComplaintStatusString || '-') + '</td>' +
                         '<td>' + imageCell + '</td>' +
                         '<td>' + videoCell + '</td>' +
-                        '<td><button type="button" class="btn btn-danger btn-small quality-delete-btn" data-id="' + escapeHtml(item.ID) + '">Delete</button></td>' +
+                        '<td><button type="button" class="btn btn-danger btn-small quality-delete-btn" data-id="' + escapeHtml(item.ID) + '">Delete</button>' + publishCell + '</td>' +
                         '</tr>';
                 }
 
