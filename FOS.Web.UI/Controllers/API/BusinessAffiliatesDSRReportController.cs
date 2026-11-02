@@ -106,7 +106,7 @@ namespace FOS.Web.UI.Controllers.API
                             BusinessAffiliateID = reader["BusinessAffiliateID"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["BusinessAffiliateID"]),
                             BusinessName = reader["BusinessName"] as string,
                             ContactPerson = reader["ContactPerson"] as string,
-                            ContactNumber = reader["ContactNumber"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["ContactNumber"]),
+                            ContactNumber = reader["ContactNumber"] as string,
                             BusinessAddress = reader["BusinessAddress"] as string,
                             RegionID = reader["RegionID"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["RegionID"]),
                             RegionName = reader["RegionName"] as string,
@@ -210,7 +210,7 @@ namespace FOS.Web.UI.Controllers.API
                     table.AddCell(Cell(r.SaleOfficerName, cellFont));
                     table.AddCell(Cell(r.BusinessName, cellFont));
                     table.AddCell(Cell(r.ContactPerson, cellFont));
-                    table.AddCell(Cell(r.ContactNumber.HasValue ? r.ContactNumber.Value.ToString() : "", cellFont));
+                    table.AddCell(Cell(r.ContactNumber ?? "", cellFont));
                     table.AddCell(Cell(r.RegionName, cellFont));
                     table.AddCell(Cell(r.CityName, cellFont));
                     table.AddCell(Cell(r.PurposeOfVisit, cellFont));

@@ -84,7 +84,7 @@ namespace FOS.Web.UI.Controllers.API
                     {
                         return Ok(new
                         {
-                            MyListForAttendance = MAinCat2
+                            MyListForAttendance = MAinCat2.OrderBy(x => x.Name).ToList()
 
                         });
                     }

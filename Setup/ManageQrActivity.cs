@@ -74,7 +74,7 @@ namespace FOS.Setup
             {
                 using (FOSDataModel dbContext = new FOSDataModel())
                 {
-                    qrData = dbContext.SaleOfficers.Where(u => u.RegionalHeadID == RegionalHeadID && u.IsDeleted == false).ToList()
+                    qrData = dbContext.SaleOfficers.Where(u => u.RegionalHeadID == RegionalHeadID && u.IsDeleted == false && u.IsActive == true).ToList()
                             .Select(
                                 u => new SaleOfficerData
                                 {
@@ -109,7 +109,7 @@ namespace FOS.Setup
             {
                 using (FOSDataModel dbContext = new FOSDataModel())
                 {
-                    qrData = dbContext.SaleOfficers.Where(u => u.IsDeleted == false).ToList()
+                    qrData = dbContext.SaleOfficers.Where(u => u.IsDeleted == false && u.IsActive == true).ToList()
                             .Select(
                                 u => new SaleOfficerData
                                 {
@@ -237,7 +237,7 @@ namespace FOS.Setup
             List<SaleOfficer> qrData = new List<SaleOfficer>();
             using (FOSDataModel dbContext = new FOSDataModel())
             {
-                qrData = dbContext.SaleOfficers.ToList();
+                qrData = dbContext.SaleOfficers.Where(s => s.IsActive == true).ToList();
             }
             return qrData;
         }
@@ -250,11 +250,11 @@ namespace FOS.Setup
             {
                 if (RHID == 0)
                 {
-                    qrData = dbContext.SaleOfficers.ToList();
+                    qrData = dbContext.SaleOfficers.Where(s => s.IsActive == true).ToList();
                 }
                 else
                 {
-                    qrData = dbContext.SaleOfficers.Where(s => s.RegionalHeadID == RHID).ToList();
+                    qrData = dbContext.SaleOfficers.Where(s => s.RegionalHeadID == RHID && s.IsActive == true).ToList();
                 }
                 
             }
@@ -430,7 +430,7 @@ namespace FOS.Setup
             {
                 using (FOSDataModel dbContext = new FOSDataModel())
                 {
-                    qrData = dbContext.SaleOfficers.Where(u => u.RegionalHeadID == RegionalHeadID && u.IsDeleted == false).ToList()
+                    qrData = dbContext.SaleOfficers.Where(u => u.RegionalHeadID == RegionalHeadID && u.IsDeleted == false && u.IsActive == true).ToList()
                             .Select(
                                 u => new SaleOfficerData
                                 {

@@ -76,7 +76,7 @@ namespace FOS.Setup
             {
                 using (FOSDataModel dbContext = new FOSDataModel())
                 {
-                    compData = dbContext.SaleOfficers.Where(u => u.RegionalHeadID == RegionalHeadID && u.IsDeleted == false).ToList()
+                    compData = dbContext.SaleOfficers.Where(u => u.RegionalHeadID == RegionalHeadID && u.IsDeleted == false && u.IsActive == true).ToList()
                             .Select(
                                 u => new SaleOfficerData
                                 {
@@ -111,7 +111,7 @@ namespace FOS.Setup
             {
                 using (FOSDataModel dbContext = new FOSDataModel())
                 {
-                    compData = dbContext.SaleOfficers.Where(u => u.IsDeleted == false).ToList()
+                    compData = dbContext.SaleOfficers.Where(u => u.IsDeleted == false && u.IsActive == true).ToList()
                             .Select(
                                 u => new SaleOfficerData
                                 {
@@ -212,7 +212,7 @@ namespace FOS.Setup
             List<SaleOfficer> compData = new List<SaleOfficer>();
             using (FOSDataModel dbContext = new FOSDataModel())
             {
-                compData = dbContext.SaleOfficers.ToList();
+                compData = dbContext.SaleOfficers.Where(s => s.IsActive == true).ToList();
             }
             return compData;
         }
@@ -225,11 +225,11 @@ namespace FOS.Setup
             {
                 if (RHID == 0)
                 {
-                    compData = dbContext.SaleOfficers.ToList();
+                    compData = dbContext.SaleOfficers.Where(s => s.IsActive == true).ToList();
                 }
                 else
                 {
-                    compData = dbContext.SaleOfficers.Where(s => s.RegionalHeadID == RHID).ToList();
+                    compData = dbContext.SaleOfficers.Where(s => s.RegionalHeadID == RHID && s.IsActive == true).ToList();
                 }
                 
             }
@@ -383,7 +383,7 @@ namespace FOS.Setup
             {
                 using (FOSDataModel dbContext = new FOSDataModel())
                 {
-                    compData = dbContext.SaleOfficers.Where(u => u.RegionalHeadID == RegionalHeadID && u.IsDeleted == false).ToList()
+                    compData = dbContext.SaleOfficers.Where(u => u.RegionalHeadID == RegionalHeadID && u.IsDeleted == false && u.IsActive == true).ToList()
                             .Select(
                                 u => new SaleOfficerData
                                 {

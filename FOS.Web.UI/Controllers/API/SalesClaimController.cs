@@ -36,47 +36,54 @@ namespace FOS.Web.UI.Controllers.API
 
             try
             {
-                //// Date validation logic
-                //DateTime currentDate = DateTime.Now;
-                //DateTime selectedDate = rm.DateSelected;
+                // Date validation logic - only applies to real Claims; DocType ==
+                // "DealerVerification" already returned above and never reaches here.
+                DateTime currentDate = DateTime.Now;
+                DateTime selectedDate = rm.DateSelected;
 
-                //// Check if selected date is in previous month
-                //if (selectedDate.Year < currentDate.Year ||
-                //    (selectedDate.Year == currentDate.Year && selectedDate.Month < currentDate.Month))
-                //{
-                //    // For previous month data, only allow if current date is on or before 10th of current month
-                //    if (currentDate.Day > 10)
-                //    {
-                //        return new Result<SuccessResponse>
-                //        {
-                //            Data = null,
-                //            Message = "Previous month data can only be saved until the 10th of current month",
-                //            ResultType = ResultType.Warning,
-                //            Exception = null,
-                //            ValidationErrors = null
-                //        };
-                //    }
-                //}
+                // monthsBack = how many whole calendar months before the current month
+                // selectedDate falls in (1 = last month, 2 = two months back, etc).
+                int monthsBack = (currentDate.Year * 12 + currentDate.Month) - (selectedDate.Year * 12 + selectedDate.Month);
 
-                //else if (selectedDate > currentDate)
-                //{
-                //    return new Result<SuccessResponse>
-                //    {
-                //        Data = null,
-                //        Message = "Future dates cannot be selected",
-                //        ResultType = ResultType.Warning,
-                //        Exception = null,
-                //        ValidationErrors = null
-                //    };
-                //}
-                //// Check if selected date is in current month
-                //else if (selectedDate.Year == currentDate.Year && selectedDate.Month == currentDate.Month)
-                //{
-                //    // Current month data is always allowed
-                //    // No additional validation needed
-                //}
-                //// Check if selected date is in future
-              
+                if (monthsBack > 1)
+                {
+                    // Anything older than last month is always too late - its own
+                    // 10th-of-the-following-month window has already closed.
+                    return new Result<SuccessResponse>
+                    {
+                        Data = null,
+                        Message = "Claims older than last month cannot be submitted",
+                        ResultType = ResultType.Warning,
+                        Exception = null,
+                        ValidationErrors = null
+                    };
+                }
+                else if (monthsBack == 1)
+                {
+                    // Last month's data is only allowed through the 10th of this month.
+                    if (currentDate.Day > 10)
+                    {
+                        return new Result<SuccessResponse>
+                        {
+                            Data = null,
+                            Message = "Previous month data can only be saved until the 10th of current month",
+                            ResultType = ResultType.Warning,
+                            Exception = null,
+                            ValidationErrors = null
+                        };
+                    }
+                }
+                else if (monthsBack < 0 || (monthsBack == 0 && selectedDate > currentDate))
+                {
+                    return new Result<SuccessResponse>
+                    {
+                        Data = null,
+                        Message = "Future dates cannot be selected",
+                        ResultType = ResultType.Warning,
+                        Exception = null,
+                        ValidationErrors = null
+                    };
+                }
 
                 // Log incoming request for diagnostics
                 Log.Instance.Info("SalesClaim POST => SOID: " + rm.SaleOfficerId

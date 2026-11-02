@@ -533,6 +533,7 @@
     <Compile Include="Controllers\API\BusinessAffiliatesVisitsController.cs" />
     <Compile Include="Controllers\API\BusinessAffiliatesVisitListController.cs" />
     <Compile Include="Controllers\API\BusinessAffiliatesDSRReportController.cs" />
+    <Compile Include="Controllers\API\CompetitorActivitiesDSRReportController.cs" />
     <Compile Include="Controllers\API\ComplaintProgressController.cs" />
     <Compile Include="Controllers\API\ComplaintsPDFController.cs" />
     <Compile Include="Controllers\API\CoverageDSRReportController.cs" />
@@ -577,6 +578,8 @@
     <Compile Include="Controllers\API\MyVisitsSOWiseController.cs" />
     <Compile Include="Controllers\API\ClaimReportController.cs" />
     <Compile Include="Controllers\API\BusinessAffiliatesRegistrationController.cs" />
+    <Compile Include="Controllers\API\GetBusinessAffiliateController.cs" />
+    <Compile Include="Controllers\API\UpdateBusinessAffiliateController.cs" />
     <Compile Include="Controllers\API\ChemicalRetailerEditController.cs" />
     <Compile Include="Controllers\API\FannanSODirectionController.cs" />
     <Compile Include="Controllers\API\SaveBrightoServicesCustomerController.cs" />
@@ -2280,6 +2283,7 @@
     <Content Include="Views\Reports\SaleOfficerDetail.cshtml" />
     <Content Include="Views\Dealer\DistributorDSR.cshtml" />
     <Content Include="Views\Home\DealersDashboard.cshtml" />
+    <Content Include="Views\Home\CompetitorActivityDashboard.cshtml" />
     <Content Include="Views\Home\Test.cshtml" />
     <Content Include="Views\Reports\LowItemsDetail.cshtml" />
     <Content Include="Views\Setup\DelieveryBoys.cshtml" />

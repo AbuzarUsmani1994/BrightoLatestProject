@@ -23,7 +23,7 @@ namespace FOS.Setup
             {
                 using (FOSDataModel dbContext = new FOSDataModel())
                 {
-                    so = dbContext.SaleOfficers.Where(c => c.RegionID == intRegionID && c.IsDeleted == false)
+                    so = dbContext.SaleOfficers.Where(c => c.RegionID == intRegionID && c.IsDeleted == false && c.IsActive == true)
                             .Select(
                                 u => new SaleOfficerData
                                 {
@@ -52,7 +52,7 @@ namespace FOS.Setup
             {
                 using (FOSDataModel dbContext = new FOSDataModel())
                 {
-                    so = dbContext.SaleOfficers.Where(c => c.RegionalHeadID == intRegionHeadID && c.IsDeleted == false)
+                    so = dbContext.SaleOfficers.Where(c => c.RegionalHeadID == intRegionHeadID && c.IsDeleted == false && c.IsActive == true)
                             .Select(
                                 u => new SaleOfficerData
                                 {

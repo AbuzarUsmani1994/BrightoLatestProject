@@ -1832,7 +1832,13 @@ namespace FOS.Web.UI.Controllers
 
         }
 
-
+        // Dedicated login dashboard for userID 1117 (wired in
+        // AdminPanelController.UserAuth) - just the "Reports For MIS" panel used
+        // on ManagersDashboard, trimmed to the one report this user needs.
+        public ActionResult CompetitorActivityDashboard()
+        {
+            return View();
+        }
 
     }
 }

@@ -90,6 +90,7 @@
                                 <option value="1 week">1 week</option>
                                 <option value="2 week">2 week</option>
                                 <option value="3 week">3 week</option>
+                                <option value="N/A">N/A</option>
                             </select>
                         </span>
 
@@ -628,6 +629,13 @@
                                         <label style="font-weight: 600; font-size: 13px; color: #555; display: block; margin-bottom: 4px;">Contractor Number</label>
                                         <div style="padding: 8px 10px; background-color: #f9f9f9; border-radius: 3px; border: 1px solid #eee;">
                                             <span id="contractorNumberDisplay">-</span>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-bottom: 12px;">
+                                        <label style="font-weight: 600; font-size: 13px; color: #555; display: block; margin-bottom: 4px;">Remarks</label>
+                                        <div style="padding: 8px 10px; background-color: #f9f9f9; border-radius: 3px; border: 1px solid #eee;">
+                                            <span id="visitRemarksDisplay">-</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1215,6 +1223,7 @@
                 // Populate contractor information
                 $("#contractorNameDisplay").text(customerData.ContractorName || "-");
                 $("#contractorNumberDisplay").text(customerData.ContractorNumber || "-");
+                $("#visitRemarksDisplay").text(customerData.Remarks || "-");
 
 
 

@@ -377,6 +377,14 @@ namespace FOS.Web.UI.Controllers
 
         public ActionResult FOSPlanningReport(string StartingDate, string EndingDate, int TID, int fosid)
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
             try
             {
 
@@ -427,12 +435,28 @@ namespace FOS.Web.UI.Controllers
                 {
                     Stream stream = rd.ExportToStream(CrystalDecisions.Shared.ExportFormatType.PortableDocFormat);
                     stream.Seek(0, SeekOrigin.Begin);
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "FOS Planning Report";
+                hst.ReportType = "FOSPlanning";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     return File(stream, "application/pdf", "FOSPlanning.pdf");
                 }
                 else
                 {
                     Stream stream = rd.ExportToStream(CrystalDecisions.Shared.ExportFormatType.Excel);
                     stream.Seek(0, SeekOrigin.Begin);
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "FOS Planning Report";
+                hst.ReportType = "FOSPlanning";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     return File(stream, "application/ms-excel", string.Format("FOSPlanning{0}.xls", DateTime.Now.ToShortDateString()));
                 }
 
@@ -885,6 +909,14 @@ namespace FOS.Web.UI.Controllers
 
 
                 Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Retailers Information Report";
+                hst.ReportType = "RetailerInformation";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
 
 
@@ -1196,6 +1228,14 @@ namespace FOS.Web.UI.Controllers
 
         public void StockPositionReport(int TID, int RangeID, int cityid, string sdate, string edate)
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
 
 
             try
@@ -1239,6 +1279,14 @@ namespace FOS.Web.UI.Controllers
                     ));
                 }
                 Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Stock Position Report";
+                hst.ReportType = "StockPosition";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
 
             }
@@ -1318,6 +1366,14 @@ namespace FOS.Web.UI.Controllers
 
         public void StockInvoiceReport(int TID, int RangeID, int cityid, string sdate, string edate)
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
 
 
             try
@@ -1361,6 +1417,14 @@ namespace FOS.Web.UI.Controllers
                     ));
                 }
                 Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Stock Invoice Report";
+                hst.ReportType = "StockInvoice";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
 
             }
@@ -1429,6 +1493,14 @@ namespace FOS.Web.UI.Controllers
 
         public ActionResult ShopVisitSummeryy(string StartingDate, string EndingDate, int TID, int fosid, int dealerid, int cityid)
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
             try
             {
 
@@ -1503,12 +1575,28 @@ namespace FOS.Web.UI.Controllers
                 {
                     Stream stream = rd.ExportToStream(CrystalDecisions.Shared.ExportFormatType.PortableDocFormat);
                     stream.Seek(0, SeekOrigin.Begin);
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Shop Visit Summary Report";
+                hst.ReportType = "ShopVisitSummery";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     return File(stream, "application/pdf", "VisitSummary.pdf");
                 }
                 else
                 {
                     Stream stream = rd.ExportToStream(CrystalDecisions.Shared.ExportFormatType.Excel);
                     stream.Seek(0, SeekOrigin.Begin);
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Shop Visit Summary Report";
+                hst.ReportType = "ShopVisitSummery";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     return File(stream, "application/ms-excel", string.Format("VisitSummary{0}.xls", DateTime.Now.ToShortDateString()));
                 }
 
@@ -2363,6 +2451,14 @@ namespace FOS.Web.UI.Controllers
                 }
 
                 Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Shops Performance Report";
+                hst.ReportType = "ShopsPerformance";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
             
             }
@@ -2541,6 +2637,14 @@ namespace FOS.Web.UI.Controllers
                 }
 
                 Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Team Visit Summary Report";
+                hst.ReportType = "SSSaleSummary";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
            
             }
@@ -2882,6 +2986,14 @@ namespace FOS.Web.UI.Controllers
              
 
                 Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "SO Payments Information Report";
+                hst.ReportType = "SOPayments";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
                
             }
@@ -3000,6 +3112,14 @@ namespace FOS.Web.UI.Controllers
                 Response.AddHeader("content-disposition", "attachment;filename=BusinessAffiliateReport" + DateTime.Now + ".csv");
                 Response.ContentType = "application/octet-stream";
                 Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Business Affiliate Report";
+                hst.ReportType = "BusinessAffiliate";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
             }
             catch (Exception exp)
@@ -3022,7 +3142,30 @@ namespace FOS.Web.UI.Controllers
             var ranges = FOS.Setup.ManageRegion.GetRangesRelatedToZSM(userID);
             var rangeid = ranges.Select(r => r.ID).FirstOrDefault();
             List<RegionalHeadData> regionalHeadData = new List<RegionalHeadData>();
-            regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
+            if (userID == 1117)
+            {
+                // This report is userID 1117's one and only screen (their login
+                // dashboard links nowhere else), and they need to drill into any
+                // head's competitor activity, not just their own - so list every
+                // head here instead of GetTerritorialRegionalHeadList's single-head
+                // result for a non-admin user.
+                regionalHeadData = db.RegionalHeads.Where(u => u.IsDeleted == false)
+                    .OrderBy(u => u.Name)
+                    .Select(u => new RegionalHeadData { ID = u.ID, Name = u.Name })
+                    .ToList();
+            }
+            else
+            {
+                regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
+            }
+            // usp_GetCompetitorReport's @RegionalHeadID treats 0 as "every head"
+            // (same TID=0 convention every other backend report in this controller
+            // uses), so make that selectable here too.
+            regionalHeadData.Insert(0, new RegionalHeadData
+            {
+                ID = 0,
+                Name = "All"
+            });
             int regId = 0;
             if (FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser() == 0)
             {
@@ -3108,12 +3251,36 @@ namespace FOS.Web.UI.Controllers
                 Response.AddHeader("content-disposition", "attachment;filename=CompetitorReport" + DateTime.Now + ".csv");
                 Response.ContentType = "application/octet-stream";
                 Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Competitor Report";
+                hst.ReportType = "CompetitorReport";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
             }
             catch (Exception exp)
             {
                 Log.Instance.Error(exp, "Report Not Working");
-                // return null;
+                // Previously swallowed silently, leaving the "Generate Report" tab
+                // blank with no indication anything went wrong (e.g. if
+                // usp_GetCompetitorReport or its underlying tables aren't deployed
+                // on this DB). Surface it instead.
+                Response.Clear();
+                Response.ContentType = "text/plain";
+                Response.StatusCode = 500;
+                Response.Write("Failed to generate Competitor Report: " + exp.Message);
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Competitor Report";
+                hst.ReportType = "CompetitorReport";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
+                Response.End();
             }
 
         }
@@ -3190,15 +3357,18 @@ namespace FOS.Web.UI.Controllers
             return View(objJob);
         }
 
-        public void ClaimSummaryRpt(string StartingDate, string EndingDate, int TID, int fosid, string SubmissionType = "All")
+        public void ClaimSummaryRpt(string StartingDate, string EndingDate, int TID, int fosid, string SubmissionType = "All", string DocType = "Claims")
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
             try
             {
-                // Log user activity
-                var userID = Convert.ToInt32(Session["UserID"]);
-                var ipAddress = Dns.GetHostAddresses(Dns.GetHostName())
-                                  .FirstOrDefault()?.ToString() ?? "Unknown";
-
                 // Parse dates with proper null handling
                 DateTime start = DateTime.Parse(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
                 DateTime end = DateTime.Parse(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
@@ -3206,7 +3376,9 @@ namespace FOS.Web.UI.Controllers
                 DateTime final = end;
 
                 // Get data from database
-                var result = db.usp_GetClaimSummaryReportTraderWiseForBackEnd(TID, fosid, start, final, 0).ToList();
+                var result = string.Equals(DocType, "DealerVerification", StringComparison.OrdinalIgnoreCase)
+                    ? GetDealerVerificationClaimSummaryRows(TID, fosid, start, final)
+                    : db.usp_GetClaimSummaryReportTraderWiseForBackEnd(TID, fosid, start, final, 0).ToList();
 
                 // Late submission = punched after the 10th of the month following the claim's own month
                 // (e.g. a February claim is due by 10-Mar; punched 11-Mar or later is late)
@@ -3221,35 +3393,60 @@ namespace FOS.Web.UI.Controllers
                 Response.ContentType = "text/csv";
 
                 // Create CSV writer
+                bool isDealerVerification = string.Equals(DocType, "DealerVerification", StringComparison.OrdinalIgnoreCase);
                 using (var sw = new StringWriter())
                 {
-                    // Write CSV header
-                    sw.WriteLine("\"Sr#\",\"Head Name\",\"SO Name\",\"Region Name\",\"City Name\",\"Claim Date\",\"Submission Date\",\"Customer Name\",\"Trader Name\",\"Total Liters\",\"Incentive value\",\"Total Price\",\"Sales Tax\",\"MRP Value\",\"Discount % Value\"");
+                    // Dealer Verification has no customer (it's a trade party instead,
+                    // already in "Trader Name") and no sale value, so the Customer Name
+                    // and financial columns don't apply - drop them from the header
+                    // rather than ship them always blank/zero.
+                    if (isDealerVerification)
+                    {
+                        sw.WriteLine("\"Sr#\",\"Head Name\",\"SO Name\",\"Region Name\",\"City Name\",\"Claim Date\",\"Submission Date\",\"Trader Name\"");
+                    }
+                    else
+                    {
+                        sw.WriteLine("\"Sr#\",\"Head Name\",\"SO Name\",\"Region Name\",\"City Name\",\"Claim Date\",\"Submission Date\",\"Customer Name\",\"Trader Name\",\"Total Liters\",\"Incentive value\",\"Total Price\",\"Sales Tax\",\"MRP Value\",\"Discount % Value\"");
+                    }
 
                     if (result != null)
                     {
                         int srNo = 1;
                         foreach (var retailer in result)
                         {
-                            // Calculate discount percentage
-                            string discountPercentage = CalculateDiscountPercentage(retailer.MRPValue, retailer.TotalPrice);
+                            if (isDealerVerification)
+                            {
+                                sw.WriteLine($"\"{srNo}\"," +
+                                            $"\"{EscapeCsvValue(retailer.HeadName)}\"," +
+                                            $"\"{EscapeCsvValue(retailer.SOName)}\"," +
+                                            $"\"{EscapeCsvValue(retailer.RegionName)}\"," +
+                                            $"\"{EscapeCsvValue(retailer.CityName)}\"," +
+                                            $"\"{retailer.CreatedDate}\"," +
+                                            $"\"{retailer.PunchingDate}\"," +
+                                            $"\"{EscapeCsvValue(retailer.TraderName)}\"");
+                            }
+                            else
+                            {
+                                // Calculate discount percentage
+                                string discountPercentage = CalculateDiscountPercentage(retailer.MRPValue, retailer.TotalPrice);
 
-                            // Write CSV line using string interpolation for better readability
-                            sw.WriteLine($"\"{srNo}\"," +
-                                        $"\"{EscapeCsvValue(retailer.HeadName)}\"," +
-                                        $"\"{EscapeCsvValue(retailer.SOName)}\"," +
-                                        $"\"{EscapeCsvValue(retailer.RegionName)}\"," +
-                                        $"\"{EscapeCsvValue(retailer.CityName)}\"," +
-                                        $"\"{retailer.CreatedDate}\"," +
-                                        $"\"{retailer.PunchingDate}\"," +
-                                        $"\"{EscapeCsvValue(retailer.CustomerName)}\"," +
-                                        $"\"{EscapeCsvValue(retailer.TraderName)}\"," +
-                                        $"\"{retailer.TotalLiters}\"," +
-                                        $"\"{retailer.IncentiveValue}\"," +
-                                        $"\"{retailer.TotalPrice}\"," +
-                                        $"\"{retailer.SalesTax}\"," +
-                                        $"\"{retailer.MRPValue}\"," +
-                                        $"\"{discountPercentage}\"");
+                                // Write CSV line using string interpolation for better readability
+                                sw.WriteLine($"\"{srNo}\"," +
+                                            $"\"{EscapeCsvValue(retailer.HeadName)}\"," +
+                                            $"\"{EscapeCsvValue(retailer.SOName)}\"," +
+                                            $"\"{EscapeCsvValue(retailer.RegionName)}\"," +
+                                            $"\"{EscapeCsvValue(retailer.CityName)}\"," +
+                                            $"\"{retailer.CreatedDate}\"," +
+                                            $"\"{retailer.PunchingDate}\"," +
+                                            $"\"{EscapeCsvValue(retailer.CustomerName)}\"," +
+                                            $"\"{EscapeCsvValue(retailer.TraderName)}\"," +
+                                            $"\"{retailer.TotalLiters}\"," +
+                                            $"\"{retailer.IncentiveValue}\"," +
+                                            $"\"{retailer.TotalPrice}\"," +
+                                            $"\"{retailer.SalesTax}\"," +
+                                            $"\"{retailer.MRPValue}\"," +
+                                            $"\"{discountPercentage}\"");
+                            }
 
                             srNo++;
                         }
@@ -3258,6 +3455,14 @@ namespace FOS.Web.UI.Controllers
                     Response.Write(sw.ToString());
                 }
 
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Claim Summary Report";
+                hst.ReportType = "ClaimSummary";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
             }
             catch (Exception exp)
@@ -3266,8 +3471,79 @@ namespace FOS.Web.UI.Controllers
                 // Consider returning an error response to the client
                 Response.StatusCode = 500;
                 Response.Write("Error generating report. Please try again.");
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Claim Summary Report";
+                hst.ReportType = "ClaimSummary";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
             }
+        }
+
+        // DocType = "DealerVerification" reports on Tbl_DealerVerification submissions
+        // instead of Tbl_SalesClaimMaster ones - same toggle already used by the "Claims
+        // Detail" manager grid (RetailerOrdersController.GetClaimsForManager /
+        // ManageJobs.GetDealerVerificationForGrid). Tbl_DealerVerification isn't in the
+        // .edmx, so this is raw ADO.NET, mapped into the same result type the Claims
+        // branch uses above so the CSV writer needs no changes. A Dealer Verification
+        // submission has no sale value/liters/incentive/tax, so those columns come back
+        // "0.00" (CalculateDiscountPercentage already treats "0.00" MRP as 0% discount).
+        private List<usp_GetClaimSummaryReportTraderWiseForBackEnd_Result> GetDealerVerificationClaimSummaryRows(int headID, int saleOfficerId, DateTime start, DateTime end)
+        {
+            var rows = new List<usp_GetClaimSummaryReportTraderWiseForBackEnd_Result>();
+
+            using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+            using (var cmd = new SqlCommand(@"
+                SELECT dv.TradePartyID, dv.DateSelected AS CreatedDate, dv.CreatedOn AS PunchingDate,
+                       head.Name AS HeadName, so.Name AS SOName, reg.Name AS RegionName,
+                       tp.ShopName AS TraderName, city.Name AS CityName, r.ShopName AS CustomerName
+                FROM dbo.Tbl_DealerVerification dv
+                LEFT JOIN dbo.SaleOfficers so ON dv.SOID = so.ID
+                LEFT JOIN dbo.RegionalHeads head ON so.RegionalHeadID = head.ID
+                LEFT JOIN dbo.Regions reg ON so.RegionID = reg.ID
+                LEFT JOIN dbo.Retailers r ON dv.CustomerID = r.ID
+                LEFT JOIN dbo.Cities city ON r.CityID = city.ID
+                LEFT JOIN dbo.Retailers tp ON dv.TradePartyID = tp.ID
+                WHERE dv.IsActive = 1
+                  AND dv.DateSelected BETWEEN @startdate AND @enddate
+                  AND so.RegionalHeadID = CASE WHEN @headID = 0 THEN so.RegionalHeadID ELSE @headID END
+                  AND so.ID = CASE WHEN @SaleOfficerId = 0 THEN so.ID ELSE @SaleOfficerId END", conn))
+            {
+                cmd.Parameters.AddWithValue("@headID", headID);
+                cmd.Parameters.AddWithValue("@SaleOfficerId", saleOfficerId);
+                cmd.Parameters.AddWithValue("@startdate", start);
+                cmd.Parameters.AddWithValue("@enddate", end);
+
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        rows.Add(new usp_GetClaimSummaryReportTraderWiseForBackEnd_Result
+                        {
+                            TradepartyID = reader["TradePartyID"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["TradePartyID"]),
+                            CreatedDate = reader["CreatedDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["CreatedDate"]),
+                            PunchingDate = reader["PunchingDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["PunchingDate"]),
+                            HeadName = reader["HeadName"] as string,
+                            SOName = reader["SOName"] as string,
+                            RegionName = reader["RegionName"] as string,
+                            TraderName = reader["TraderName"] as string,
+                            CityName = reader["CityName"] as string,
+                            CustomerName = reader["CustomerName"] as string,
+                            TotalLiters = "0.00",
+                            IncentiveValue = "0.00",
+                            TotalPrice = "0.00",
+                            SalesTax = "0.00",
+                            MRPValue = "0.00"
+                        });
+                    }
+                }
+            }
+
+            return rows;
         }
 
         private string CalculateDiscountPercentage(string mrpValue, string totalPrice)
@@ -3388,13 +3664,16 @@ namespace FOS.Web.UI.Controllers
 
         public void ClaimSummarySOWiseRpt(string StartingDate, string EndingDate, int TID, int fosid, string SubmissionType = "All")
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
             try
             {
-                // Log user activity
-                var userID = Convert.ToInt32(Session["UserID"]);
-                var ipAddress = Dns.GetHostAddresses(Dns.GetHostName())
-                                  .FirstOrDefault()?.ToString() ?? "Unknown";
-
                 // Parse dates with proper null handling
                 DateTime start = DateTime.Parse(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
                 DateTime end = DateTime.Parse(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
@@ -3481,6 +3760,14 @@ namespace FOS.Web.UI.Controllers
                     Response.Write(sw.ToString());
                 }
 
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Claim Summary SO Wise Report";
+                hst.ReportType = "ClaimSummarySOWise";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
             }
             catch (Exception exp)
@@ -3489,6 +3776,14 @@ namespace FOS.Web.UI.Controllers
                 // Consider returning an error response to the client
                 Response.StatusCode = 500;
                 Response.Write("Error generating report. Please try again.");
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Claim Summary SO Wise Report";
+                hst.ReportType = "ClaimSummarySOWise";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
             }
         }
@@ -3570,13 +3865,16 @@ namespace FOS.Web.UI.Controllers
 
         public void ChemicalSummarySOWiseRpt(string StartingDate, string EndingDate, int TID, int fosid)
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
             try
             {
-                // Log user activity
-                var userID = Convert.ToInt32(Session["UserID"]);
-                var ipAddress = Dns.GetHostAddresses(Dns.GetHostName())
-                                  .FirstOrDefault()?.ToString() ?? "Unknown";
-
                 // Parse dates with proper null handling
                 DateTime start = DateTime.Parse(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
                 DateTime end = DateTime.Parse(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
@@ -3625,6 +3923,14 @@ namespace FOS.Web.UI.Controllers
                     Response.Write(sw.ToString());
                 }
 
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Chemical Summary SO Wise Report";
+                hst.ReportType = "ChemicalSummarySOWise";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
             }
             catch (Exception exp)
@@ -3633,6 +3939,14 @@ namespace FOS.Web.UI.Controllers
                 // Consider returning an error response to the client
                 Response.StatusCode = 500;
                 Response.Write("Error generating report. Please try again.");
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Chemical Summary SO Wise Report";
+                hst.ReportType = "ChemicalSummarySOWise";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
             }
         }
@@ -3713,13 +4027,16 @@ namespace FOS.Web.UI.Controllers
 
         public void CoverageSummarySOWiseRpt(string StartingDate, string EndingDate, int TID, int fosid)
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
             try
             {
-                // Log user activity
-                var userID = Convert.ToInt32(Session["UserID"]);
-                var ipAddress = Dns.GetHostAddresses(Dns.GetHostName())
-                                  .FirstOrDefault()?.ToString() ?? "Unknown";
-
                 // Parse dates with proper null handling
                 DateTime start = DateTime.Parse(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
                 DateTime end = DateTime.Parse(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
@@ -3776,6 +4093,14 @@ namespace FOS.Web.UI.Controllers
                     Response.Write(sw.ToString());
                 }
 
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Coverage Summary SO Wise Report";
+                hst.ReportType = "CoverageSummarySOWise";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
             }
             catch (Exception exp)
@@ -3784,6 +4109,14 @@ namespace FOS.Web.UI.Controllers
                 // Consider returning an error response to the client
                 Response.StatusCode = 500;
                 Response.Write("Error generating report. Please try again.");
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Coverage Summary SO Wise Report";
+                hst.ReportType = "CoverageSummarySOWise";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
             }
         }
@@ -3984,6 +4317,14 @@ namespace FOS.Web.UI.Controllers
 
 
                 Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Claim Detail Report";
+                hst.ReportType = "ClaimDetail";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
 
             }
@@ -4134,6 +4475,14 @@ namespace FOS.Web.UI.Controllers
                 Response.BinaryWrite(bytes);
                 Response.Flush();
 
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Claims Incentives SO Wise Report";
+                hst.ReportType = "ClaimSummaryVSKPISOWise";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
 
             }
@@ -4304,6 +4653,14 @@ namespace FOS.Web.UI.Controllers
 
 
                 Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Sales Claims HOApproval Report";
+                hst.ReportType = "ClaimApproval";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
 
             }
@@ -4443,6 +4800,14 @@ namespace FOS.Web.UI.Controllers
                 Response.BinaryWrite(bytes);
                 Response.Flush();
 
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "SO Claims Summary Report";
+                hst.ReportType = "SOClaimsSummary";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
 
             }
@@ -4609,6 +4974,14 @@ namespace FOS.Web.UI.Controllers
                     }
 
                     Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Market Visit Detail Report";
+                hst.ReportType = "RetailerOrders";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     Response.End();
 
                 }
@@ -4634,19 +5007,33 @@ namespace FOS.Web.UI.Controllers
                     DateTime final = end.AddDays(1);
                     ManageRetailer objRetailers = new ManageRetailer();
                     List<Sp_OrderForPDFHousingVisitsBackend_Result> result = db.Sp_OrderForPDFHousingVisitsBackend(start, final, fosid,TID).ToList();
+
+                    // Latest call (by CreatedOn) per visit, same "latest only" rule as
+                    // GetCustomerCallDetailController's Android call section - pulled
+                    // into memory first since GroupBy+OrderBy.First() per group isn't
+                    // reliably translatable by EF6 LINQ-to-Entities.
+                    var visitIds = result.Select(r => r.VisitID).Distinct().ToList();
+                    var latestCallByVisit = db.Tbl_SaveCall
+                        .Where(c => c.VisitID.HasValue && visitIds.Contains(c.VisitID.Value))
+                        .ToList()
+                        .GroupBy(c => c.VisitID.Value)
+                        .ToDictionary(g => g.Key, g => g.OrderByDescending(c => c.CreatedOn).First());
+
                     // Example data
                     StringWriter sw = new StringWriter();
 
-                    sw.WriteLine("\"VisitID\",\"CustomerID\",\"Owner Name\",\"Customer Name\",\"Customer CreatedDate\",\"Compititors\",\"Business Status\",\"Regional Head Name\",\"Visit Date\",\"Next Visit Date\",\"SaleOfficer Name\",\"Address\",\"Mobile No\",\"Architect Name\",\"Architect Number\",\"Contractor Name\",\"Contractor Number\",\"Estimated Value\",\"Order Volume\",\"Off take From Others\",\"Scope\",\"Nature\",\"Construction Stage\",\"Plot Size\",\"Color Scheme\",\"Site Won\",\"Remarks\",\"Location\",\"Online OR Offline\"");
+                    sw.WriteLine("\"VisitID\",\"CustomerID\",\"Owner Name\",\"Customer Name\",\"Customer CreatedDate\",\"Compititors\",\"Business Status\",\"Regional Head Name\",\"Visit Date\",\"Next Visit Date\",\"SaleOfficer Name\",\"Address\",\"Mobile No\",\"Architect Name\",\"Architect Number\",\"Contractor Name\",\"Contractor Number\",\"Estimated Value\",\"Order Volume\",\"Off take From Others\",\"Scope\",\"Nature\",\"Construction Stage\",\"Plot Size\",\"Color Scheme\",\"Site Won\",\"Remarks\",\"Location\",\"Online OR Offline\",\"Call to Customer\",\"Call Date\",\"Call Rating\",\"Nature of Call\",\"Site Status\",\"Call Remarks\"");
 
                     Response.ClearContent();
                     Response.AddHeader("content-disposition", "attachment;filename=HousingVisits" + DateTime.Now + ".csv");
                     Response.ContentType = "application/octet-stream";
-                      
+
 
                     foreach (var retailer in result)
                     {
-                        sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\",\"{13}\",\"{14}\",\"{15}\",\"{16}\",\"{17}\",\"{18}\",\"{19}\",\"{20}\",\"{21}\",\"{22}\",\"{23}\",\"{24}\",\"{25}\",\"{26}\",\"{27}\",\"{28}\"",
+                        latestCallByVisit.TryGetValue(retailer.VisitID, out var latestCall);
+
+                        sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\",\"{13}\",\"{14}\",\"{15}\",\"{16}\",\"{17}\",\"{18}\",\"{19}\",\"{20}\",\"{21}\",\"{22}\",\"{23}\",\"{24}\",\"{25}\",\"{26}\",\"{27}\",\"{28}\",\"{29}\",\"{30}\",\"{31}\",\"{32}\",\"{33}\",\"{34}\"",
 
                         retailer.VisitID,
                         retailer.CustomerID,
@@ -4662,7 +5049,7 @@ namespace FOS.Web.UI.Controllers
                         retailer.SaleOfficerName,
                         retailer.Address,
                        retailer.Phone1,
-                       
+
                         retailer.ArchitectName,
 
                               retailer.ArchitectNumber,
@@ -4678,11 +5065,17 @@ namespace FOS.Web.UI.Controllers
                         retailer.ConstructionStage,
                        retailer.PlotSize,
                         retailer.ColorScheme,
-                        
+
                        retailer.SiteWon,
                        retailer.Remarks,
                        retailer.Latitude + "," + retailer.Longitude,
-                       retailer.OnlineOffline
+                       retailer.OnlineOffline,
+                       latestCall?.NextExpectedVisit,
+                       latestCall?.CreatedOn,
+                       latestCall?.CallRating,
+                       latestCall?.NatureOfCall,
+                       latestCall?.SiteStatus,
+                       latestCall?.CallerRemarks
 
 
 
@@ -4690,6 +5083,14 @@ namespace FOS.Web.UI.Controllers
                     }
 
                     Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Market Visit Detail Report";
+                hst.ReportType = "RetailerOrders";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     Response.End();
 
                 }
@@ -4766,6 +5167,14 @@ namespace FOS.Web.UI.Controllers
                     }
 
                     Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Market Visit Detail Report";
+                hst.ReportType = "RetailerOrders";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     Response.End();
 
                 }
@@ -4830,6 +5239,14 @@ namespace FOS.Web.UI.Controllers
                     }
 
                     Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Market Visit Detail Report";
+                hst.ReportType = "RetailerOrders";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     Response.End();
 
                 }
@@ -5316,6 +5733,14 @@ namespace FOS.Web.UI.Controllers
 
         public ActionResult ShopVisitDetaill(string StartingDate, string EndingDate, int TID, int fosid, int dealerid, int cityid)
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
             try
             {
 
@@ -5378,12 +5803,28 @@ namespace FOS.Web.UI.Controllers
                 {
                     Stream stream = rd.ExportToStream(CrystalDecisions.Shared.ExportFormatType.PortableDocFormat);
                     stream.Seek(0, SeekOrigin.Begin);
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Market Visit Detail Report";
+                hst.ReportType = "ShopVisitDetail";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     return File(stream, "application/pdf", "ShopVisit_Detail.pdf");
                 }
                 else
                 {
                     Stream stream = rd.ExportToStream(CrystalDecisions.Shared.ExportFormatType.Excel);
                     stream.Seek(0, SeekOrigin.Begin);
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Market Visit Detail Report";
+                hst.ReportType = "ShopVisitDetail";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     return File(stream, "application/ms-excel", string.Format("ShopVisit_Detail{0}.xls", DateTime.Now.ToShortDateString()));
                 }
 
@@ -5630,6 +6071,14 @@ namespace FOS.Web.UI.Controllers
                     srNo++;
                 }
                 Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "SO/Attendance Sync Report";
+                hst.ReportType = "PresentSOSync";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
               
 
@@ -5847,6 +6296,14 @@ namespace FOS.Web.UI.Controllers
 
         public ActionResult MarketInformation(string StartingDate, string EndingDate, int TID, int fosid, int dealerid)
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
             try
             {
 
@@ -5924,12 +6381,28 @@ namespace FOS.Web.UI.Controllers
                 {
                     Stream stream = rd.ExportToStream(CrystalDecisions.Shared.ExportFormatType.PortableDocFormat);
                     stream.Seek(0, SeekOrigin.Begin);
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Market Information Report";
+                hst.ReportType = "MarketInformation";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     return File(stream, "application/pdf", "MarketInformation.pdf");
                 }
                 else
                 {
                     Stream stream = rd.ExportToStream(CrystalDecisions.Shared.ExportFormatType.Excel);
                     stream.Seek(0, SeekOrigin.Begin);
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Market Information Report";
+                hst.ReportType = "MarketInformation";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     return File(stream, "application/ms-excel", string.Format("MarketInformation{0}.xls", DateTime.Now.ToShortDateString()));
                 }
 
@@ -5973,6 +6446,14 @@ namespace FOS.Web.UI.Controllers
 
         public ActionResult CityRetailerWiseReportExtract(int cityid, int retailerid)
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
             try
             {
 
@@ -6028,12 +6509,28 @@ namespace FOS.Web.UI.Controllers
                 {
                     Stream stream = rd.ExportToStream(CrystalDecisions.Shared.ExportFormatType.PortableDocFormat);
                     stream.Seek(0, SeekOrigin.Begin);
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "City Retailer Wise Report";
+                hst.ReportType = "CityRetailerWise";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     return File(stream, "application/pdf", "CityRetailerWiseInfo.pdf");
                 }
                 else
                 {
                     Stream stream = rd.ExportToStream(CrystalDecisions.Shared.ExportFormatType.Excel);
                     stream.Seek(0, SeekOrigin.Begin);
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "City Retailer Wise Report";
+                hst.ReportType = "CityRetailerWise";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     return File(stream, "application/ms-excel", string.Format("CityRetailerWiseInfo{0}.xls", DateTime.Now.ToShortDateString()));
                 }
 
@@ -6106,6 +6603,14 @@ namespace FOS.Web.UI.Controllers
 
         public ActionResult ShopBrandWiseDisplayReport(string StartingDate, string EndingDate, int TID, int fosid, int dealerid, int cityid, int display)
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
             try
             {
 
@@ -6166,12 +6671,28 @@ namespace FOS.Web.UI.Controllers
                 {
                     Stream stream = rd.ExportToStream(CrystalDecisions.Shared.ExportFormatType.PortableDocFormat);
                     stream.Seek(0, SeekOrigin.Begin);
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Shop Brand Wise Display Report";
+                hst.ReportType = "ShopBrandWiseDisplay";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     return File(stream, "application/pdf", "ShopBrandWiseDisplay.pdf");
                 }
                 else
                 {
                     Stream stream = rd.ExportToStream(CrystalDecisions.Shared.ExportFormatType.Excel);
                     stream.Seek(0, SeekOrigin.Begin);
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Shop Brand Wise Display Report";
+                hst.ReportType = "ShopBrandWiseDisplay";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     return File(stream, "application/ms-excel", string.Format("ShopBrandWiseDisplay{0}.xls", DateTime.Now.ToShortDateString()));
                 }
 
@@ -7408,7 +7929,7 @@ namespace FOS.Web.UI.Controllers
 
         }
 
-        public void ApprovalSummary(string StartingDate, string EndingDate,int RHID, int? DisID, int TID)
+        public void ApprovalSummary(string StartingDate, string EndingDate,int RHID, int? DisID, int TID, string DocType = "Claims")
         {
             var userID = Convert.ToInt32(Session["UserID"]);
             var remoteIpAddress = "";
@@ -7439,7 +7960,9 @@ namespace FOS.Web.UI.Controllers
                         
 
                         // Get data from database
-                        var result = db.sp_GetSOClaimsApprovalStatus(RHID, TID, start, final).ToList();
+                        var result = string.Equals(DocType, "DealerVerification", StringComparison.OrdinalIgnoreCase)
+                            ? GetDealerVerificationApprovalStatusRows(RHID, TID, start, final)
+                            : db.sp_GetSOClaimsApprovalStatus(RHID, TID, start, final).ToList();
 
                         // Set up CSV response
                         Response.ClearContent();
@@ -7477,6 +8000,14 @@ namespace FOS.Web.UI.Controllers
                             Response.Write(sw.ToString());
                         }
 
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Sales Claims Approval Summary";
+                hst.ReportType = "ApprovalSummary";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                         Response.End();
                     }
                     catch (Exception exp)
@@ -7485,6 +8016,14 @@ namespace FOS.Web.UI.Controllers
                         // Consider returning an error response to the client
                         Response.StatusCode = 500;
                         Response.Write("Error generating report. Please try again.");
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Sales Claims Approval Summary";
+                hst.ReportType = "ApprovalSummary";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                         Response.End();
                     }
 
@@ -7502,7 +8041,9 @@ namespace FOS.Web.UI.Controllers
 
 
                         // Get data from database
-                        var result = db.sp_GetSOClaimsDetailApproval(RHID, TID, start, final).ToList();
+                        var result = string.Equals(DocType, "DealerVerification", StringComparison.OrdinalIgnoreCase)
+                            ? GetDealerVerificationDetailApprovalRows(RHID, TID, start, final)
+                            : db.sp_GetSOClaimsDetailApproval(RHID, TID, start, final).ToList();
 
                         // Set up CSV response
                         Response.ClearContent();
@@ -7512,8 +8053,13 @@ namespace FOS.Web.UI.Controllers
                         // Create CSV writer
                         using (var sw = new StringWriter())
                         {
-                            // Write CSV header
-                            sw.WriteLine("\"Sr#\",\"ClaimID\",\"Head Name\",\"SO Name\",\"Customer Name\",\"Claim Date\",\"Submitted Date\",\"Approved Date\",\"Approved By\",\"Approved Status\",\"Remarks\"");
+                            // Write CSV header - Dealer Verification's "customer" column is
+                            // the trade party (dv.TradePartyID), not dv.CustomerID, so it's
+                            // labeled accordingly instead of "Customer Name".
+                            var partyColumnHeader = string.Equals(DocType, "DealerVerification", StringComparison.OrdinalIgnoreCase)
+                                ? "Trade Party Name"
+                                : "Customer Name";
+                            sw.WriteLine($"\"Sr#\",\"ClaimID\",\"Head Name\",\"SO Name\",\"{partyColumnHeader}\",\"Claim Date\",\"Submitted Date\",\"Approved Date\",\"Approved By\",\"Approved Status\",\"Remarks\"");
 
                             if (result != null)
                             {
@@ -7543,6 +8089,14 @@ namespace FOS.Web.UI.Controllers
                             Response.Write(sw.ToString());
                         }
 
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Sales Claims Approval Summary";
+                hst.ReportType = "ApprovalSummary";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                         Response.End();
                     }
                     catch (Exception exp)
@@ -7551,6 +8105,14 @@ namespace FOS.Web.UI.Controllers
                         // Consider returning an error response to the client
                         Response.StatusCode = 500;
                         Response.Write("Error generating report. Please try again.");
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Sales Claims Approval Summary";
+                hst.ReportType = "ApprovalSummary";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                         Response.End();
                     }
 
@@ -7565,6 +8127,111 @@ namespace FOS.Web.UI.Controllers
 
             }
 
+        }
+
+        // DocType = "DealerVerification" counterparts to sp_GetSOClaimsApprovalStatus /
+        // sp_GetSOClaimsDetailApproval, for Tbl_DealerVerification submissions. That table
+        // isn't in the .edmx, so this is raw ADO.NET. Status/ApprovedBy is the SO-level
+        // approve/reject pair set by ApproveClaimsController (DocType = "DealerVerification"
+        // branch: "UPDATE ... SET Status = 'Approved', ApprovedBy = @SOID"), mirroring
+        // Tbl_SalesClaimMaster; ClaimManagerLatestStatus/Remarks/Date is the separate Claim
+        // Manager review set by JobController.UpdateClaimStatus. Both pairs are used below the
+        // same way GetApprovalsListController's existing DealerVerification branch already
+        // reads them.
+        private List<sp_GetSOClaimsApprovalStatus_Result> GetDealerVerificationApprovalStatusRows(int headID, int saleOfficerId, DateTime start, DateTime end)
+        {
+            var rows = new List<sp_GetSOClaimsApprovalStatus_Result>();
+
+            using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+            using (var cmd = new SqlCommand(@"
+                SELECT so.ID AS SOID, MAX(head.Name) AS HeadName, MAX(so.Name) AS SOName,
+                       COUNT(dv.ID) AS TotalClaims,
+                       SUM(CASE WHEN dv.Status = 'Approved' THEN 1 ELSE 0 END) AS ApprovedClaims,
+                       SUM(CASE WHEN ISNULL(dv.Status, '') <> 'Approved' THEN 1 ELSE 0 END) AS NotApprovedClaims
+                FROM dbo.Tbl_DealerVerification dv
+                INNER JOIN dbo.SaleOfficers so ON dv.SOID = so.ID
+                LEFT JOIN dbo.RegionalHeads head ON so.RegionalHeadID = head.ID
+                WHERE dv.IsActive = 1
+                  AND dv.DateSelected BETWEEN @startdate AND @enddate
+                  AND so.RegionalHeadID = CASE WHEN @headID = 0 THEN so.RegionalHeadID ELSE @headID END
+                  AND so.ID = CASE WHEN @SaleOfficerId = 0 THEN so.ID ELSE @SaleOfficerId END
+                GROUP BY so.ID", conn))
+            {
+                cmd.Parameters.AddWithValue("@headID", headID);
+                cmd.Parameters.AddWithValue("@SaleOfficerId", saleOfficerId);
+                cmd.Parameters.AddWithValue("@startdate", start);
+                cmd.Parameters.AddWithValue("@enddate", end);
+
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        rows.Add(new sp_GetSOClaimsApprovalStatus_Result
+                        {
+                            SOID = reader["SOID"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["SOID"]),
+                            HeadName = reader["HeadName"] as string,
+                            SOName = reader["SOName"] as string,
+                            TotalClaims = Convert.ToInt32(reader["TotalClaims"]),
+                            ApprovedClaims = Convert.ToInt32(reader["ApprovedClaims"]),
+                            NotApprovedClaims = Convert.ToInt32(reader["NotApprovedClaims"])
+                        });
+                    }
+                }
+            }
+
+            return rows;
+        }
+
+        private List<sp_GetSOClaimsDetailApproval_Result> GetDealerVerificationDetailApprovalRows(int headID, int saleOfficerId, DateTime start, DateTime end)
+        {
+            var rows = new List<sp_GetSOClaimsDetailApproval_Result>();
+
+            using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+            using (var cmd = new SqlCommand(@"
+                SELECT dv.ID AS ClaimID, so.ID AS SOID, head.Name AS HeadName, so.Name AS SOName,
+                       tp.ShopName AS ShopName, dv.DateSelected AS ClaimDate, dv.CreatedOn AS SubmittedDate,
+                       dv.ClaimManagerDate AS ApprovedDate, apso.Name AS ApprovedBy,
+                       dv.ClaimManagerLatestStatus AS ApprovedStatus, dv.ClaimManagerLatestRemarks AS Remarks
+                FROM dbo.Tbl_DealerVerification dv
+                LEFT JOIN dbo.SaleOfficers so ON dv.SOID = so.ID
+                LEFT JOIN dbo.RegionalHeads head ON so.RegionalHeadID = head.ID
+                LEFT JOIN dbo.Retailers tp ON dv.TradePartyID = tp.ID
+                LEFT JOIN dbo.SaleOfficers apso ON dv.ApprovedBy = apso.ID
+                WHERE dv.IsActive = 1
+                  AND dv.DateSelected BETWEEN @startdate AND @enddate
+                  AND so.RegionalHeadID = CASE WHEN @headID = 0 THEN so.RegionalHeadID ELSE @headID END
+                  AND so.ID = CASE WHEN @SaleOfficerId = 0 THEN so.ID ELSE @SaleOfficerId END", conn))
+            {
+                cmd.Parameters.AddWithValue("@headID", headID);
+                cmd.Parameters.AddWithValue("@SaleOfficerId", saleOfficerId);
+                cmd.Parameters.AddWithValue("@startdate", start);
+                cmd.Parameters.AddWithValue("@enddate", end);
+
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        rows.Add(new sp_GetSOClaimsDetailApproval_Result
+                        {
+                            ClaimID = Convert.ToInt32(reader["ClaimID"]),
+                            SOID = reader["SOID"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["SOID"]),
+                            HeadName = reader["HeadName"] as string,
+                            SOName = reader["SOName"] as string,
+                            ShopName = reader["ShopName"] as string,
+                            ClaimDate = reader["ClaimDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["ClaimDate"]),
+                            SubmittedDate = reader["SubmittedDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["SubmittedDate"]),
+                            ApprovedDate = reader["ApprovedDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["ApprovedDate"]),
+                            ApprovedBy = reader["ApprovedBy"] as string,
+                            ApprovedStatus = reader["ApprovedStatus"] as string,
+                            Remarks = reader["Remarks"] as string
+                        });
+                    }
+                }
+            }
+
+            return rows;
         }
 
         #endregion
@@ -7854,6 +8521,14 @@ namespace FOS.Web.UI.Controllers
                             Response.BinaryWrite(bytes);
                             Response.Flush();
 
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Daily Sales Report";
+                hst.ReportType = "OrderSummary";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                             Response.End();
 
 
@@ -7935,6 +8610,14 @@ namespace FOS.Web.UI.Controllers
                         Response.BinaryWrite(bytes);
                         Response.Flush();
 
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Daily Sales Report";
+                hst.ReportType = "OrderSummary";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                         Response.End();
 
 
@@ -8014,6 +8697,14 @@ namespace FOS.Web.UI.Controllers
                         Response.BinaryWrite(bytes);
                         Response.Flush();
 
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Daily Sales Report";
+                hst.ReportType = "OrderSummary";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                         Response.End();
 
 
@@ -8090,6 +8781,14 @@ namespace FOS.Web.UI.Controllers
                         Response.BinaryWrite(bytes);
                         Response.Flush();
 
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Daily Sales Report";
+                hst.ReportType = "OrderSummary";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                         Response.End();
 
 
@@ -8203,6 +8902,14 @@ namespace FOS.Web.UI.Controllers
                     Response.BinaryWrite(bytes);
                     Response.Flush();
 
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Count Report";
+                hst.ReportType = "CountReport";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     Response.End();
 
 
@@ -8286,15 +8993,14 @@ namespace FOS.Web.UI.Controllers
                 }
 
                 Response.Write(sw.ToString());
-                Response.End();
-
-
-
-
-
-
-
-                Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Call Summery Report";
+                hst.ReportType = "CallSummary";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
 
             }
@@ -8368,6 +9074,14 @@ namespace FOS.Web.UI.Controllers
                 }
 
                 Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Brighto Services Attendance Report";
+                hst.ReportType = "BrightoServicesAttendance";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
             }
             catch (Exception exp)
@@ -8796,6 +9510,14 @@ namespace FOS.Web.UI.Controllers
         }
         public void SoVisitsFrequencyDetail(string StartingDate, string EndingDate, int intSaleOfficerIDfrom,int RegionID)
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
             FOSDataModel data = new FOSDataModel();
             DateTime start = Convert.ToDateTime(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
             DateTime end = Convert.ToDateTime(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
@@ -8825,6 +9547,14 @@ namespace FOS.Web.UI.Controllers
                 ));
             }
             Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "SO Visits Frequency Report";
+                hst.ReportType = "SoVisitsFrequency";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
             Response.End();
         }
         #endregion SovisitsFrequency
@@ -9059,19 +9789,16 @@ namespace FOS.Web.UI.Controllers
             if (userID == 1122)
             {
                 regionalHeadData = ManageComplaint.GetRegionalHeads(userID);
+                regionalHeadData.Insert(0, new RegionalHeadData
+                {
+                    ID = 0,
+                    Name = "All"
+                });
             }
             else
             {
                 regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
             }
-            //if (userID == 1)
-            //{
-            //    regionalHeadData.Insert(0, new RegionalHeadData
-            //    {
-            //        ID = 0,
-            //        Name = "All"
-            //    });
-            //}
             int regId = 0;
             if (FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser() == 0)
             {
@@ -9125,6 +9852,14 @@ namespace FOS.Web.UI.Controllers
 
         public void ComplaintSummaryRpt(string StartingDate, string EndingDate, int TID, int fosid, string ReportType)
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
             try
             {
                 DateTime start = Convert.ToDateTime(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
@@ -9138,23 +9873,29 @@ namespace FOS.Web.UI.Controllers
 
                     result = db.usp_GetComplaintDetail(start, final, fosid, TID).ToList();
 
+                    var zoneCityByComplaintDetail = GetZoneCityByComplaintID(result.Select(r => r.ComplaintID));
+
                     Response.ClearContent();
                     Response.AddHeader("content-disposition", "attachment;filename=ComplaintDetailReport_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv");
                     Response.ContentType = "text/csv";
 
                     using (StringWriter sw = new StringWriter())
                     {
-                        sw.WriteLine("\"ID\",\"Complaint Number\",\"Complaint Date\",\"SO Name\",\"Customer Name\",\"Phone No\",\"Dealer Name\",\"Product Description\",\"Product Nature\",\"Product Batch No\",\"Shaking Time\",\"Color Code\",\"Quantity\",\"Substrate Color\",\"Tinning Ratio\",\"No of Coasts Applied\",\"Time Duration Within Coats\",\"Thinning Solvant\",\"Applied Tool\",\"Remarks\",\"Type\",\"Attribute Name\",\"Type\",\"Attribute Name\",\"Application Cause\",\"Substrate Cause\",\"Quality of Product\",\"Varified\",\"Quality Review Remarks\",\"Updated At\"");
+                        sw.WriteLine("\"ID\",\"Complaint Number\",\"Complaint Date\",\"SO Name\",\"Zone\",\"City\",\"Customer Name\",\"Phone No\",\"Dealer Name\",\"Product Description\",\"Product Nature\",\"Product Batch No\",\"Shaking Time\",\"Color Code\",\"Quantity\",\"Substrate Color\",\"Tinning Ratio\",\"No of Coasts Applied\",\"Time Duration Within Coats\",\"Thinning Solvant\",\"Applied Tool\",\"Remarks\",\"Type\",\"Attribute Name\",\"Type\",\"Attribute Name\",\"Application Cause\",\"Substrate Cause\",\"Quality of Product\",\"Varified\",\"Quality Review Remarks\",\"Updated At\"");
 
                         if (result.Count > 0)
                         {
                             foreach (var complaint in result)
                             {
-                                sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\",\"{13}\",\"{14}\",\"{15}\",\"{16}\",\"{17}\",\"{18}\",\"{19}\",\"{20}\",\"{21}\",\"{22}\",\"{23}\",\"{24}\",\"{25}\",\"{26}\",\"{27}\",\"{28}\",\"{29}\"",
+                                zoneCityByComplaintDetail.TryGetValue(complaint.ComplaintID, out var zoneCity);
+
+                                sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\",\"{13}\",\"{14}\",\"{15}\",\"{16}\",\"{17}\",\"{18}\",\"{19}\",\"{20}\",\"{21}\",\"{22}\",\"{23}\",\"{24}\",\"{25}\",\"{26}\",\"{27}\",\"{28}\",\"{29}\",\"{30}\",\"{31}\"",
                                     complaint.ComplaintID.ToString(),
                                     complaint.ComplaintNumber,
                                     complaint.ComplaintDate == null ? "" : complaint.ComplaintDate.Value.ToString("yyyy-MM-dd HH:mm:ss"),
                                     complaint.SONAME,
+                                    zoneCity?.ZoneName,
+                                    zoneCity?.CityName,
                                     complaint.CustomerName,
                                     complaint.Phone1,
                                     complaint.DealerName,
@@ -9192,6 +9933,14 @@ namespace FOS.Web.UI.Controllers
                         Response.Write(sw.ToString());
                     }
 
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "SO Complaint Summary Report";
+                hst.ReportType = "ComplaintSummary";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     Response.End();
                 }
                 else
@@ -9199,23 +9948,29 @@ namespace FOS.Web.UI.Controllers
                     List<sp_usp_GetComplaintSummary_Result> summary = new List<sp_usp_GetComplaintSummary_Result>();
                     summary = db.sp_usp_GetComplaintSummary(start, final, fosid, TID).ToList();
 
+                    var zoneCityByComplaintSummary = GetZoneCityByComplaintID(summary.Select(r => r.ComplaintID));
+
                     Response.ClearContent();
                     Response.AddHeader("content-disposition", "attachment;filename=ComplaintSummaryReport_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv");
                     Response.ContentType = "text/csv";
 
                     using (StringWriter sw = new StringWriter())
                     {
-                        sw.WriteLine("\"ID\",\"Complaint Number\",\"Complaint Date\",\"SO Name\",\"Customer Name\",\"Phone No\",\"Dealer Name\",\"Product Description\",\"Varified\",\"Quality Review Remarks\",\"Updated At\"");
+                        sw.WriteLine("\"ID\",\"Complaint Number\",\"Complaint Date\",\"SO Name\",\"Zone\",\"City\",\"Customer Name\",\"Phone No\",\"Dealer Name\",\"Product Description\",\"Varified\",\"Quality Review Remarks\",\"Updated At\"");
 
                         if (summary.Count > 0)
                         {
                             foreach (var complaint in summary)
                             {
-                                sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\"",
+                                zoneCityByComplaintSummary.TryGetValue(complaint.ComplaintID, out var zoneCity);
+
+                                sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\"",
                                     complaint.ComplaintID,
                                     complaint.ComplaintNumber,
                                     complaint.CreatedOn == null ? "" : complaint.CreatedOn.Value.ToString("yyyy-MM-dd HH:mm:ss"),
                                     complaint.SOName,
+                                    zoneCity?.ZoneName,
+                                    zoneCity?.CityName,
                                     complaint.CustomerName,
                                     complaint.Phone1,
                                     complaint.DealerName,
@@ -9234,6 +9989,14 @@ namespace FOS.Web.UI.Controllers
                         Response.Write(sw.ToString());
                     }
 
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "SO Complaint Summary Report";
+                hst.ReportType = "ComplaintSummary";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                     Response.End();
                 }
             }
@@ -9242,6 +10005,34 @@ namespace FOS.Web.UI.Controllers
                 Log.Instance.Error(exp, "Complaint Summary Report Failed");
                 Response.Write("Error generating report: " + exp.Message);
             }
+        }
+
+        private class ComplaintZoneCity
+        {
+            public string ZoneName { get; set; }
+            public string CityName { get; set; }
+        }
+
+        // usp_GetComplaintDetail/sp_usp_GetComplaintSummary don't return Zone/City,
+        // and their bodies aren't checked into SQL/ to safely alter - so this looks
+        // them up separately via the complained-about customer
+        // (Tbl_SaveComplaints.CustomerID -> Retailers.RegionID/CityID - "Zone" here
+        // is Retailer.RegionID, not Retailer.ZoneID), keyed by the same ComplaintID
+        // (Tbl_SaveComplaints.ID) both procs already return.
+        private Dictionary<int, ComplaintZoneCity> GetZoneCityByComplaintID(IEnumerable<int> complaintIds)
+        {
+            var ids = complaintIds.Distinct().ToList();
+
+            return (from tsc in db.Tbl_SaveComplaints
+                     join r in db.Retailers on tsc.CustomerID equals r.ID into rj
+                     from r in rj.DefaultIfEmpty()
+                     join z in db.Regions on r.RegionID equals z.ID into zj
+                     from z in zj.DefaultIfEmpty()
+                     join c in db.Cities on r.CityID equals c.ID into cj
+                     from c in cj.DefaultIfEmpty()
+                     where ids.Contains(tsc.ID)
+                     select new { tsc.ID, ZoneName = z.Name, CityName = c.Name })
+                    .ToDictionary(x => x.ID, x => new ComplaintZoneCity { ZoneName = x.ZoneName, CityName = x.CityName });
         }
 
         #region Call Summary Detailed Report
@@ -9265,6 +10056,14 @@ namespace FOS.Web.UI.Controllers
 
         public void CallSummaryDetailedReportRpt(int TID, DateTime sdate, DateTime edate)
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
             try
             {
                 StringWriter sw = new StringWriter();
@@ -9320,6 +10119,14 @@ namespace FOS.Web.UI.Controllers
                 }
 
                 Response.Write(sw.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "Call Summary Detailed Report";
+                hst.ReportType = "CallSummaryDetailed";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
                 Response.End();
             }
             catch (Exception exp)
@@ -9408,6 +10215,14 @@ namespace FOS.Web.UI.Controllers
 
         public ActionResult ExportSOWiseTargetAllocationReport(int SOID, int FinancialYearID, int RegionalHeadID)
         {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
             var data = ManageCity.GetKPIForGrid(SOID, FinancialYearID, RegionalHeadID);
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("\"Sr No\",\"Created Date\",\"Financial Year\",\"Regional Head\",\"SO Name\",\"Platinum\",\"Premium\",\"Gold\",\"Total\"");
@@ -9426,6 +10241,14 @@ namespace FOS.Web.UI.Controllers
                     row.TotalTarget));
             }
             byte[] bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+                ManagersLoginHst hst = new ManagersLoginHst();
+                hst.UserID = userID;
+                hst.IPAddress = remoteIpAddress;
+                hst.ReportName = "SO Wise Target Allocation Report";
+                hst.ReportType = "SOWiseTargetAllocationReport";
+                hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+                db.ManagersLoginHsts.Add(hst);
+                db.SaveChanges();
             return File(bytes, "application/vnd.ms-excel", "SOWiseTargetAllocationReport_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv");
         }
 

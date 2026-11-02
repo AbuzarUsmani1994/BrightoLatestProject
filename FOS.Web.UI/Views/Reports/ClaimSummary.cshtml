@@ -101,6 +101,16 @@
                             </div>
                         </div>
 
+                        <div class="control-group" style="margin-bottom: 14px;">
+                            <label class="control-label">Doc Type *</label>
+                            <div class="controls">
+                                <select id="DocType" name="DocType" style="height: 28px;">
+                                    <option value="Claims">Claims</option>
+                                    <option value="DealerVerification">Dealer Verification Form</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="control-group" style="border-top: 1px solid #e5e5e5;">
                             <div class="form-actions" style="padding-left: 130px; padding-right: 0px;">
                                 <button type="submit" id="btnNew" class="btn btn-primary">
@@ -761,7 +771,7 @@
                 window.open("@Url.Action("CityMonthWiseIntakeReport", "Retailer")" + "?StartingDate=" + $("#StartingDate1").val() + "&EndingDate=" + $("#StartingDate2").val() + "&TID=" + $("#TID").val() + "&Shoptypeid=" + $("#Shoptypeid").val() + "&message=" + message + "", "_top");
             }*@
                 //else {
-                window.open("@Url.Action("ClaimSummaryRpt", "Reports")" + "?StartingDate=" + $("#StartingDate1").val() + "&EndingDate=" + $("#StartingDate2").val() + "&TID=" + $TID + "&fosid=" + $("#SaleOfficerID").val() + "&SubmissionType=" + $("#SubmissionType").val());
+                window.open("@Url.Action("ClaimSummaryRpt", "Reports")" + "?StartingDate=" + $("#StartingDate1").val() + "&EndingDate=" + $("#StartingDate2").val() + "&TID=" + $TID + "&fosid=" + $("#SaleOfficerID").val() + "&SubmissionType=" + $("#SubmissionType").val() + "&DocType=" + $("#DocType").val());
                 //}
             }
         });
