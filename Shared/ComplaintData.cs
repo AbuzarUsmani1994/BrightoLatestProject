@@ -119,8 +119,11 @@ namespace FOS.Shared
         public List<ComplaintProductQualityRelated> ComplaintProducts { get; set; }
         public string QualityName { get; set; }
         public string ComplaintNumber { get; set; }
+        public int ID { get; set; }
         public int ComplaintYesNo { get; set; }
         public string IsVerifiedString { get; set; }
+        public int? ComplaintStatus { get; set; }
+        public string ComplaintStatusString { get; set; }
         public string ImageUrl { get; set; }
         public string VideoUrl { get; set; }
         public string OtherApplication { get; set; }

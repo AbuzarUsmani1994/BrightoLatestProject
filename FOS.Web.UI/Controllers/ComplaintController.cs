@@ -238,7 +238,6 @@ namespace FOS.Web.UI.Controllers
 
         public JsonResult SaveManageComplaints(ComplaintData data)
         {
-            ComplaintSuggesionAdded add = new ComplaintSuggesionAdded();
             string ApplicationName = string.Empty;
             string SubstrateName = string.Empty;
             string QualityName = string.Empty;
@@ -379,130 +378,96 @@ namespace FOS.Web.UI.Controllers
                         Video1 = "/Images/ComVideo/" + VideofileName;
                     }
                 }
-                add = db.ComplaintSuggesionAddeds.Where(x => x.ComplaintID == data.ComplaintID).FirstOrDefault();
-                if (add == null)
+                int? StatusCode = null;
+                string StatusCodeString = Request.Form["ComplaintStatus"];
+                if (!string.IsNullOrEmpty(StatusCodeString))
                 {
-                    var Dat = new ComplaintSuggesionAdded();
-                    Dat.ComplaintID = data.ComplaintID;
-                    Dat.ComplaintNo = data.ComplaintNumber;
-                    Dat.ComplaintSubmitby = data.SaleOfficerName;
-                    Dat.ComplaintSubmitDate = Convert.ToDateTime(data.StartingDate1);
-                    Dat.ApplicationCauseId = ApplicationIds;
-                    Dat.SubstrateCauseID = SubstrateIds;
-                    Dat.ProductQualityRetailedID = QualityIds;
-                    Dat.ApplicationCaseName = ApplicationName;
-                    Dat.SubstrateCaseName = SubstrateName;
-                    Dat.QualityProductName = QualityName;
-                    Dat.Remarks = data.Remarks;
-                    Dat.IsVerified = data.ComplaintYesNo;
-                    if (data.ComplaintYesNo == 1)
+                    int ParsedStatus;
+                    if (int.TryParse(StatusCodeString, out ParsedStatus))
                     {
-                        Dat.IsVerifiedName = "Yes";
+                        StatusCode = ParsedStatus;
                     }
-                    else if (data.ComplaintYesNo == 2)
-                    {
-                        Dat.IsVerifiedName = "No";
-                    }
-                    else
-                    {
-                        Dat.IsVerifiedName = "In Progress";
-                    }
-                    Dat.ImageUrl = Picture1;
-                    Dat.VideoUrl = Video1;
-                    Dat.CreatedDate = DateTime.Now;
-                    Dat.UpdatedDate = DateTime.Now;
-                    db.ComplaintSuggesionAddeds.Add(Dat);
-                    db.SaveChanges();
+                }
+
+                var Dat = new ComplaintSuggesionAdded();
+                Dat.ComplaintID = data.ComplaintID;
+                Dat.ComplaintNo = data.ComplaintNumber;
+                Dat.ComplaintSubmitby = data.SaleOfficerName;
+                Dat.ComplaintSubmitDate = Convert.ToDateTime(data.StartingDate1);
+                Dat.ApplicationCauseId = ApplicationIds;
+                Dat.SubstrateCauseID = SubstrateIds;
+                Dat.ProductQualityRetailedID = QualityIds;
+                Dat.ApplicationCaseName = ApplicationName;
+                Dat.SubstrateCaseName = SubstrateName;
+                Dat.QualityProductName = QualityName;
+                Dat.Remarks = data.Remarks;
+                Dat.IsVerified = data.ComplaintYesNo;
+                if (data.ComplaintYesNo == 1)
+                {
+                    Dat.IsVerifiedName = "Yes";
+                }
+                else if (data.ComplaintYesNo == 2)
+                {
+                    Dat.IsVerifiedName = "No";
                 }
                 else
                 {
-                    add.ComplaintID = data.ComplaintID;
-                    add.ComplaintNo = data.ComplaintNumber;
-                    add.ComplaintSubmitby = data.SaleOfficerName;
-                    add.ComplaintSubmitDate = Convert.ToDateTime(data.StartingDate1);
-                    add.ApplicationCauseId = ApplicationIds;
-                    add.SubstrateCauseID = SubstrateIds;
-                    add.ProductQualityRetailedID = QualityIds;
-                    add.ApplicationCaseName = ApplicationName;
-                    add.SubstrateCaseName = SubstrateName;
-                    add.QualityProductName = QualityName;
-                    add.Remarks = data.Remarks;
-                    add.IsVerified = data.ComplaintYesNo;
-                    if (data.ComplaintYesNo == 1)
-                    {
-                        add.IsVerifiedName = "Yes";
-                    }
-                    else if (data.ComplaintYesNo == 2)
-                    {
-                        add.IsVerifiedName = "No";
-                    }
-                    else
-                    {
-                        add.IsVerifiedName = "In Progress";
-                    }
-                    if (Picture1.Equals("") || Picture1 == null)
-                    {
-                        add.ImageUrl = add.ImageUrl;
-                    }
-                    else
-                    {
-                        add.ImageUrl = Picture1;
-                    }
-                    if (Video1.Equals("") || Video1 == null)
-                    {
-                        add.VideoUrl = add.VideoUrl;
-                    }
-                    else
-                    {
-                        add.VideoUrl = Video1;
-                    }
-                    add.UpdatedDate = DateTime.Now;
-                    db.SaveChanges();
+                    Dat.IsVerifiedName = "In Progress";
                 }
+                Dat.ComplaintStatus = StatusCode;
+                Dat.ComplaintStatusName = StatusCode == 1 ? "In Progress" : StatusCode == 2 ? "On Hold" : StatusCode == 3 ? "Resolved" : StatusCode == 4 ? "Duplicate" : null;
+                Dat.ImageUrl = Picture1;
+                Dat.VideoUrl = Video1;
+                Dat.CreatedDate = DateTime.Now;
+                Dat.UpdatedDate = DateTime.Now;
+                db.ComplaintSuggesionAddeds.Add(Dat);
+                db.SaveChanges();
             }
             return Json("1", JsonRequestBehavior.AllowGet);
         }
 
         public JsonResult GetSuggestData(int ComplaintID)
         {
-            ComplaintData complaint = new ComplaintData();
+            List<ComplaintData> list = new List<ComplaintData>();
             using (FOSDataModel db = new FOSDataModel())
             {
-                var data = db.ComplaintSuggesionAddeds.Where(x => x.ComplaintID == ComplaintID).FirstOrDefault();
-                if (data != null)
+                var rows = db.ComplaintSuggesionAddeds.Where(x => x.ComplaintID == ComplaintID)
+                    .OrderByDescending(x => x.CreatedDate).ThenByDescending(x => x.ID).ToList();
+                foreach (var data in rows)
                 {
-                    complaint.ComplaintID = (int)data.ComplaintID;
-                    complaint.ComplaintNumber = data.ComplaintNo;
-                    complaint.SaleOfficerName = data.ComplaintSubmitby;
-                    complaint.StartingDate1 = data.ComplaintSubmitDate.Value.ToString("dd-MMM-yyyy");
-                    complaint.AppID = data.ApplicationCauseId;
-                    complaint.SubsID = data.SubstrateCauseID;
-                    complaint.QuaID = data.ProductQualityRetailedID;
-                    complaint.Remarks = data.Remarks;
-                    complaint.ComplaintYesNo = (int)data.IsVerified;
-                    complaint.ApplicationName = data.ApplicationCaseName;
-                    complaint.SubstrateName = data.SubstrateCaseName;
-                    complaint.QualityName = data.QualityProductName;
-                    complaint.ImageUrl = data.ImageUrl;
-                    complaint.VideoUrl = data.VideoUrl;
-                    complaint.IsVerifiedString = data.IsVerifiedName;
+                    list.Add(new ComplaintData
+                    {
+                        ID = data.ID,
+                        ComplaintID = (int)data.ComplaintID,
+                        ComplaintNumber = data.ComplaintNo,
+                        SaleOfficerName = data.ComplaintSubmitby,
+                        StartingDate1 = data.ComplaintSubmitDate.HasValue ? data.ComplaintSubmitDate.Value.ToString("dd-MMM-yyyy") : null,
+                        AppID = data.ApplicationCauseId,
+                        SubsID = data.SubstrateCauseID,
+                        QuaID = data.ProductQualityRetailedID,
+                        Remarks = data.Remarks,
+                        ComplaintYesNo = data.IsVerified ?? 0,
+                        ApplicationName = data.ApplicationCaseName,
+                        SubstrateName = data.SubstrateCaseName,
+                        QualityName = data.QualityProductName,
+                        ImageUrl = data.ImageUrl,
+                        VideoUrl = data.VideoUrl,
+                        IsVerifiedString = data.IsVerifiedName,
+                        ComplaintStatus = data.ComplaintStatus,
+                        ComplaintStatusString = data.ComplaintStatusName
+                    });
                 }
-                else
-                {
-                    complaint = null;
-                }
-
             }
 
-            return Json(complaint, JsonRequestBehavior.AllowGet);
+            return Json(list, JsonRequestBehavior.AllowGet);
         }
 
         [HttpPost]
-        public JsonResult DeleteComplaintSuggestion(int ComplaintID)
+        public JsonResult DeleteComplaintSuggestion(int ID)
         {
             using (FOSDataModel db = new FOSDataModel())
             {
-                var add = db.ComplaintSuggesionAddeds.Where(x => x.ComplaintID == ComplaintID).FirstOrDefault();
+                var add = db.ComplaintSuggesionAddeds.Where(x => x.ID == ID).FirstOrDefault();
                 if (add != null)
                 {
                     db.ComplaintSuggesionAddeds.Remove(add);

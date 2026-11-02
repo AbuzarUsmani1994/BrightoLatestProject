@@ -60,6 +60,10 @@ public partial class ComplaintSuggesionAdded
 
     public string QualityProductName { get; set; }
 
+    public Nullable<int> ComplaintStatus { get; set; }
+
+    public string ComplaintStatusName { get; set; }
+
 }
 
 }

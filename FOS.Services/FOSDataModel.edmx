@@ -172,6 +172,8 @@
           <Property Name="ApplicationCaseName" Type="varchar" MaxLength="5000" />
           <Property Name="SubstrateCaseName" Type="varchar" MaxLength="5000" />
           <Property Name="QualityProductName" Type="varchar" MaxLength="5000" />
+          <Property Name="ComplaintStatus" Type="int" />
+          <Property Name="ComplaintStatusName" Type="varchar" MaxLength="100" />
         </EntityType>
         <EntityType Name="DealerCityArea">
           <Key>
@@ -14340,6 +14342,8 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <Property Name="ApplicationCaseName" Type="String" MaxLength="5000" FixedLength="false" Unicode="false" />
           <Property Name="SubstrateCaseName" Type="String" MaxLength="5000" FixedLength="false" Unicode="false" />
           <Property Name="QualityProductName" Type="String" MaxLength="5000" FixedLength="false" Unicode="false" />
+          <Property Name="ComplaintStatus" Type="Int32" />
+          <Property Name="ComplaintStatusName" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
         </EntityType>
         <ComplexType Name="Sp_GetComplaintVerifiedorNorbyQualtiy_Result">
           <Property Type="String" Name="QualityLaunchBy" Nullable="true" MaxLength="200" />
@@ -20524,6 +20528,8 @@ warning 6002: The table/view 'Brightoo.dbo.vActiveJobs' does not have a primary 
           <EntitySetMapping Name="ComplaintSuggesionAddeds">
             <EntityTypeMapping TypeName="FOS_WallCoatModel.ComplaintSuggesionAdded">
               <MappingFragment StoreEntitySet="ComplaintSuggesionAdded">
+                <ScalarProperty Name="ComplaintStatusName" ColumnName="ComplaintStatusName" />
+                <ScalarProperty Name="ComplaintStatus" ColumnName="ComplaintStatus" />
                 <ScalarProperty Name="QualityProductName" ColumnName="QualityProductName" />
                 <ScalarProperty Name="SubstrateCaseName" ColumnName="SubstrateCaseName" />
                 <ScalarProperty Name="ApplicationCaseName" ColumnName="ApplicationCaseName" />

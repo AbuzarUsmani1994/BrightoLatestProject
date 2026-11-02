@@ -222,6 +222,16 @@
                                                 new { @class = "form-control" }
                                             )*@
                                     </div>
+                                    <div class="span3">
+                                        <label class="control-label">Complaint Status</label>
+                                        <select id="ComplaintStatus" name="ComplaintStatus">
+                                            <option value="">-- Select Status --</option>
+                                            <option value="1">In Progress</option>
+                                            <option value="2">On Hold</option>
+                                            <option value="3">Resolved</option>
+                                            <option value="4">Duplicate</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="row" style="margin-top:5px">
                                     <div class="span3">
@@ -249,23 +259,13 @@
                                         <th>Product Quality</th>
                                         <th>Remarks</th>
                                         <th>Status</th>
+                                        <th>Complaint Status</th>
                                         <th>Image</th>
                                         <th>Video</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr>
-                                        <td id="qdApplication">-</td>
-                                        <td id="qdSubstrate">-</td>
-                                        <td id="qdQuality">-</td>
-                                        <td id="qdRemarks">-</td>
-                                        <td id="qdStatus">-</td>
-                                        <td id="qdImage">-</td>
-                                        <td id="qdVideo">-</td>
-                                        <td><button type="button" class="btn btn-danger btn-small" id="QualityDeleteBtn" style="display:none">Delete</button></td>
-                                    </tr>
-                                </tbody>
+                                <tbody id="QualityDataTableBody"></tbody>
                             </table>
                         </div>
                     </div>
@@ -409,6 +409,7 @@
         data.append("SubsID", $("#SubsID").val());
         data.append("QuaID", $("#QuaID").val());
         data.append("ComplaintYesNo", $("#ComplaintYesNo").val());
+        data.append("ComplaintStatus", $("#ComplaintStatus").val());
         data.append("Remarks", $("#Remarks").val());
         data.append("OtherApplication", $("#OtherApplication").val());
         data.append("OtherSubstrate", $("#OtherSubstrate").val());
@@ -445,21 +446,27 @@
         }
     });
 
-    $("#QualityDeleteBtn").click(function () {
+    $(document).on("click", ".quality-delete-btn", function () {
+        var rowID = $(this).data("id");
         var ComplaintID = $("#CompaintID").text();
-        if (!ComplaintID) {
+        var ComplaintNo = $("#complaintno").text();
+        var SoName = $("#submittedby").text();
+        var created = $("#submitteddate").text();
+        if (!rowID) {
             return;
         }
-        if (confirm("Are you sure you want to delete this quality review data?")) {
+        if (confirm("Are you sure you want to delete this quality review entry?")) {
             $.ajax({
                 type: "Post",
                 url: "@Url.Action("DeleteComplaintSuggestion", "Complaint")",
-                data: { ComplaintID: ComplaintID },
+                data: { ID: rowID },
                 success: function (res) {
                     if (res == "1") {
                         alertify.success("Deleted Successfully");
-                        $("#ProductDetail").modal('hide');
-                        ClearFields();
+                        // Re-fetch and re-render this complaint's history in place
+                        // (modal stays open - the user is managing a list, not a single record).
+                        loadQualityHistory(ComplaintID, ComplaintNo, SoName, created);
+                        // The outer grid's "latest status" column may change too.
                         var otable = $("#datatab").DataTable();
                         otable.ajax.reload();
                     }
@@ -510,76 +517,7 @@
                         var SoName = $(this).attr("data-soname");
                         var created = $(this).attr("data-created");
 
-                        $.ajax({
-                            type: "Get",
-                            url: "@Url.Action("GetSuggestData", "Complaint")",
-                            data: { ComplaintID: ComplaintID },
-                            success: function (res) {
-                                debugger
-                                if (res == null || res == "") {
-
-                                    ClearFields();
-                                    $("#CompaintID").text(ComplaintID);
-                                    $("#complaintno").text(ComplaintNo);
-                                    $("#submitteddate").text(created);
-                                    $("#submittedby").text(SoName);
-                                    $("#qdApplication").text('-');
-                                    $("#qdSubstrate").text('-');
-                                    $("#qdQuality").text('-');
-                                    $("#qdRemarks").text('-');
-                                    $("#qdStatus").text('-');
-                                    $("#qdImage").html('-');
-                                    $("#qdVideo").html('-');
-                                    $("#QualityDeleteBtn").hide();
-                                    //$("#IsVerified").val(res.IsVerified);
-                                    //val = "True";
-                                    //$('input[name="IsVerified"][value="' + val + '"]')
-                                    //    .prop('checked', true);
-                                }
-                                else {
-                                    $("#CompaintID").text(res.ComplaintID);
-                                    $("#complaintno").text(res.ComplaintNumber);
-                                    $("#submitteddate").text(res.StartingDate1);
-                                    $("#submittedby").text(res.SaleOfficerName);
-                                    var selected = res.AppID.split(",");
-                                    $("#AppID").val(selected).trigger("change");
-                                    for (var i = 0; i < selected.length; i++) {
-                                        if (selected[i] == "20") {
-                                            $("#OtherApplication1").show();
-                                        }
-                                    }
-                                    var selectedsub = res.SubsID.split(",");
-                                    $("#SubsID").val(selectedsub).trigger("change");
-                                    for (var i = 0; i < selectedsub.length; i++) {
-                                        if (selectedsub[i] == "17") {
-                                            $("#OtherSubstrate1").show();
-                                        }
-                                    }
-                                    var selectedQua = res.QuaID.split(",");
-                                    $("#QuaID").val(selectedQua).trigger("change");
-                                    for (var i = 0; i < selectedQua.length; i++) {
-                                        if (selectedQua[i] == "28") {
-                                            $("#OtherQuality1").show();
-                                        }
-                                    }
-                                    $("#Remarks").val(res.Remarks);
-                                    $("#ComplaintYesNo").val(res.ComplaintYesNo);
-                                    //var val = res.IsVerified.toString();
-                                    //val = val.charAt(0).toUpperCase() + val.slice(1);
-                                    //$('input[name="IsVerified"][value="' + val + '"]')
-                                    //    .prop('checked', true);
-
-                                    $("#qdApplication").text(res.ApplicationName || "-");
-                                    $("#qdSubstrate").text(res.SubstrateName || "-");
-                                    $("#qdQuality").text(res.QualityName || "-");
-                                    $("#qdRemarks").text(res.Remarks || "-");
-                                    $("#qdStatus").text(res.IsVerifiedString || "-");
-                                    $("#qdImage").html(res.ImageUrl ? '<a href="' + res.ImageUrl + '" target="_blank">View</a>' : '-');
-                                    $("#qdVideo").html(res.VideoUrl ? '<a href="' + res.VideoUrl + '" target="_blank">View</a>' : '-');
-                                    $("#QualityDeleteBtn").show();
-                                }
-                            }
-                        });
+                        loadQualityHistory(ComplaintID, ComplaintNo, SoName, created);
 
                         $("html, body").animate({
                             scrollTop: $(window).scrollTop() - $(window).height()
@@ -661,17 +599,122 @@
         $("#OtherSubstrate1").hide();
         $("#OtherQuality1").hide();
         $("#ComplaintYesNo").val('1');
-        $("#qdApplication").text('-');
-        $("#qdSubstrate").text('-');
-        $("#qdQuality").text('-');
-        $("#qdRemarks").text('-');
-        $("#qdStatus").text('-');
-        $("#qdImage").html('-');
-        $("#qdVideo").html('-');
-        $("#QualityDeleteBtn").hide();
+        $("#ComplaintStatus").val('');
+        $("#QualityDataTableBody").empty();
         //val = "True";
         //$('input[name="IsVerified"][value="' + val + '"]')
         //    .prop('checked', true);
+    }
+
+    // Minimal HTML-escaping helper so free-text fields (Remarks, names) can never
+    // break out of the markup we build via string concatenation below.
+    function escapeHtml(value) {
+        if (value == null) {
+            return '';
+        }
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // Fetches the full quality-review history for a complaint (GetSuggestData now
+    // returns a JSON array, most-recent-first) and renders:
+    //   - the top editable form fields, pre-filled from the most recent entry (res[0])
+    //   - every entry as its own row in #QualityDataTableBody
+    // Used both when opening the modal (.edit click) and after a per-row delete,
+    // so the modal's grid can refresh in place without closing it.
+    function loadQualityHistory(ComplaintID, ComplaintNo, SoName, created) {
+        $.ajax({
+            type: "Get",
+            url: "@Url.Action("GetSuggestData", "Complaint")",
+            data: { ComplaintID: ComplaintID },
+            success: function (res) {
+                $("#CompaintID").text(ComplaintID);
+                $("#complaintno").text(ComplaintNo);
+                $("#submitteddate").text(created);
+                $("#submittedby").text(SoName);
+
+                if (!res || res.length === 0) {
+                    $("#AppID").val(null).trigger("change");
+                    $("#SubsID").val(null).trigger("change");
+                    $("#QuaID").val(null).trigger("change");
+                    $("#Remarks").val('');
+                    $("#OtherApplication").val('');
+                    $("#OtherSubstrate").val('');
+                    $("#OtherQuality").val('');
+                    $("#OtherApplication1").hide();
+                    $("#OtherSubstrate1").hide();
+                    $("#OtherQuality1").hide();
+                    $("#ComplaintYesNo").val('1');
+                    $("#ComplaintStatus").val('');
+
+                    $("#QualityDataTableBody").empty();
+                    $("#QualityDataTableBody").append(
+                        '<tr><td colspan="9" style="text-align:center">No records found</td></tr>'
+                    );
+                    return;
+                }
+
+                var latest = res[0];
+
+                var selected = (latest.AppID || "").split(",");
+                $("#AppID").val(selected).trigger("change");
+                $("#OtherApplication1").hide();
+                for (var i = 0; i < selected.length; i++) {
+                    if (selected[i] == "20") {
+                        $("#OtherApplication1").show();
+                    }
+                }
+                var selectedsub = (latest.SubsID || "").split(",");
+                $("#SubsID").val(selectedsub).trigger("change");
+                $("#OtherSubstrate1").hide();
+                for (var j = 0; j < selectedsub.length; j++) {
+                    if (selectedsub[j] == "17") {
+                        $("#OtherSubstrate1").show();
+                    }
+                }
+                var selectedQua = (latest.QuaID || "").split(",");
+                $("#QuaID").val(selectedQua).trigger("change");
+                $("#OtherQuality1").hide();
+                for (var k = 0; k < selectedQua.length; k++) {
+                    if (selectedQua[k] == "28") {
+                        $("#OtherQuality1").show();
+                    }
+                }
+                $("#Remarks").val(latest.Remarks);
+                $("#ComplaintYesNo").val(latest.ComplaintYesNo);
+                $("#ComplaintStatus").val(latest.ComplaintStatus || "");
+
+                var rowsHtml = '';
+                for (var r = 0; r < res.length; r++) {
+                    var item = res[r];
+                    var imageCell = item.ImageUrl
+                        ? '<a href="' + escapeHtml(item.ImageUrl) + '" target="_blank">View</a>'
+                        : '-';
+                    var videoCell = item.VideoUrl
+                        ? '<a href="' + escapeHtml(item.VideoUrl) + '" target="_blank">View</a>'
+                        : '-';
+
+                    rowsHtml += '<tr>' +
+                        '<td>' + escapeHtml(item.ApplicationName || '-') + '</td>' +
+                        '<td>' + escapeHtml(item.SubstrateName || '-') + '</td>' +
+                        '<td>' + escapeHtml(item.QualityName || '-') + '</td>' +
+                        '<td>' + escapeHtml(item.Remarks || '-') + '</td>' +
+                        '<td>' + escapeHtml(item.IsVerifiedString || '-') + '</td>' +
+                        '<td>' + escapeHtml(item.ComplaintStatusString || '-') + '</td>' +
+                        '<td>' + imageCell + '</td>' +
+                        '<td>' + videoCell + '</td>' +
+                        '<td><button type="button" class="btn btn-danger btn-small quality-delete-btn" data-id="' + escapeHtml(item.ID) + '">Delete</button></td>' +
+                        '</tr>';
+                }
+
+                $("#QualityDataTableBody").empty();
+                $("#QualityDataTableBody").append(rowsHtml);
+            }
+        });
     }
 
 </script>
