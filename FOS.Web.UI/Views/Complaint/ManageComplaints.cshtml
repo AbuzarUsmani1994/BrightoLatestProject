@@ -47,33 +47,43 @@
             <div class="container-fluid" style="margin-top:2px;">
                 <div class="row">
                     <form class="form-inline" style="white-space:normal;">
-                        <label class="control-label" style="display:inline;margin-left:40px">Starting Date *</label>
-                        <input class="text-box single-line" id="StartingDate1" name="StartingDate1" autocomplete="off" style="height: 22px; width: 202px; margin-bottom: 0px;">
-                        <label class="control-label" style="display:inline">Ending Date *</label>
-                        <input class="text-box single-line" id="StartingDate2" name="StartingDate2" autocomplete="off" style="height: 22px; width: 202px; margin-bottom: 0px;">
+                        <span style="display:inline-block; white-space:nowrap; margin:0 10px 10px 0;">
+                            <label class="control-label" style="display:inline;margin-left:40px">Starting Date *</label>
+                            <input class="text-box single-line" id="StartingDate1" name="StartingDate1" autocomplete="off" style="height: 22px; width: 202px; margin-bottom: 0px;">
+                        </span>
+                        <span style="display:inline-block; white-space:nowrap; margin:0 10px 10px 0;">
+                            <label class="control-label" style="display:inline">Ending Date *</label>
+                            <input class="text-box single-line" id="StartingDate2" name="StartingDate2" autocomplete="off" style="height: 22px; width: 202px; margin-bottom: 0px;">
+                        </span>
 
-                        <label class="control-label">Regional Head *</label>
+                        <span style="display:inline-block; white-space:nowrap; margin:0 10px 10px 0;">
+                            <label class="control-label">Regional Head *</label>
+                            @Html.DropDownListFor(model => model.RegionalHeadID, new SelectList(Model.RegionalHead, "ID", "Name"), new { @class = "" })
+                            @Html.ValidationMessageFor(model => model.RegionalHeadID)
+                        </span>
 
-                        @Html.DropDownListFor(model => model.RegionalHeadID, new SelectList(Model.RegionalHead, "ID", "Name"), new { @class = "" })
-                        @Html.ValidationMessageFor(model => model.RegionalHeadID)
+                        <span style="display:inline-block; white-space:nowrap; margin:0 10px 10px 0;">
+                            <label class="control-label">Nature *</label>
+                            @Html.DropDownListFor(model => model.ProductNatureID, new SelectList(Model.ProductNatures, "ID", "Name"), new { @class = "" })
+                            @Html.ValidationMessageFor(model => model.ProductNatureID)
+                        </span>
 
-                        <label class="control-label">Nature *</label>
+                        <span style="display:inline-block; white-space:nowrap; margin:0 10px 10px 0;">
+                            <label class="control-label">Complaint Status *</label>
+                            <select id="ComplaintStatusFilter" name="ComplaintStatusFilter">
+                                <option value="0">All</option>
+                                <option value="1">In Progress</option>
+                                <option value="2">On Hold</option>
+                                <option value="3">Resolved</option>
+                                <option value="4">Duplicate</option>
+                            </select>
+                        </span>
 
-                        @Html.DropDownListFor(model => model.ProductNatureID, new SelectList(Model.ProductNatures, "ID", "Name"), new { @class = "" })
-                        @Html.ValidationMessageFor(model => model.ProductNatureID)
-
-                        <label class="control-label">Complaint Status *</label>
-                        <select id="ComplaintStatusFilter" name="ComplaintStatusFilter">
-                            <option value="0">All</option>
-                            <option value="1">In Progress</option>
-                            <option value="2">On Hold</option>
-                            <option value="3">Resolved</option>
-                            <option value="4">Duplicate</option>
-                        </select>
-
-                        <button type="button" id="ApplyFilter" class="btn btn-primary">
-                            <i class="icon-ok icon-white" style="padding-right: 2px"></i><span style="width:50px">Apply Filter</span>
-                        </button>
+                        <span style="display:inline-block; white-space:nowrap; margin:0 10px 10px 0;">
+                            <button type="button" id="ApplyFilter" class="btn btn-primary">
+                                <i class="icon-ok icon-white" style="padding-right: 2px"></i><span style="width:50px">Apply Filter</span>
+                            </button>
+                        </span>
 
                     </form>
                 </div>
