@@ -673,6 +673,7 @@
     <Compile Include="Controllers\API\GetRetailersRelatedToSOController .cs" />
     <Compile Include="Controllers\API\SubCategoryController.cs" />
     <Compile Include="Controllers\API\CommonController.cs" />
+    <Compile Include="Controllers\AskAIController.cs" />
     <Compile Include="Controllers\API\ComplaintController.cs" />
     <Compile Include="Controllers\API\QrController.cs" />
     <Compile Include="Controllers\API\LoginController.cs" />
@@ -2284,6 +2285,7 @@
     <Content Include="Views\Dealer\DistributorDSR.cshtml" />
     <Content Include="Views\Home\DealersDashboard.cshtml" />
     <Content Include="Views\Home\CompetitorActivityDashboard.cshtml" />
+    <Content Include="Views\AskAI\Index.cshtml" />
     <Content Include="Views\Home\Test.cshtml" />
     <Content Include="Views\Reports\LowItemsDetail.cshtml" />
     <Content Include="Views\Setup\DelieveryBoys.cshtml" />

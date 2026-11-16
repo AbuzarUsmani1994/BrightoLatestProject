@@ -1,0 +1,98 @@
+@{
+    ViewBag.Title = "Ask AI";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row-fluid">
+    <div class="span12">
+        <h3 class="page-title"></h3>
+        <ul class="breadcrumb">
+            <li><a href="#">Home</a><span class="divider">/</span></li>
+            <li><a href="#">Ask AI</a></li>
+        </ul>
+    </div>
+</div>
+
+<div class="row-fluid">
+    <div class="span12">
+        <div class="widget green">
+            <div class="widget-title">
+                <h4 style="text-align:center">Ask AI</h4>
+            </div>
+
+            <div class="container-fluid" style="margin-top:2px;">
+                <div class="row">
+                    <p style="color:#555; margin:10px 0;">
+                        Ask about today's Visits, Trade Visits, Claims or Complaints for your team.
+                    </p>
+
+                    <div style="display:flex; gap:10px; margin-bottom:15px;">
+                        <input type="text" id="AskAIQuestion" class="span10" placeholder="e.g. How are today's claims?" style="height:34px;" />
+                        <button type="button" id="AskAIButton" class="btn btn-primary">Ask</button>
+                    </div>
+
+                    <div id="AskAILoading" style="display:none; color:#888;">Thinking...</div>
+
+                    <div id="AskAIAnswer" style="display:none; background:#fdf6ec; border:1px solid #eee; border-radius:4px; padding:12px; margin-bottom:15px;"></div>
+
+                    <table id="AskAINumbers" class="table table-bordered" style="display:none;">
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        function renderNumbers(numbers) {
+            var $tbody = $('#AskAINumbers tbody').empty();
+            if (!numbers) { return; }
+
+            $.each(numbers, function (domain, fields) {
+                $tbody.append('<tr><td colspan="2" style="font-weight:bold; background:#f5f5f5;">' + domain + '</td></tr>');
+                $.each(fields, function (key, value) {
+                    if (value !== null && typeof value === 'object') {
+                        $.each(value, function (subKey, subValue) {
+                            $tbody.append('<tr><td style="padding-left:25px;">' + key + ' - ' + subKey + '</td><td>' + subValue + '</td></tr>');
+                        });
+                    } else {
+                        $tbody.append('<tr><td style="padding-left:25px;">' + key + '</td><td>' + value + '</td></tr>');
+                    }
+                });
+            });
+
+            $('#AskAINumbers').toggle($tbody.children().length > 0);
+        }
+
+        function ask() {
+            var question = $('#AskAIQuestion').val();
+            if (!question) { return; }
+
+            $('#AskAIAnswer').hide();
+            $('#AskAINumbers').hide();
+            $('#AskAILoading').show();
+
+            $.ajax({
+                url: '@Url.Action("Ask", "AskAI")',
+                type: 'POST',
+                data: { question: question },
+                success: function (result) {
+                    $('#AskAILoading').hide();
+                    $('#AskAIAnswer').text(result.narrative).show();
+                    renderNumbers(result.numbers);
+                },
+                error: function () {
+                    $('#AskAILoading').hide();
+                    $('#AskAIAnswer').text('Something went wrong - please try again.').show();
+                }
+            });
+        }
+
+        $('#AskAIButton').on('click', ask);
+        $('#AskAIQuestion').on('keypress', function (e) {
+            if (e.which === 13) { ask(); }
+        });
+    });
+</script>
