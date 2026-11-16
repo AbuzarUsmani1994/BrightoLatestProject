@@ -176,6 +176,11 @@ namespace FOS.Web.UI.Controllers
         {
             var obj = new JObject { ["total"] = s.Total };
 
+            if (s.Timestamp.HasValue)
+            {
+                obj["timestamp"] = s.Timestamp.Value.ToString("dd MMM yyyy HH:mm");
+            }
+
             if (s.ByGroup.Count > 0)
             {
                 var byGroupObj = new JObject();
@@ -231,8 +236,10 @@ namespace FOS.Web.UI.Controllers
                 "not only when the question says \"who\". If the question asks about a specific subset of SOs (e.g. who is " +
                 "absent, who has pending items), only list the SOs matching that subset using the \"byGroup\" value inside " +
                 "each SO's entry - do not list SOs outside that subset. Keep each SO bullet short - just the name and the " +
-                "relevant numbers, no extra commentary. " +
-                "Never state a number or a name that is not present in this JSON - if something isn't covered by the data, say so instead of guessing.\n\n" +
+                "relevant numbers, no extra commentary. If an SO's entry has a \"timestamp\" value, include that exact " +
+                "date/time in their bullet (e.g. their check-in time) - do this by default whenever it's present, not only " +
+                "when the question asks for a time. " +
+                "Never state a number, a name or a time that is not present in this JSON - if something isn't covered by the data, say so instead of guessing.\n\n" +
                 "JSON data:\n" + summary.ToString(Formatting.None) +
                 "\n\nQuestion: " + question;
 
@@ -372,26 +379,32 @@ namespace FOS.Web.UI.Controllers
         {
             public bool Present { get; set; }
             public string SOName { get; set; }
+            public DateTime? CheckInTime { get; set; }
         }
 
         // "Present" matches SOPresentTodayController's own definition: a "Market start" row logged today.
         private DomainSummary GetAttendanceSummary(List<int> soIds, Dictionary<int, string> soNames, DateTime start, DateTime end)
         {
-            var presentSoIds = db.SOAttendances
+            var checkIns = db.SOAttendances
                 .Where(a => a.SOID != null && soIds.Contains(a.SOID.Value) && a.Type == "Market start"
                     && a.CreatedAt >= start && a.CreatedAt < end)
-                .Select(a => a.SOID.Value)
-                .Distinct()
+                .Select(a => new { SOID = a.SOID.Value, a.CreatedAt })
                 .ToList();
 
-            var presentSet = new HashSet<int>(presentSoIds);
+            // First check-in of the range per SO, in case they logged "Market start" more than once.
+            var firstCheckInBySO = checkIns
+                .GroupBy(c => c.SOID)
+                .ToDictionary(g => g.Key, g => g.Min(c => c.CreatedAt));
+
             var perSo = soIds.Select(id => new AttendanceRow
             {
-                Present = presentSet.Contains(id),
-                SOName = soNames.ContainsKey(id) ? soNames[id] : null
+                Present = firstCheckInBySO.ContainsKey(id),
+                SOName = soNames.ContainsKey(id) ? soNames[id] : null,
+                CheckInTime = firstCheckInBySO.ContainsKey(id) ? firstCheckInBySO[id] : null
             }).ToList();
 
-            return DomainSummaryProcessor.SummarizeBySO(perSo, r => r.SOName, r => r.Present ? "Present" : "Absent");
+            return DomainSummaryProcessor.SummarizeBySO(perSo, r => r.SOName, r => r.Present ? "Present" : "Absent",
+                timestampSelector: r => r.CheckInTime);
         }
 
         // Plain roster, not a DomainSummary - there's nothing to count or sum here, just contact
