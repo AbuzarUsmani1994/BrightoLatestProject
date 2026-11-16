@@ -56,19 +56,19 @@ namespace FOS.Web.UI.Controllers
                 return Json(new { narrative = "AI isn't configured yet - the ClaudeApiKey setting is missing or empty in the live Web.config." });
             }
 
-            DateTime today = DateTime.Today;
-            DateTime tomorrow = today.AddDays(1);
+            DateTime start, end;
+            GetDateRange(question, out start, out end);
 
             var domains = ClassifyDomains(question);
 
             var summary = new JObject();
             if (domains.Contains("Claims"))
             {
-                summary["claims"] = ToJObject(GetClaimsSummary(headID, today, tomorrow));
+                summary["claims"] = ToJObject(GetClaimsSummary(headID, start, end));
             }
             if (domains.Contains("Complaints"))
             {
-                summary["complaints"] = ToJObject(GetComplaintsSummary(headID, today, tomorrow));
+                summary["complaints"] = ToJObject(GetComplaintsSummary(headID, start, end));
             }
             if (domains.Contains("Visits") || domains.Contains("TradeVisits") || domains.Contains("Attendance"))
             {
@@ -78,15 +78,15 @@ namespace FOS.Web.UI.Controllers
 
                 if (domains.Contains("Visits"))
                 {
-                    summary["housingVisits"] = ToJObject(GetHousingVisitsSummary(soIds, soNames, today, tomorrow));
+                    summary["housingVisits"] = ToJObject(GetHousingVisitsSummary(soIds, soNames, start, end));
                 }
                 if (domains.Contains("TradeVisits"))
                 {
-                    summary["tradeVisits"] = ToJObject(GetTradeVisitsSummary(soIds, soNames, today, tomorrow));
+                    summary["tradeVisits"] = ToJObject(GetTradeVisitsSummary(soIds, soNames, start, end));
                 }
                 if (domains.Contains("Attendance"))
                 {
-                    summary["attendance"] = ToJObject(GetAttendanceSummary(soIds, soNames, today, tomorrow));
+                    summary["attendance"] = ToJObject(GetAttendanceSummary(soIds, soNames, start, end));
                 }
             }
 
@@ -99,9 +99,72 @@ namespace FOS.Web.UI.Controllers
                 });
             }
 
-            string narrative = Narrate(question, summary);
+            string narrative = Narrate(question, summary, start, end);
 
             return Json(new { numbers = summary, narrative = narrative });
+        }
+
+        // Haiku only picks a label - the actual date math always happens here in C#, never the model.
+        private void GetDateRange(string question, out DateTime start, out DateTime end)
+        {
+            string prompt = "Extract the date range this question is asking about. Reply with EXACTLY one of: " +
+                "today, yesterday, this_week, last_week, this_month, last_month - or a specific date in YYYY-MM-DD " +
+                "format if one is mentioned. If no date is mentioned, reply exactly: today. " +
+                "Reply with ONLY that value, nothing else.\n\nQuestion: " + question;
+
+            string reply = CallClaude(prompt, 15);
+            ResolveDateRange(reply, out start, out end);
+        }
+
+        // start is inclusive, end is exclusive (same convention as every domain query below).
+        private void ResolveDateRange(string label, out DateTime start, out DateTime end)
+        {
+            DateTime today = DateTime.Today;
+            label = (label ?? "").Trim().ToLowerInvariant();
+
+            int daysSinceMonday = (7 + (today.DayOfWeek - DayOfWeek.Monday)) % 7;
+            DateTime thisWeekStart = today.AddDays(-daysSinceMonday);
+            DateTime thisMonthStart = new DateTime(today.Year, today.Month, 1);
+
+            switch (label)
+            {
+                case "yesterday":
+                    start = today.AddDays(-1);
+                    end = today;
+                    return;
+                case "this_week":
+                    start = thisWeekStart;
+                    end = today.AddDays(1);
+                    return;
+                case "last_week":
+                    start = thisWeekStart.AddDays(-7);
+                    end = thisWeekStart;
+                    return;
+                case "this_month":
+                    start = thisMonthStart;
+                    end = today.AddDays(1);
+                    return;
+                case "last_month":
+                    start = thisMonthStart.AddMonths(-1);
+                    end = thisMonthStart;
+                    return;
+                case "today":
+                    start = today;
+                    end = today.AddDays(1);
+                    return;
+                default:
+                    DateTime specific;
+                    if (DateTime.TryParseExact(label, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.None, out specific))
+                    {
+                        start = specific;
+                        end = specific.AddDays(1);
+                        return;
+                    }
+                    start = today;
+                    end = today.AddDays(1);
+                    return;
+            }
         }
 
         // Turns the generic DomainSummaryProcessor output into the JSON shape handed to Haiku and the UI.
@@ -148,9 +211,13 @@ namespace FOS.Web.UI.Controllers
             return labels.Where(l => reply.IndexOf(l, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
         }
 
-        private string Narrate(string question, JObject summary)
+        private string Narrate(string question, JObject summary, DateTime start, DateTime end)
         {
-            string prompt = "You are summarising sales data for a Regional Head, for today only. " +
+            string rangeDescription = start.AddDays(1) == end
+                ? start.ToString("dd MMM yyyy")
+                : start.ToString("dd MMM yyyy") + " to " + end.AddDays(-1).ToString("dd MMM yyyy");
+
+            string prompt = "You are summarising sales data for a Regional Head, covering " + rangeDescription + ". " +
                 "Using ONLY the numbers in the JSON below, answer as a short, precise bulleted list - " +
                 "one fact per line, each line starting with \"- \", no more than 5 bullets, no filler sentences. " +
                 "Never state a number or a name that is not present in this JSON - if something isn't covered by the data, say so instead of guessing.\n\n" +
