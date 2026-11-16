@@ -43,6 +43,9 @@
         background: #fff; border: 1px solid #ecefe6; padding: 12px 16px; border-radius: 4px 16px 16px 16px;
         font-size: 14px; line-height: 1.55; color: #2b2b2b; box-shadow: 0 2px 10px rgba(30,40,20,0.06); max-width: 78%;
     }
+    .askai-bubble-ai ul { margin: 0; padding-left: 18px; }
+    .askai-bubble-ai li { margin-bottom: 5px; }
+    .askai-bubble-ai li:last-child { margin-bottom: 0; }
     .askai-facts { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 7px; }
     .askai-fact {
         background: linear-gradient(135deg, #f1f8e6, #e6f3d6); border: 1px solid #d3e8b8; color: #3f6b1a;
@@ -104,10 +107,26 @@
             scrollToBottom();
         }
 
+        function renderBulletedText($bubble, text) {
+            var lines = (text || '').split(/\r?\n/).map(function (l) { return l.trim(); }).filter(function (l) { return l.length > 0; });
+            var bulletLines = lines.filter(function (l) { return /^[-*]\s+/.test(l); });
+
+            if (bulletLines.length >= 2 && bulletLines.length === lines.length) {
+                var $ul = $('<ul></ul>');
+                $.each(bulletLines, function (i, line) {
+                    $('<li></li>').text(line.replace(/^[-*]\s+/, '')).appendTo($ul);
+                });
+                $bubble.empty().append($ul);
+            } else {
+                $bubble.text(text);
+            }
+        }
+
         function addAiMessage(text, numbers) {
             var $row = $('<div class="askai-row ai"><span class="askai-avatar">&#129302;</span><div></div></div>');
             var $content = $row.find('> div');
-            $('<div class="askai-bubble-ai"></div>').text(text).appendTo($content);
+            var $bubble = $('<div class="askai-bubble-ai"></div>').appendTo($content);
+            renderBulletedText($bubble, text);
 
             var $facts = $('<div class="askai-facts"></div>');
             $.each(numbers || {}, function (domain, data) {

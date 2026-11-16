@@ -151,7 +151,8 @@ namespace FOS.Web.UI.Controllers
         private string Narrate(string question, JObject summary)
         {
             string prompt = "You are summarising sales data for a Regional Head, for today only. " +
-                "Using ONLY the numbers in the JSON below, answer the question in 2-4 short sentences. " +
+                "Using ONLY the numbers in the JSON below, answer as a short, precise bulleted list - " +
+                "one fact per line, each line starting with \"- \", no more than 5 bullets, no filler sentences. " +
                 "Never state a number or a name that is not present in this JSON - if something isn't covered by the data, say so instead of guessing.\n\n" +
                 "JSON data:\n" + summary.ToString(Formatting.None) +
                 "\n\nQuestion: " + question;
