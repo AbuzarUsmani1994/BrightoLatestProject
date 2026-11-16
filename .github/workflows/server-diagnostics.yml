@@ -1,0 +1,40 @@
+name: Server Diagnostics
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  diagnostics:
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 5
+
+    steps:
+      - name: OS and memory
+        shell: powershell
+        run: >
+          Get-ComputerInfo |
+          Select-Object OsName, OsVersion, OsArchitecture, WindowsProductName,
+          WindowsVersion, CsTotalPhysicalMemory, OsFreePhysicalMemory |
+          Format-List
+
+      - name: CPU
+        shell: powershell
+        run: >
+          Get-CimInstance Win32_Processor |
+          Select-Object Name, NumberOfCores, NumberOfLogicalProcessors, MaxClockSpeed |
+          Format-List
+
+      - name: GPU
+        shell: powershell
+        run: >
+          Get-CimInstance Win32_VideoController |
+          Select-Object Name, AdapterRAM, DriverVersion |
+          Format-List
+
+      - name: Disk space
+        shell: powershell
+        run: >
+          Get-PSDrive -PSProvider FileSystem |
+          Select-Object Name, @{N='FreeGB';E={[math]::Round($_.Free/1GB,1)}},
+          @{N='UsedGB';E={[math]::Round($_.Used/1GB,1)}} |
+          Format-Table -AutoSize
