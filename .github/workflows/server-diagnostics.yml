@@ -47,6 +47,11 @@ jobs:
           if ($latest) { Write-Output "Reading: $($latest.FullName)"; Get-Content $latest.FullName -Tail 80 }
           else { Write-Output "No log files found under E:\BrightoPublish\BrightoPublish\Logs" }
 
+      - name: sp_helptext GetSaleOfficerCountsFinal
+        shell: powershell
+        run: >
+          sqlcmd -S ABUZAR -d Brighto -E -Q "SET NOCOUNT ON; EXEC sp_helptext 'GetSaleOfficerCountsFinal';"
+
       - name: Disk space
         shell: powershell
         run: >
