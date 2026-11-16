@@ -31,6 +31,14 @@ jobs:
           Select-Object Name, AdapterRAM, DriverVersion |
           Format-List
 
+      - name: Network / IP
+        shell: powershell
+        run: >
+          Get-NetIPAddress -AddressFamily IPv4 |
+          Where-Object { $_.InterfaceAlias -notlike "*Loopback*" } |
+          Select-Object InterfaceAlias, IPAddress, PrefixOrigin |
+          Format-Table -AutoSize
+
       - name: Disk space
         shell: powershell
         run: >
