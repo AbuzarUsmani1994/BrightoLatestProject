@@ -240,6 +240,11 @@ namespace FOS.Web.UI.Controllers
                 ["model"] = "claude-haiku-5-5",
                 ["max_tokens"] = maxTokens,
                 ["output_config"] = new JObject { ["effort"] = "low" },
+                // Thinking is on by default on Haiku 5.5 and counts against max_tokens even
+                // though it's hidden - with a small budget like this, it can consume the whole
+                // thing and leave no room for the actual visible answer. Not needed for a plain
+                // classify/narrate task anyway.
+                ["thinking"] = new JObject { ["type"] = "disabled" },
                 ["messages"] = new JArray
                 {
                     new JObject { ["role"] = "user", ["content"] = userMessage }
