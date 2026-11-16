@@ -220,10 +220,12 @@ namespace FOS.Web.UI.Controllers
                 "Using ONLY the numbers in the JSON below, answer as a short, precise bulleted list - " +
                 "one fact per line, each line starting with \"- \", no filler sentences. " +
                 "Start with the overall total/breakdown and overall sums (value, litres, etc. if present). Then, if the " +
-                "JSON has a \"bySO\" object for the relevant domain, ALWAYS add one bullet per Sale Officer showing their " +
-                "name, their total, AND their own sums (value/litres/etc.) if that SO's entry has any - this is required " +
-                "whenever bySO is present, not only when the question asks \"who\". Keep each SO bullet short - just the " +
-                "name and the relevant numbers, no extra commentary. " +
+                "JSON has a \"bySO\" object for the relevant domain, add one bullet per relevant Sale Officer showing their " +
+                "name, their total, AND their own sums (value/litres/etc.) if that SO's entry has any - do this by default, " +
+                "not only when the question says \"who\". If the question asks about a specific subset of SOs (e.g. who is " +
+                "absent, who has pending items), only list the SOs matching that subset using the \"byGroup\" value inside " +
+                "each SO's entry - do not list SOs outside that subset. Keep each SO bullet short - just the name and the " +
+                "relevant numbers, no extra commentary. " +
                 "Never state a number or a name that is not present in this JSON - if something isn't covered by the data, say so instead of guessing.\n\n" +
                 "JSON data:\n" + summary.ToString(Formatting.None) +
                 "\n\nQuestion: " + question;
