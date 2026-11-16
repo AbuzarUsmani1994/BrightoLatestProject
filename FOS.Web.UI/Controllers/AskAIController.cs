@@ -65,7 +65,8 @@ namespace FOS.Web.UI.Controllers
             {
                 summary["complaints"] = ToJObject(GetComplaintsSummary(headID, start, end));
             }
-            if (domains.Contains("Visits") || domains.Contains("TradeVisits") || domains.Contains("Attendance") || domains.Contains("Claims"))
+            if (domains.Contains("Visits") || domains.Contains("TradeVisits") || domains.Contains("Attendance") ||
+                domains.Contains("Claims") || domains.Contains("Team"))
             {
                 var team = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(headID, true);
                 var soIds = team.Select(s => s.ID).ToList();
@@ -87,6 +88,10 @@ namespace FOS.Web.UI.Controllers
                 {
                     summary["attendance"] = ToJObject(GetAttendanceSummary(soIds, soNames, start, end));
                 }
+                if (domains.Contains("Team"))
+                {
+                    summary["team"] = GetTeamInfo(team);
+                }
             }
 
             if (!summary.Properties().Any())
@@ -94,7 +99,7 @@ namespace FOS.Web.UI.Controllers
                 return Json(new
                 {
                     numbers = summary,
-                    narrative = "I couldn't match that to Visits, Trade Visits, Claims, Complaints or Attendance - try asking about one of those."
+                    narrative = "I couldn't match that to Visits, Trade Visits, Claims, Complaints, Attendance or Team - try asking about one of those."
                 });
             }
 
@@ -197,16 +202,17 @@ namespace FOS.Web.UI.Controllers
 
         private List<string> ClassifyDomains(string question)
         {
-            string labelList = "Visits, TradeVisits, Claims, Complaints, Attendance";
+            string labelList = "Visits, TradeVisits, Claims, Complaints, Attendance, Team";
             string prompt = "Classify the question below into one or more of these exact labels: " + labelList + ". " +
                 "Visits = housing/market visits and site calls. TradeVisits = trade/retail visits that may result in an order. " +
                 "Claims = sales claims (claim value/sale value, litres, approval status). Complaints = product complaints / quality review. " +
                 "Attendance = whether sales officers have checked in / started their market day. " +
+                "Team = contact info/roster for sales officers (name, username, phone number). " +
                 "Reply with ONLY a comma-separated list of matching labels from that exact list, nothing else.\n\n" +
                 "Question: " + question;
 
             string reply = CallClaude(prompt, 20);
-            var labels = new[] { "Visits", "TradeVisits", "Claims", "Complaints", "Attendance" };
+            var labels = new[] { "Visits", "TradeVisits", "Claims", "Complaints", "Attendance", "Team" };
             return labels.Where(l => reply.IndexOf(l, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
         }
 
@@ -386,6 +392,27 @@ namespace FOS.Web.UI.Controllers
             }).ToList();
 
             return DomainSummaryProcessor.SummarizeBySO(perSo, r => r.SOName, r => r.Present ? "Present" : "Absent");
+        }
+
+        // Plain roster, not a DomainSummary - there's nothing to count or sum here, just contact
+        // info. Queries SaleOfficer directly rather than the existing SaleOfficerDetailRpt proc,
+        // which also selects the plaintext Password column - deliberately never selected here.
+        // No Email field exists anywhere on SaleOfficer in this system.
+        private JArray GetTeamInfo(List<SaleOfficer> team)
+        {
+            var array = new JArray();
+            foreach (var so in team)
+            {
+                array.Add(new JObject
+                {
+                    ["name"] = so.Name,
+                    ["userName"] = so.UserName,
+                    ["phone1"] = so.Phone1,
+                    ["phone2"] = so.Phone2,
+                    ["active"] = so.IsActive
+                });
+            }
+            return array;
         }
     }
 }
