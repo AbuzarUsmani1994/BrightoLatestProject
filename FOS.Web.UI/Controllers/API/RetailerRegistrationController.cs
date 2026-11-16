@@ -3,6 +3,8 @@ using FOS.Web.UI.Common;
 using Shared.Diagnostics.Logging;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -121,7 +123,7 @@ namespace FOS.Web.UI.Controllers.API
 
                     db.SaveChanges();
 
-                 
+                    SendWelcomeMessage(retailerObj.ID, retailerObj.Phone1);
 
 
 
@@ -175,6 +177,95 @@ namespace FOS.Web.UI.Controllers.API
 
          
 
+        }
+
+        // Welcome SMS for a newly-registered Retailer (customer). Never lets a gateway
+        // failure affect the registration response - the customer record is already
+        // saved by the time this runs, so any error here is only logged.
+        private const string WelcomeMessageText =
+            "برائیٹو پینٹس کی جانب سے خوش آمدید\n" +
+            "برائیٹو پینٹس پاکستان کا پہلا ملٹی نیشنل پینٹ برانڈ ہے جو 30 سے زائد ممالک میں دستیاب ہے\n" +
+            "مزید معلومات کے لیےرابطہ فرمائیں\n" +
+            "08000-1973\n\n" +
+            "https://brightopaints.com";
+
+        private void SendWelcomeMessage(int customerId, string rawContactNumber)
+        {
+            string status = "Failed";
+            string errorDetail = null;
+            string normalizedPhone = FOS.Web.UI.Common.CBSSmsSender.NormalizePhoneForCBS(rawContactNumber);
+
+            try
+            {
+                if (string.IsNullOrEmpty(normalizedPhone))
+                {
+                    errorDetail = "No usable contact number on the Retailer record";
+                }
+                else
+                {
+                    // UniCode="1": the welcome message is Urdu script, which the CBS docs
+                    // say needs Unicode SMS encoding - sending it as UniCode="0" (GSM_7,
+                    // English-only) is exactly the kind of mismatch a carrier can silently
+                    // drop instead of delivering.
+                    var result = FOS.Web.UI.Common.CBSSmsSender.SendQuickSMS(normalizedPhone, WelcomeMessageText, "1");
+                    if (result.Success)
+                    {
+                        status = "Sent";
+                    }
+                    else
+                    {
+                        errorDetail = "CBS StatusCode: " + result.StatusCode + " " + result.Description;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                errorDetail = Log.GetDetailedError(ex);
+                Log.Instance.Error(ex, "Retailer welcome SMS failed");
+            }
+
+            // Log the outcome independently of the history-table insert below, so the
+            // real gateway result (sent vs. rejected, and why) is never lost even if
+            // that insert itself fails for some other reason.
+            Log.Instance.Info("Retailer welcome SMS outcome: CustomerID=" + customerId
+                + ", Phone=" + normalizedPhone + ", Status=" + status
+                + (errorDetail != null ? ", Detail=" + errorDetail : ""));
+
+            LogWelcomeMessage(customerId, normalizedPhone, status, errorDetail);
+        }
+
+        private void LogWelcomeMessage(int customerId, string phoneNo, string status, string errorDetail)
+        {
+            try
+            {
+                // Use a fresh context rather than the shared `db` field: by this point
+                // `db` has already had SaveChanges() called on it for the Retailer
+                // insert, which opens its connection - and once a SqlConnection has
+                // been opened, ADO.NET strips the password out of .ConnectionString on
+                // read-back (Persist Security Info=false by default). Reusing that
+                // stripped string here would make every log insert fail with "Login
+                // failed for user '<name>'" even though the real credentials are fine.
+                using (var freshDb = new FOSDataModel())
+                using (var conn = new SqlConnection(freshDb.Database.Connection.ConnectionString))
+                using (var cmd = new SqlCommand(
+                    @"INSERT INTO dbo.Tbl_BusinessAffiliateWelcomeMessageLog
+                        (CustomerID, PhoneNo, Message, Status, ErrorDetail, CreatedOn)
+                      VALUES
+                        (@CustomerID, @PhoneNo, @Message, @Status, @ErrorDetail, GETDATE())", conn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@CustomerID", SqlDbType.Int) { Value = customerId });
+                    cmd.Parameters.Add(new SqlParameter("@PhoneNo", SqlDbType.VarChar, 20) { Value = (object)phoneNo ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@Message", SqlDbType.NVarChar, 1000) { Value = WelcomeMessageText });
+                    cmd.Parameters.Add(new SqlParameter("@Status", SqlDbType.VarChar, 20) { Value = (object)status ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@ErrorDetail", SqlDbType.NVarChar, 500) { Value = (object)errorDetail ?? DBNull.Value });
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Instance.Error(ex, "Retailer welcome SMS log insert failed");
+            }
         }
 
         public string ConvertIntoByte(string Base64, string DealerName, string SendDateTime, string folderName)
