@@ -39,6 +39,14 @@ jobs:
           Select-Object InterfaceAlias, IPAddress, PrefixOrigin |
           Format-Table -AutoSize
 
+      - name: Latest app log tail
+        shell: powershell
+        run: >
+          $latest = Get-ChildItem "E:\BrightoPublish\BrightoPublish\Logs\*.log" -ErrorAction SilentlyContinue |
+          Sort-Object LastWriteTime -Descending | Select-Object -First 1;
+          if ($latest) { Write-Output "Reading: $($latest.FullName)"; Get-Content $latest.FullName -Tail 80 }
+          else { Write-Output "No log files found under E:\BrightoPublish\BrightoPublish\Logs" }
+
       - name: Disk space
         shell: powershell
         run: >
