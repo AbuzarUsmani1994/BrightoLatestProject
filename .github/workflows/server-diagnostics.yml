@@ -39,6 +39,20 @@ jobs:
           Select-Object InterfaceAlias, IPAddress, PrefixOrigin |
           Format-Table -AutoSize
 
+      - name: Test Business Affiliate welcome SMS via CBS gateway (temporary)
+        shell: powershell
+        run: >
+          $body = @{ BusinessName = "CBS Gateway Test"; ContactPerson = "Test Contact"; ContactNumber = "03324619571";
+            AffiliateBusinessTypeID = 1; AffiliateClassificationID = 1; AffiliateExpertiseID = 1; NatureOfClientID = 1;
+            SalesOfficerID = 1; RegionID = 1; CityID = 1; NoOfSites = 1; Latitude = 24.8607; Longitude = 67.0011;
+            Address = "Test Address, Karachi"; Remarks = "CBS gateway re-test" } | ConvertTo-Json;
+          try {
+            $resp = Invoke-RestMethod -Uri "http://116.58.33.11:81/api/BusinessAffiliatesRegistration" -Method Post -Body $body -ContentType "application/json";
+            $resp | ConvertTo-Json -Depth 5
+          } catch {
+            Write-Output "Request failed: $($_.Exception.Message)"
+          }
+
       - name: Latest app log tail
         shell: powershell
         run: >
