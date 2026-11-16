@@ -18,9 +18,21 @@ namespace FOS.Web.UI.Controllers
     {
         private readonly FOSDataModel db = new FOSDataModel();
 
+        // Users.RegionalheadRef - the same identity lookup every other head-scoped
+        // feature in this app uses (Setup/ManageRegionalHead.cs, ManageRegion.cs,
+        // ManageSaleOffice.cs, ManageCity.cs). NOT AdminPanelController's
+        // GetRegionalHeadIDRelatedToUser()/Session["RegionalHeads"] - that reads the
+        // Users<->RegionalHeads junction table, which nothing in this codebase ever
+        // writes to, so it's always 0 for real accounts.
+        private int CurrentRegionalHeadID()
+        {
+            int userID = Convert.ToInt32(Session["UserID"]);
+            return FOS.Setup.ManageRegionalHead.GetRegionalHeadRefForUser(userID);
+        }
+
         public ActionResult Index()
         {
-            if (AdminPanelController.GetRegionalHeadIDRelatedToUser() == 0)
+            if (CurrentRegionalHeadID() == 0)
             {
                 return RedirectToAction("Login", "AdminPanel");
             }
@@ -30,7 +42,7 @@ namespace FOS.Web.UI.Controllers
         [HttpPost]
         public JsonResult Ask(string question)
         {
-            int headID = AdminPanelController.GetRegionalHeadIDRelatedToUser();
+            int headID = CurrentRegionalHeadID();
             if (headID == 0)
             {
                 return Json(new { narrative = "You're not set up as a Regional Head, so this screen isn't available to you." });

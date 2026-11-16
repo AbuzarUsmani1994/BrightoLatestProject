@@ -54,7 +54,7 @@
 
         }
 
-        @if (FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser() > 0)
+        @if (FOS.Setup.ManageRegionalHead.GetRegionalHeadRefForUser(Convert.ToInt32(Session["UserID"])) > 0)
         {
             <li class="sub-menu @(page.StartsWith("/AskAI") ? "active" : "")">
                 <a href="@FOS.Web.UI.Common.Settings.AppPath/AskAI/Index"><i class="icon-comment"></i> Ask AI</a>

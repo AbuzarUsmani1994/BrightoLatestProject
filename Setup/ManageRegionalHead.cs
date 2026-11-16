@@ -17,6 +17,17 @@ namespace FOS.Setup
     {
 
 
+        // The RegionalHeadID tied to this login, via Users.RegionalheadRef - the same
+        // lookup GetTerritorialRegionalHeadList/GetRangesRelatedToZSM etc. already use.
+        // 0 means this user isn't a Regional Head.
+        public static int GetRegionalHeadRefForUser(int userID)
+        {
+            using (FOSDataModel dbContext = new FOSDataModel())
+            {
+                return dbContext.Users.Where(x => x.ID == userID).Select(x => x.RegionalheadRef).FirstOrDefault() ?? 0;
+            }
+        }
+
         // Get All Regional Head ...
         public static List<RegionalHeadData> GetRegionalHeadList()
         {
