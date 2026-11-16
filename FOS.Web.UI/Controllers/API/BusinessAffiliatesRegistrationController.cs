@@ -3,6 +3,8 @@ using FOS.Web.UI.Common;
 using Shared.Diagnostics.Logging;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -64,14 +66,13 @@ namespace FOS.Web.UI.Controllers.API
                    
 
                     db.Tbl_BusinessAffiliates.Add(retailerObj);
-                  
 
-             
+
+
 
                     db.SaveChanges();
 
-                 
-
+                    SendWelcomeMessage(retailerObj.ID, retailerObj.ContactNumber);
 
 
                     return new Result<SuccessResponse>
@@ -109,6 +110,99 @@ namespace FOS.Web.UI.Controllers.API
 
          
 
+        }
+
+        // Welcome SMS for a newly-registered Business Affiliate. Never lets a gateway
+        // failure affect the registration response - the customer record is already
+        // saved by the time this runs, so any error here is only logged.
+        private const string WelcomeMessageText =
+            "برائیٹو پینٹس کی جانب سے خوش آمدید\n" +
+            "برائیٹو پینٹس پاکستان کا پہلا ملٹی نیشنل پینٹ برانڈ ہے جو 30 سے زائد ممالک میں دستیاب ہے\n" +
+            "مزید معلومات کے لیےرابطہ فرمائیں\n" +
+            "08000-1973\n\n" +
+            "https://brightopaints.com";
+
+        private void SendWelcomeMessage(int customerId, string rawContactNumber)
+        {
+            string status = "Failed";
+            string errorDetail = null;
+            string normalizedPhone = NormalizePakistaniMobile(rawContactNumber);
+
+            try
+            {
+                if (string.IsNullOrEmpty(normalizedPhone))
+                {
+                    errorDetail = "No usable contact number on the Business Affiliate record";
+                }
+                else
+                {
+                    string url = "http://weblogin.premiumsms.pk/sendsms_url.html"
+                        + "?Username=03214966886&Password=ms876&From=Test%20Acct"
+                        + "&To=" + Uri.EscapeDataString(normalizedPhone)
+                        + "&Message=" + Uri.EscapeDataString(WelcomeMessageText);
+
+                    using (var client = new HttpClient())
+                    {
+                        HttpResponseMessage response = client.GetAsync(url).Result;
+                        if (response.IsSuccessStatusCode)
+                        {
+                            status = "Sent";
+                        }
+                        else
+                        {
+                            errorDetail = "Gateway StatusCode: " + (int)response.StatusCode + " " + response.ReasonPhrase;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                errorDetail = Log.GetDetailedError(ex);
+                Log.Instance.Error(ex, "Business Affiliate welcome SMS failed");
+            }
+
+            LogWelcomeMessage(customerId, normalizedPhone, status, errorDetail);
+        }
+
+        private void LogWelcomeMessage(int customerId, string phoneNo, string status, string errorDetail)
+        {
+            try
+            {
+                using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+                using (var cmd = new SqlCommand(
+                    @"INSERT INTO dbo.Tbl_BusinessAffiliateWelcomeMessageLog
+                        (CustomerID, PhoneNo, Message, Status, ErrorDetail, CreatedOn)
+                      VALUES
+                        (@CustomerID, @PhoneNo, @Message, @Status, @ErrorDetail, GETDATE())", conn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@CustomerID", SqlDbType.Int) { Value = customerId });
+                    cmd.Parameters.Add(new SqlParameter("@PhoneNo", SqlDbType.VarChar, 20) { Value = (object)phoneNo ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@Message", SqlDbType.NVarChar, 1000) { Value = WelcomeMessageText });
+                    cmd.Parameters.Add(new SqlParameter("@Status", SqlDbType.VarChar, 20) { Value = (object)status ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@ErrorDetail", SqlDbType.NVarChar, 500) { Value = (object)errorDetail ?? DBNull.Value });
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Instance.Error(ex, "Business Affiliate welcome SMS log insert failed");
+            }
+        }
+
+        // Tbl_BusinessAffiliates.ContactNumber is free-text (varchar) - strip everything
+        // but digits, then convert the local 03XXXXXXXXX form to the gateway's expected
+        // 923XXXXXXXXX form (matches the format already used elsewhere against this gateway).
+        private string NormalizePakistaniMobile(string rawContactNumber)
+        {
+            if (string.IsNullOrWhiteSpace(rawContactNumber)) return null;
+
+            string digits = new string(rawContactNumber.Where(char.IsDigit).ToArray());
+            if (string.IsNullOrEmpty(digits)) return null;
+
+            if (digits.StartsWith("0")) return "92" + digits.Substring(1);
+            if (digits.StartsWith("92")) return digits;
+            return "92" + digits;
         }
 
         public string ConvertIntoByte(string Base64, string DealerName, string SendDateTime, string folderName)
