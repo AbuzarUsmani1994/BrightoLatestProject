@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -62,20 +61,20 @@ namespace FOS.Web.UI.Controllers
             var domains = ClassifyDomains(question);
 
             var summary = new JObject();
-            if (domains.Contains("Claims"))
-            {
-                summary["claims"] = ToJObject(GetClaimsSummary(headID, start, end));
-            }
             if (domains.Contains("Complaints"))
             {
                 summary["complaints"] = ToJObject(GetComplaintsSummary(headID, start, end));
             }
-            if (domains.Contains("Visits") || domains.Contains("TradeVisits") || domains.Contains("Attendance"))
+            if (domains.Contains("Visits") || domains.Contains("TradeVisits") || domains.Contains("Attendance") || domains.Contains("Claims"))
             {
                 var team = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(headID, true);
                 var soIds = team.Select(s => s.ID).ToList();
                 var soNames = team.ToDictionary(s => s.ID, s => s.Name);
 
+                if (domains.Contains("Claims"))
+                {
+                    summary["claims"] = ToJObject(GetClaimsSummary(soIds, soNames, start, end));
+                }
                 if (domains.Contains("Visits"))
                 {
                     summary["housingVisits"] = ToJObject(GetHousingVisitsSummary(soIds, soNames, start, end));
@@ -201,7 +200,7 @@ namespace FOS.Web.UI.Controllers
             string labelList = "Visits, TradeVisits, Claims, Complaints, Attendance";
             string prompt = "Classify the question below into one or more of these exact labels: " + labelList + ". " +
                 "Visits = housing/market visits and site calls. TradeVisits = trade/retail visits that may result in an order. " +
-                "Claims = dealer verification claims. Complaints = product complaints / quality review. " +
+                "Claims = sales claims (claim value/sale value, litres, approval status). Complaints = product complaints / quality review. " +
                 "Attendance = whether sales officers have checked in / started their market day. " +
                 "Reply with ONLY a comma-separated list of matching labels from that exact list, nothing else.\n\n" +
                 "Question: " + question;
@@ -289,44 +288,25 @@ namespace FOS.Web.UI.Controllers
             }
         }
 
-        private class ClaimRow
+        // Tbl_SalesClaimMaster, not Tbl_DealerVerification - the latter is a related but
+        // separate sub-type (verification forms only) with no SaleValue/TotalLiters at all,
+        // by design (see SQL/CreateTbl_DealerVerification.sql's own comment).
+        private DomainSummary GetClaimsSummary(List<int> soIds, Dictionary<int, string> soNames, DateTime start, DateTime end)
         {
-            public string Status { get; set; }
-            public string SOName { get; set; }
-        }
+            var claims = db.Tbl_SalesClaimMaster
+                .Where(c => c.IsActive == true && c.SOID != null && soIds.Contains(c.SOID.Value)
+                    && c.DateSelected >= start && c.DateSelected < end)
+                .ToList();
 
-        private DomainSummary GetClaimsSummary(int headID, DateTime start, DateTime end)
-        {
-            var rows = new List<ClaimRow>();
-
-            using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
-            using (var cmd = new SqlCommand(@"
-                SELECT dv.ID AS ClaimID, dv.ClaimManagerLatestStatus AS ApprovedStatus, so.Name AS SOName
-                FROM dbo.Tbl_DealerVerification dv
-                LEFT JOIN dbo.SaleOfficers so ON dv.SOID = so.ID
-                WHERE dv.IsActive = 1
-                  AND dv.DateSelected >= @startdate AND dv.DateSelected < @enddate
-                  AND so.RegionalHeadID = CASE WHEN @headID = 0 THEN so.RegionalHeadID ELSE @headID END", conn))
-            {
-                cmd.Parameters.AddWithValue("@headID", headID);
-                cmd.Parameters.AddWithValue("@startdate", start);
-                cmd.Parameters.AddWithValue("@enddate", end);
-
-                conn.Open();
-                using (var reader = cmd.ExecuteReader())
+            return DomainSummaryProcessor.SummarizeBySO(
+                claims,
+                soNameSelector: c => c.SOID.HasValue && soNames.ContainsKey(c.SOID.Value) ? soNames[c.SOID.Value] : null,
+                groupKeySelector: c => c.ClaimManagerLatestStatus,
+                sumSelectors: new Dictionary<string, Func<Tbl_SalesClaimMaster, decimal?>>
                 {
-                    while (reader.Read())
-                    {
-                        rows.Add(new ClaimRow
-                        {
-                            Status = reader["ApprovedStatus"] as string,
-                            SOName = reader["SOName"] as string
-                        });
-                    }
-                }
-            }
-
-            return DomainSummaryProcessor.SummarizeBySO(rows, r => r.SOName, r => r.Status);
+                    ["SaleValue"] = c => c.SaleValue,
+                    ["TotalLiters"] = c => c.TotalLiters
+                });
         }
 
         private DomainSummary GetComplaintsSummary(int headID, DateTime start, DateTime end)
