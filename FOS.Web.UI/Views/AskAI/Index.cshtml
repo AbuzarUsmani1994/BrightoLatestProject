@@ -3,6 +3,8 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
 <div class="row-fluid">
     <div class="span12">
         <h3 class="page-title"></h3>
@@ -13,31 +15,78 @@
     </div>
 </div>
 
+<style>
+    #AskAIPanel { font-family: 'Inter', Arial, Helvetica, sans-serif; }
+    #AskAIPanel * { box-sizing: border-box; }
+
+    #AskAIThread { height: 480px; overflow-y: auto; padding: 24px; background: radial-gradient(1000px 400px at 50% -15%, #eef7e2 0%, #f7f9f5 55%, #f7f9f5 100%); }
+    #AskAIThread::-webkit-scrollbar { width: 8px; }
+    #AskAIThread::-webkit-scrollbar-thumb { background: #cfd8c6; border-radius: 4px; }
+
+    .askai-row { display: flex; margin-bottom: 18px; animation: askaiFadeIn 0.25s ease-out; }
+    @@keyframes askaiFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    .askai-row.user { justify-content: flex-end; }
+    .askai-bubble-user {
+        background: linear-gradient(135deg, #4aa3df, #2f7fc1); color: #fff; padding: 11px 16px;
+        border-radius: 16px 16px 4px 16px; max-width: 75%; font-size: 14px; line-height: 1.45;
+        box-shadow: 0 3px 10px rgba(47,127,193,0.3);
+    }
+
+    .askai-row.ai { justify-content: flex-start; gap: 10px; }
+    .askai-avatar {
+        flex: none; width: 30px; height: 30px; border-radius: 50%;
+        background: linear-gradient(135deg,#8dc43f,#4a7a1f); color: #fff; text-align: center;
+        line-height: 30px; font-size: 14px; box-shadow: 0 2px 6px rgba(74,122,31,0.35);
+    }
+    .askai-bubble-ai {
+        background: #fff; border: 1px solid #ecefe6; padding: 12px 16px; border-radius: 4px 16px 16px 16px;
+        font-size: 14px; line-height: 1.55; color: #2b2b2b; box-shadow: 0 2px 10px rgba(30,40,20,0.06); max-width: 78%;
+    }
+    .askai-facts { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 7px; }
+    .askai-fact {
+        background: linear-gradient(135deg, #f1f8e6, #e6f3d6); border: 1px solid #d3e8b8; color: #3f6b1a;
+        font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 12px; box-shadow: 0 1px 3px rgba(74,122,31,0.1);
+    }
+
+    .askai-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #6ea32a; animation: askaiBounce 1.2s infinite ease-in-out; margin-right: 4px; }
+    .askai-dot:nth-child(2) { animation-delay: 0.15s; }
+    .askai-dot:nth-child(3) { animation-delay: 0.3s; margin-right: 0; }
+    @@keyframes askaiBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-5px); opacity: 1; } }
+
+    #AskAIBar { padding: 16px 24px 20px; background: #fff; }
+    .askai-suggestion {
+        padding: 6px 14px; font-size: 12.5px; font-weight: 500; background: #fff; border: 1px solid #e2e8d8;
+        border-radius: 16px; color: #4a7a1f; cursor: pointer; box-shadow: 0 1px 3px rgba(30,40,20,0.05); margin: 0 8px 8px 0;
+    }
+    .askai-suggestion:hover { background: #eef5e3; border-color: #bcd99a; }
+
+    .askai-input-row {
+        display: flex; gap: 10px; align-items: center; background: #f7f9f5; padding: 6px 6px 6px 18px;
+        border-radius: 28px; box-shadow: 0 2px 8px rgba(30,40,20,0.08); border: 1px solid #ecefe6;
+    }
+    #AskAIQuestion { flex: 1; height: 38px; padding: 0; border: none; outline: none; font-size: 14.5px; font-family: inherit; background: transparent; }
+    #AskAIButton {
+        flex: none; width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #8dc43f, #4a7a1f);
+        border: none; color: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 3px 10px rgba(74,122,31,0.35);
+    }
+</style>
+
 <div class="row-fluid">
     <div class="span12">
-        <div class="widget green">
+        <div class="widget green" id="AskAIPanel">
             <div class="widget-title">
                 <h4 style="text-align:center">Ask AI</h4>
             </div>
 
-            <div class="container-fluid" style="margin-top:2px;">
-                <div class="row">
-                    <p style="color:#555; margin:10px 0;">
-                        Ask about today's Visits, Trade Visits, Claims or Complaints for your team.
-                    </p>
+            <div id="AskAIThread"></div>
 
-                    <div style="display:flex; gap:10px; margin-bottom:15px;">
-                        <input type="text" id="AskAIQuestion" class="span10" placeholder="e.g. How are today's claims?" style="height:34px;" />
-                        <button type="button" id="AskAIButton" class="btn btn-primary">Ask</button>
-                    </div>
-
-                    <div id="AskAILoading" style="display:none; color:#888;">Thinking...</div>
-
-                    <div id="AskAIAnswer" style="display:none; background:#fdf6ec; border:1px solid #eee; border-radius:4px; padding:12px; margin-bottom:15px;"></div>
-
-                    <table id="AskAINumbers" class="table table-bordered" style="display:none;">
-                        <tbody></tbody>
-                    </table>
+            <div id="AskAIBar">
+                <div id="AskAISuggestions"></div>
+                <div class="askai-input-row">
+                    <input type="text" id="AskAIQuestion" placeholder="Ask about today's visits, claims, complaints..." />
+                    <button type="button" id="AskAIButton">&#10148;</button>
                 </div>
             </div>
         </div>
@@ -46,53 +95,84 @@
 
 <script>
     $(document).ready(function () {
-        function renderNumbers(numbers) {
-            var $tbody = $('#AskAINumbers tbody').empty();
-            if (!numbers) { return; }
+        var $thread = $('#AskAIThread');
 
-            $.each(numbers, function (domain, fields) {
-                $tbody.append('<tr><td colspan="2" style="font-weight:bold; background:#f5f5f5;">' + domain + '</td></tr>');
-                $.each(fields, function (key, value) {
-                    if (value !== null && typeof value === 'object') {
-                        $.each(value, function (subKey, subValue) {
-                            $tbody.append('<tr><td style="padding-left:25px;">' + key + ' - ' + subKey + '</td><td>' + subValue + '</td></tr>');
-                        });
-                    } else {
-                        $tbody.append('<tr><td style="padding-left:25px;">' + key + '</td><td>' + value + '</td></tr>');
-                    }
-                });
-            });
-
-            $('#AskAINumbers').toggle($tbody.children().length > 0);
+        function addUserMessage(text) {
+            var $row = $('<div class="askai-row user"><div class="askai-bubble-user"></div></div>');
+            $row.find('.askai-bubble-user').text(text);
+            $thread.append($row);
+            scrollToBottom();
         }
 
-        function ask() {
-            var question = $('#AskAIQuestion').val();
-            if (!question) { return; }
+        function addAiMessage(text, numbers) {
+            var $row = $('<div class="askai-row ai"><span class="askai-avatar">&#129302;</span><div></div></div>');
+            var $content = $row.find('> div');
+            $('<div class="askai-bubble-ai"></div>').text(text).appendTo($content);
 
-            $('#AskAIAnswer').hide();
-            $('#AskAINumbers').hide();
-            $('#AskAILoading').show();
+            var $facts = $('<div class="askai-facts"></div>');
+            $.each(numbers || {}, function (domain, data) {
+                if (data && typeof data.total !== 'undefined') {
+                    $('<span class="askai-fact"></span>').text(domain + ': ' + data.total).appendTo($facts);
+                }
+                if (data && data.byGroup) {
+                    $.each(data.byGroup, function (key, value) {
+                        $('<span class="askai-fact"></span>').text(key + ': ' + value).appendTo($facts);
+                    });
+                }
+            });
+            if ($facts.children().length > 0) { $content.append($facts); }
+
+            $thread.append($row);
+            scrollToBottom();
+        }
+
+        function addTypingIndicator() {
+            var $row = $('<div class="askai-row ai" id="AskAITyping"><span class="askai-avatar">&#129302;</span>' +
+                '<div class="askai-bubble-ai"><span class="askai-dot"></span><span class="askai-dot"></span><span class="askai-dot"></span></div></div>');
+            $thread.append($row);
+            scrollToBottom();
+        }
+
+        function removeTypingIndicator() {
+            $('#AskAITyping').remove();
+        }
+
+        function scrollToBottom() {
+            $thread.scrollTop($thread[0].scrollHeight);
+        }
+
+        function ask(question) {
+            if (!question) { return; }
+            addUserMessage(question);
+            $('#AskAIQuestion').val('');
+            addTypingIndicator();
 
             $.ajax({
                 url: '@Url.Action("Ask", "AskAI")',
                 type: 'POST',
                 data: { question: question },
                 success: function (result) {
-                    $('#AskAILoading').hide();
-                    $('#AskAIAnswer').text(result.narrative).show();
-                    renderNumbers(result.numbers);
+                    removeTypingIndicator();
+                    addAiMessage(result.narrative, result.numbers);
                 },
                 error: function () {
-                    $('#AskAILoading').hide();
-                    $('#AskAIAnswer').text('Something went wrong - please try again.').show();
+                    removeTypingIndicator();
+                    addAiMessage('Something went wrong - please try again.', null);
                 }
             });
         }
 
-        $('#AskAIButton').on('click', ask);
-        $('#AskAIQuestion').on('keypress', function (e) {
-            if (e.which === 13) { ask(); }
+        $.each(['Any pending trade visits?', "Show today's complaints", 'How are housing visits going?', 'Who is absent today?'], function (i, label) {
+            $('<button type="button" class="askai-suggestion"></button>').text(label).on('click', function () {
+                ask(label);
+            }).appendTo('#AskAISuggestions');
         });
+
+        $('#AskAIButton').on('click', function () { ask($('#AskAIQuestion').val()); });
+        $('#AskAIQuestion').on('keydown', function (e) {
+            if (e.which === 13) { ask($(this).val()); }
+        });
+
+        addAiMessage("Ask me about today's Visits, Trade Visits, Claims, Complaints or Attendance for your team.", null);
     });
 </script>
