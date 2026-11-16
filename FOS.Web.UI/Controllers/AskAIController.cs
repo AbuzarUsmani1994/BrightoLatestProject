@@ -56,20 +56,21 @@ namespace FOS.Web.UI.Controllers
             }
             if (domains.Contains("Visits") || domains.Contains("TradeVisits") || domains.Contains("Attendance"))
             {
-                var soIds = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(headID, true)
-                    .Select(s => s.ID).ToList();
+                var team = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(headID, true);
+                var soIds = team.Select(s => s.ID).ToList();
+                var soNames = team.ToDictionary(s => s.ID, s => s.Name);
 
                 if (domains.Contains("Visits"))
                 {
-                    summary["housingVisits"] = ToJObject(GetHousingVisitsSummary(soIds, today, tomorrow));
+                    summary["housingVisits"] = ToJObject(GetHousingVisitsSummary(soIds, soNames, today, tomorrow));
                 }
                 if (domains.Contains("TradeVisits"))
                 {
-                    summary["tradeVisits"] = ToJObject(GetTradeVisitsSummary(soIds, today, tomorrow));
+                    summary["tradeVisits"] = ToJObject(GetTradeVisitsSummary(soIds, soNames, today, tomorrow));
                 }
                 if (domains.Contains("Attendance"))
                 {
-                    summary["attendance"] = ToJObject(GetAttendanceSummary(soIds, today, tomorrow));
+                    summary["attendance"] = ToJObject(GetAttendanceSummary(soIds, soNames, today, tomorrow));
                 }
             }
 
@@ -106,6 +107,13 @@ namespace FOS.Web.UI.Controllers
                 obj["sums"] = sumsObj;
             }
 
+            if (s.BySO.Count > 0)
+            {
+                var bySoObj = new JObject();
+                foreach (var kv in s.BySO) bySoObj[kv.Key] = ToJObject(kv.Value);
+                obj["bySO"] = bySoObj;
+            }
+
             return obj;
         }
 
@@ -128,7 +136,7 @@ namespace FOS.Web.UI.Controllers
         {
             string prompt = "You are summarising sales data for a Regional Head, for today only. " +
                 "Using ONLY the numbers in the JSON below, answer the question in 2-4 short sentences. " +
-                "Never state a number that is not present in this JSON - if something isn't covered by the data, say so instead of guessing.\n\n" +
+                "Never state a number or a name that is not present in this JSON - if something isn't covered by the data, say so instead of guessing.\n\n" +
                 "JSON data:\n" + summary.ToString(Formatting.None) +
                 "\n\nQuestion: " + question;
 
@@ -187,6 +195,7 @@ namespace FOS.Web.UI.Controllers
         private class ClaimRow
         {
             public string Status { get; set; }
+            public string SOName { get; set; }
         }
 
         private DomainSummary GetClaimsSummary(int headID, DateTime start, DateTime end)
@@ -195,7 +204,7 @@ namespace FOS.Web.UI.Controllers
 
             using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
             using (var cmd = new SqlCommand(@"
-                SELECT dv.ID AS ClaimID, dv.ClaimManagerLatestStatus AS ApprovedStatus
+                SELECT dv.ID AS ClaimID, dv.ClaimManagerLatestStatus AS ApprovedStatus, so.Name AS SOName
                 FROM dbo.Tbl_DealerVerification dv
                 LEFT JOIN dbo.SaleOfficers so ON dv.SOID = so.ID
                 WHERE dv.IsActive = 1
@@ -211,12 +220,16 @@ namespace FOS.Web.UI.Controllers
                 {
                     while (reader.Read())
                     {
-                        rows.Add(new ClaimRow { Status = reader["ApprovedStatus"] as string });
+                        rows.Add(new ClaimRow
+                        {
+                            Status = reader["ApprovedStatus"] as string,
+                            SOName = reader["SOName"] as string
+                        });
                     }
                 }
             }
 
-            return DomainSummaryProcessor.Summarize(rows, r => r.Status);
+            return DomainSummaryProcessor.SummarizeBySO(rows, r => r.SOName, r => r.Status);
         }
 
         private DomainSummary GetComplaintsSummary(int headID, DateTime start, DateTime end)
@@ -224,18 +237,19 @@ namespace FOS.Web.UI.Controllers
             var rows = FOS.Setup.ManageComplaint.GetComplaintDataForGrid(
                 start.ToString("yyyy-MM-dd"), end.ToString("yyyy-MM-dd"), headID, 0, 0);
 
-            return DomainSummaryProcessor.Summarize(rows, r => r.ComplaintStatusString);
+            return DomainSummaryProcessor.SummarizeBySO(rows, r => r.SaleOfficerName, r => r.ComplaintStatusString);
         }
 
-        private DomainSummary GetTradeVisitsSummary(List<int> soIds, DateTime start, DateTime end)
+        private DomainSummary GetTradeVisitsSummary(List<int> soIds, Dictionary<int, string> soNames, DateTime start, DateTime end)
         {
             var visits = db.Tbl_TradeVisitsFinal
                 .Where(v => v.IsActive == true && v.SOID != null && soIds.Contains(v.SOID.Value)
                     && v.CreatedAt >= start && v.CreatedAt < end)
                 .ToList();
 
-            return DomainSummaryProcessor.Summarize(
+            return DomainSummaryProcessor.SummarizeBySO(
                 visits,
+                soNameSelector: v => v.SOID.HasValue && soNames.ContainsKey(v.SOID.Value) ? soNames[v.SOID.Value] : null,
                 groupKeySelector: v => (v.OrderValue.HasValue && v.OrderValue.Value > 0) ? "WithOrder" : "NoOrder",
                 sumSelectors: new Dictionary<string, Func<Tbl_TradeVisitsFinal, decimal?>>
                 {
@@ -243,7 +257,7 @@ namespace FOS.Web.UI.Controllers
                 });
         }
 
-        private DomainSummary GetHousingVisitsSummary(List<int> soIds, DateTime start, DateTime end)
+        private DomainSummary GetHousingVisitsSummary(List<int> soIds, Dictionary<int, string> soNames, DateTime start, DateTime end)
         {
             var visits = db.Tbl_HousingVisits
                 .Where(v => v.IsActive == true && v.SOID != null && soIds.Contains(v.SOID.Value)
@@ -257,8 +271,9 @@ namespace FOS.Web.UI.Controllers
                 : new List<int>();
             var loggedSet = new HashSet<int>(loggedVisitIds);
 
-            var summary = DomainSummaryProcessor.Summarize(
+            var summary = DomainSummaryProcessor.SummarizeBySO(
                 visits,
+                soNameSelector: v => v.SOID.HasValue && soNames.ContainsKey(v.SOID.Value) ? soNames[v.SOID.Value] : null,
                 groupKeySelector: v => loggedSet.Contains(v.ID) ? "CallLogged" : "PendingCall");
 
             summary.ByGroup["SiteWon"] = visits.Count(v => v.SiteWon == true);
@@ -269,10 +284,11 @@ namespace FOS.Web.UI.Controllers
         private class AttendanceRow
         {
             public bool Present { get; set; }
+            public string SOName { get; set; }
         }
 
         // "Present" matches SOPresentTodayController's own definition: a "Market start" row logged today.
-        private DomainSummary GetAttendanceSummary(List<int> soIds, DateTime start, DateTime end)
+        private DomainSummary GetAttendanceSummary(List<int> soIds, Dictionary<int, string> soNames, DateTime start, DateTime end)
         {
             var presentSoIds = db.SOAttendances
                 .Where(a => a.SOID != null && soIds.Contains(a.SOID.Value) && a.Type == "Market start"
@@ -282,9 +298,13 @@ namespace FOS.Web.UI.Controllers
                 .ToList();
 
             var presentSet = new HashSet<int>(presentSoIds);
-            var perSo = soIds.Select(id => new AttendanceRow { Present = presentSet.Contains(id) }).ToList();
+            var perSo = soIds.Select(id => new AttendanceRow
+            {
+                Present = presentSet.Contains(id),
+                SOName = soNames.ContainsKey(id) ? soNames[id] : null
+            }).ToList();
 
-            return DomainSummaryProcessor.Summarize(perSo, r => r.Present ? "Present" : "Absent");
+            return DomainSummaryProcessor.SummarizeBySO(perSo, r => r.SOName, r => r.Present ? "Present" : "Absent");
         }
     }
 }
