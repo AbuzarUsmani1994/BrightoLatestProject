@@ -47,10 +47,18 @@ jobs:
           if ($latest) { Write-Output "Reading: $($latest.FullName)"; Get-Content $latest.FullName -Tail 80 }
           else { Write-Output "No log files found under E:\BrightoPublish\BrightoPublish\Logs" }
 
+      - name: Resolve DB server from Web.config (server name only, never credentials)
+        shell: powershell
+        run: >
+          $cfg = Get-Content "E:\BrightoPublish\BrightoPublish\Web.config" -Raw;
+          $m = [regex]::Match($cfg, 'connectionString="[^"]*Data Source=([^;"]+)');
+          if ($m.Success) { $server = $m.Groups[1].Value.Trim(); Write-Output "Resolved Data Source: $server"; echo "SQL_SERVER=$server" >> $env:GITHUB_ENV }
+          else { Write-Output "Could not find Data Source in connection string" }
+
       - name: sp_helptext GetSaleOfficerCountsFinal
         shell: powershell
         run: >
-          sqlcmd -S ABUZAR -d Brighto -E -Q "SET NOCOUNT ON; EXEC sp_helptext 'GetSaleOfficerCountsFinal';"
+          sqlcmd -S "$env:SQL_SERVER" -d Brighto -E -Q "SET NOCOUNT ON; EXEC sp_helptext 'GetSaleOfficerCountsFinal';"
 
       - name: Disk space
         shell: powershell
