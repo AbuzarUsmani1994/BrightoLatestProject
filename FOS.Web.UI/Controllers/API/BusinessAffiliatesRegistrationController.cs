@@ -161,6 +161,13 @@ namespace FOS.Web.UI.Controllers.API
                 Log.Instance.Error(ex, "Business Affiliate welcome SMS failed");
             }
 
+            // Log the outcome independently of the history-table insert below, so the
+            // real gateway result (sent vs. rejected, and why) is never lost even if
+            // that insert itself fails for some other reason.
+            Log.Instance.Info("Business Affiliate welcome SMS outcome: CustomerID=" + customerId
+                + ", Phone=" + normalizedPhone + ", Status=" + status
+                + (errorDetail != null ? ", Detail=" + errorDetail : ""));
+
             LogWelcomeMessage(customerId, normalizedPhone, status, errorDetail);
         }
 
@@ -168,7 +175,15 @@ namespace FOS.Web.UI.Controllers.API
         {
             try
             {
-                using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+                // Use a fresh context rather than the shared `db` field: by this point
+                // `db` has already had SaveChanges() called on it for the Business
+                // Affiliate insert, which opens its connection - and once a SqlConnection
+                // has been opened, ADO.NET strips the password out of .ConnectionString
+                // on read-back (Persist Security Info=false by default). Reusing that
+                // stripped string here caused every log insert to fail with "Login
+                // failed for user '<name>'" even though the real credentials are fine.
+                using (var freshDb = new FOSDataModel())
+                using (var conn = new SqlConnection(freshDb.Database.Connection.ConnectionString))
                 using (var cmd = new SqlCommand(
                     @"INSERT INTO dbo.Tbl_BusinessAffiliateWelcomeMessageLog
                         (CustomerID, PhoneNo, Message, Status, ErrorDetail, CreatedOn)
