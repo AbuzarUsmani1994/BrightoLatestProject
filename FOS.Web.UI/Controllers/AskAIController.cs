@@ -180,6 +180,11 @@ namespace FOS.Web.UI.Controllers
 
             try
             {
+                // Old .NET Framework on this box doesn't always default to TLS 1.2 for outbound
+                // HTTPS, and api.anthropic.com requires it - without this, every call fails the
+                // handshake silently and surfaces only as a generic AggregateException.
+                System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
+
                 using (var client = new HttpClient())
                 {
                     client.DefaultRequestHeaders.Add("x-api-key", apiKey);
@@ -203,7 +208,7 @@ namespace FOS.Web.UI.Controllers
             }
             catch (Exception ex)
             {
-                Log.Instance.Error("Claude API call failed: " + ex.Message);
+                Log.Instance.Error("Claude API call failed: " + Log.GetDetailedError(ex));
                 return "(AI is temporarily unavailable.)";
             }
         }
