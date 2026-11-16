@@ -219,12 +219,15 @@ namespace FOS.Web.UI.Controllers
 
             string prompt = "You are summarising sales data for a Regional Head, covering " + rangeDescription + ". " +
                 "Using ONLY the numbers in the JSON below, answer as a short, precise bulleted list - " +
-                "one fact per line, each line starting with \"- \", no more than 5 bullets, no filler sentences. " +
+                "one fact per line, each line starting with \"- \", no filler sentences. " +
+                "Start with the overall total/breakdown. Then, if the JSON has a \"bySO\" object for the relevant domain, " +
+                "ALWAYS add one bullet per Sale Officer showing their name and their total (this is required whenever " +
+                "bySO is present, not only when the question asks \"who\"). Keep each SO bullet short - name and number only. " +
                 "Never state a number or a name that is not present in this JSON - if something isn't covered by the data, say so instead of guessing.\n\n" +
                 "JSON data:\n" + summary.ToString(Formatting.None) +
                 "\n\nQuestion: " + question;
 
-            return CallClaude(prompt, 300);
+            return CallClaude(prompt, 600);
         }
 
         private string CallClaude(string userMessage, int maxTokens)
