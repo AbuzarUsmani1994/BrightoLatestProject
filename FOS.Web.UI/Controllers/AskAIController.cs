@@ -105,6 +105,13 @@ namespace FOS.Web.UI.Controllers
 
             string narrative = Narrate(question, summary, start, end);
 
+            // Temporary: CallClaude only logs on failure, so a successful call that still
+            // produces a wrong-looking answer (e.g. missing SO-wise bullets) leaves no trace
+            // to diagnose from. Log the exact data sent and what Haiku said back, to check
+            // against real test questions instead of guessing why.
+            Log.Instance.Info("Ask AI debug - Question: " + question + " | Domains: " + string.Join(",", domains)
+                + " | JSON: " + summary.ToString(Formatting.None) + " | Narrative: " + narrative);
+
             return Json(new { numbers = summary, narrative = narrative });
         }
 
