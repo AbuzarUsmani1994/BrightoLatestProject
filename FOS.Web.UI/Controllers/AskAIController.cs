@@ -51,6 +51,10 @@ namespace FOS.Web.UI.Controllers
             {
                 return Json(new { narrative = "Ask a question about Visits, Trade Visits, Claims or Complaints." });
             }
+            if (string.IsNullOrEmpty(ConfigurationManager.AppSettings["ClaudeApiKey"]))
+            {
+                return Json(new { narrative = "AI isn't configured yet - the ClaudeApiKey setting is missing or empty in the live Web.config." });
+            }
 
             DateTime today = DateTime.Today;
             DateTime tomorrow = today.AddDays(1);
@@ -91,7 +95,7 @@ namespace FOS.Web.UI.Controllers
                 return Json(new
                 {
                     numbers = summary,
-                    narrative = "I couldn't match that to Visits, Trade Visits, Claims or Complaints - try asking about one of those."
+                    narrative = "I couldn't match that to Visits, Trade Visits, Claims, Complaints or Attendance - try asking about one of those."
                 });
             }
 
