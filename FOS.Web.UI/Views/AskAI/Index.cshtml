@@ -64,6 +64,23 @@
     }
     .askai-suggestion:hover { background: #eef5e3; border-color: #bcd99a; }
 
+    #AskAILanding { padding: 48px 24px 32px; text-align: center; }
+    .askai-greeting { font-size: 21px; font-weight: 700; color: #2b2b2b; margin-bottom: 8px; }
+    .askai-greeting .accent { color: #4a7a1f; }
+    .askai-subtext { font-size: 13.5px; color: #828a7c; max-width: 460px; margin: 0 auto 26px; line-height: 1.5; }
+    .askai-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; max-width: 640px; margin: 0 auto; }
+    .askai-card {
+        text-align: left; background: #fff; border: 1px solid #ecefe6; border-radius: 12px; padding: 14px 16px;
+        cursor: pointer; box-shadow: 0 1px 4px rgba(30,40,20,0.05); transition: all 0.15s ease; font-family: inherit;
+    }
+    .askai-card:hover { border-color: #bcd99a; box-shadow: 0 5px 14px rgba(74,122,31,0.14); transform: translateY(-2px); }
+    .askai-card-icon {
+        display: inline-flex; width: 30px; height: 30px; border-radius: 9px; align-items: center; justify-content: center;
+        background: linear-gradient(135deg, #f1f8e6, #e6f3d6); font-size: 15px; margin-bottom: 8px;
+    }
+    .askai-card-title { font-weight: 600; font-size: 13.5px; color: #2b2b2b; }
+    .askai-card-desc { font-size: 11.5px; color: #93998c; margin-top: 3px; line-height: 1.4; }
+
     .askai-input-row {
         display: flex; gap: 10px; align-items: center; background: #f7f9f5; padding: 6px 6px 6px 18px;
         border-radius: 28px; box-shadow: 0 2px 8px rgba(30,40,20,0.08); border: 1px solid #ecefe6;
@@ -83,10 +100,15 @@
                 <h4 style="text-align:center">Ask AI</h4>
             </div>
 
-            <div id="AskAIThread"></div>
+            <div id="AskAILanding">
+                <div class="askai-greeting">How can I help with your <span class="accent">team</span> today?</div>
+                <div class="askai-subtext">Ask about Visits, Trade Visits, Claims, Complaints or Attendance - I'll pull the real numbers for your team and summarise them.</div>
+                <div class="askai-cards" id="AskAICards"></div>
+            </div>
+
+            <div id="AskAIThread" style="display:none;"></div>
 
             <div id="AskAIBar">
-                <div id="AskAISuggestions"></div>
                 <div class="askai-input-row">
                     <input type="text" id="AskAIQuestion" placeholder="Ask about today's visits, claims, complaints..." />
                     <button type="button" id="AskAIButton">&#10148;</button>
@@ -160,8 +182,14 @@
             $thread.scrollTop($thread[0].scrollHeight);
         }
 
+        function showThread() {
+            $('#AskAILanding').hide();
+            $thread.show();
+        }
+
         function ask(question) {
             if (!question) { return; }
+            showThread();
             addUserMessage(question);
             $('#AskAIQuestion').val('');
             addTypingIndicator();
@@ -181,17 +209,30 @@
             });
         }
 
-        $.each(['Any pending trade visits?', "Show today's complaints", 'How are housing visits going?', 'Who is absent today?'], function (i, label) {
-            $('<button type="button" class="askai-suggestion"></button>').text(label).on('click', function () {
-                ask(label);
-            }).appendTo('#AskAISuggestions');
+        var cards = [
+            { icon: '&#128203;', title: "Today's Claims", desc: 'Approvals, pending, rejected', question: "How are today's claims?" },
+            { icon: '&#128722;', title: 'Trade Visits', desc: 'Which visits resulted in orders', question: 'Any pending trade visits?' },
+            { icon: '&#128172;', title: 'Complaints', desc: 'Status of product complaints', question: "Show today's complaints" },
+            { icon: '&#9989;', title: 'Attendance', desc: "Who's present or absent", question: 'Who is absent today?' }
+        ];
+
+        $.each(cards, function (i, c) {
+            $(
+                '<button type="button" class="askai-card">' +
+                    '<div class="askai-card-icon">' + c.icon + '</div>' +
+                    '<div class="askai-card-title"></div>' +
+                    '<div class="askai-card-desc"></div>' +
+                '</button>'
+            ).each(function () {
+                $(this).find('.askai-card-title').text(c.title);
+                $(this).find('.askai-card-desc').text(c.desc);
+                $(this).on('click', function () { ask(c.question); });
+            }).appendTo('#AskAICards');
         });
 
         $('#AskAIButton').on('click', function () { ask($('#AskAIQuestion').val()); });
         $('#AskAIQuestion').on('keydown', function (e) {
             if (e.which === 13) { ask($(this).val()); }
         });
-
-        addAiMessage("Ask me about today's Visits, Trade Visits, Claims, Complaints or Attendance for your team.", null);
     });
 </script>
