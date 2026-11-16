@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Text;
 using System.Web.Mvc;
 using FOS.DataLayer;
+using FOS.Shared;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Shared.Diagnostics.Logging;
@@ -47,24 +48,28 @@ namespace FOS.Web.UI.Controllers
             var summary = new JObject();
             if (domains.Contains("Claims"))
             {
-                summary["claims"] = GetClaimsSummary(headID, today, tomorrow);
+                summary["claims"] = ToJObject(GetClaimsSummary(headID, today, tomorrow));
             }
             if (domains.Contains("Complaints"))
             {
-                summary["complaints"] = GetComplaintsSummary(headID, today, tomorrow);
+                summary["complaints"] = ToJObject(GetComplaintsSummary(headID, today, tomorrow));
             }
-            if (domains.Contains("Visits") || domains.Contains("TradeVisits"))
+            if (domains.Contains("Visits") || domains.Contains("TradeVisits") || domains.Contains("Attendance"))
             {
                 var soIds = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(headID, true)
                     .Select(s => s.ID).ToList();
 
                 if (domains.Contains("Visits"))
                 {
-                    summary["housingVisits"] = GetHousingVisitsSummary(soIds, today, tomorrow);
+                    summary["housingVisits"] = ToJObject(GetHousingVisitsSummary(soIds, today, tomorrow));
                 }
                 if (domains.Contains("TradeVisits"))
                 {
-                    summary["tradeVisits"] = GetTradeVisitsSummary(soIds, today, tomorrow);
+                    summary["tradeVisits"] = ToJObject(GetTradeVisitsSummary(soIds, today, tomorrow));
+                }
+                if (domains.Contains("Attendance"))
+                {
+                    summary["attendance"] = ToJObject(GetAttendanceSummary(soIds, today, tomorrow));
                 }
             }
 
@@ -82,17 +87,40 @@ namespace FOS.Web.UI.Controllers
             return Json(new { numbers = summary, narrative = narrative });
         }
 
+        // Turns the generic DomainSummaryProcessor output into the JSON shape handed to Haiku and the UI.
+        private JObject ToJObject(DomainSummary s)
+        {
+            var obj = new JObject { ["total"] = s.Total };
+
+            if (s.ByGroup.Count > 0)
+            {
+                var byGroupObj = new JObject();
+                foreach (var kv in s.ByGroup) byGroupObj[kv.Key] = kv.Value;
+                obj["byGroup"] = byGroupObj;
+            }
+
+            if (s.Sums.Count > 0)
+            {
+                var sumsObj = new JObject();
+                foreach (var kv in s.Sums) sumsObj[kv.Key] = kv.Value;
+                obj["sums"] = sumsObj;
+            }
+
+            return obj;
+        }
+
         private List<string> ClassifyDomains(string question)
         {
-            string labelList = "Visits, TradeVisits, Claims, Complaints";
+            string labelList = "Visits, TradeVisits, Claims, Complaints, Attendance";
             string prompt = "Classify the question below into one or more of these exact labels: " + labelList + ". " +
                 "Visits = housing/market visits and site calls. TradeVisits = trade/retail visits that may result in an order. " +
                 "Claims = dealer verification claims. Complaints = product complaints / quality review. " +
+                "Attendance = whether sales officers have checked in / started their market day. " +
                 "Reply with ONLY a comma-separated list of matching labels from that exact list, nothing else.\n\n" +
                 "Question: " + question;
 
             string reply = CallClaude(prompt, 20);
-            var labels = new[] { "Visits", "TradeVisits", "Claims", "Complaints" };
+            var labels = new[] { "Visits", "TradeVisits", "Claims", "Complaints", "Attendance" };
             return labels.Where(l => reply.IndexOf(l, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
         }
 
@@ -156,10 +184,14 @@ namespace FOS.Web.UI.Controllers
             }
         }
 
-        private JObject GetClaimsSummary(int headID, DateTime start, DateTime end)
+        private class ClaimRow
         {
-            int total = 0;
-            var byStatus = new Dictionary<string, int>();
+            public string Status { get; set; }
+        }
+
+        private DomainSummary GetClaimsSummary(int headID, DateTime start, DateTime end)
+        {
+            var rows = new List<ClaimRow>();
 
             using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
             using (var cmd = new SqlCommand(@"
@@ -179,68 +211,39 @@ namespace FOS.Web.UI.Controllers
                 {
                     while (reader.Read())
                     {
-                        total++;
-                        string status = reader["ApprovedStatus"] as string;
-                        if (string.IsNullOrEmpty(status)) status = "Unknown";
-                        byStatus[status] = byStatus.ContainsKey(status) ? byStatus[status] + 1 : 1;
+                        rows.Add(new ClaimRow { Status = reader["ApprovedStatus"] as string });
                     }
                 }
             }
 
-            var statusObj = new JObject();
-            foreach (var kv in byStatus)
-            {
-                statusObj[kv.Key] = kv.Value;
-            }
-
-            return new JObject
-            {
-                ["totalClaims"] = total,
-                ["byStatus"] = statusObj
-            };
+            return DomainSummaryProcessor.Summarize(rows, r => r.Status);
         }
 
-        private JObject GetComplaintsSummary(int headID, DateTime start, DateTime end)
+        private DomainSummary GetComplaintsSummary(int headID, DateTime start, DateTime end)
         {
             var rows = FOS.Setup.ManageComplaint.GetComplaintDataForGrid(
                 start.ToString("yyyy-MM-dd"), end.ToString("yyyy-MM-dd"), headID, 0, 0);
 
-            var byStatus = rows
-                .GroupBy(r => string.IsNullOrEmpty(r.ComplaintStatusString) ? "Unknown" : r.ComplaintStatusString)
-                .ToDictionary(g => g.Key, g => g.Count());
-
-            var statusObj = new JObject();
-            foreach (var kv in byStatus)
-            {
-                statusObj[kv.Key] = kv.Value;
-            }
-
-            return new JObject
-            {
-                ["totalComplaints"] = rows.Count,
-                ["byStatus"] = statusObj
-            };
+            return DomainSummaryProcessor.Summarize(rows, r => r.ComplaintStatusString);
         }
 
-        private JObject GetTradeVisitsSummary(List<int> soIds, DateTime start, DateTime end)
+        private DomainSummary GetTradeVisitsSummary(List<int> soIds, DateTime start, DateTime end)
         {
             var visits = db.Tbl_TradeVisitsFinal
                 .Where(v => v.IsActive == true && v.SOID != null && soIds.Contains(v.SOID.Value)
                     && v.CreatedAt >= start && v.CreatedAt < end)
                 .ToList();
 
-            int withOrder = visits.Count(v => v.OrderValue.HasValue && v.OrderValue.Value > 0);
-            decimal totalOrderValue = visits.Where(v => v.OrderValue.HasValue).Sum(v => v.OrderValue.Value);
-
-            return new JObject
-            {
-                ["totalTradeVisits"] = visits.Count,
-                ["visitsWithOrder"] = withOrder,
-                ["totalOrderValue"] = totalOrderValue
-            };
+            return DomainSummaryProcessor.Summarize(
+                visits,
+                groupKeySelector: v => (v.OrderValue.HasValue && v.OrderValue.Value > 0) ? "WithOrder" : "NoOrder",
+                sumSelectors: new Dictionary<string, Func<Tbl_TradeVisitsFinal, decimal?>>
+                {
+                    ["OrderValue"] = v => v.OrderValue
+                });
         }
 
-        private JObject GetHousingVisitsSummary(List<int> soIds, DateTime start, DateTime end)
+        private DomainSummary GetHousingVisitsSummary(List<int> soIds, DateTime start, DateTime end)
         {
             var visits = db.Tbl_HousingVisits
                 .Where(v => v.IsActive == true && v.SOID != null && soIds.Contains(v.SOID.Value)
@@ -248,18 +251,40 @@ namespace FOS.Web.UI.Controllers
                 .ToList();
 
             var visitIds = visits.Select(v => v.ID).ToList();
-            int withCallLogged = visitIds.Any()
-                ? db.Tbl_SaveCall.Count(c => c.VisitID != null && visitIds.Contains(c.VisitID.Value))
-                : 0;
-            int sitesWon = visits.Count(v => v.SiteWon == true);
+            var loggedVisitIds = visitIds.Any()
+                ? db.Tbl_SaveCall.Where(c => c.VisitID != null && visitIds.Contains(c.VisitID.Value))
+                    .Select(c => c.VisitID.Value).ToList()
+                : new List<int>();
+            var loggedSet = new HashSet<int>(loggedVisitIds);
 
-            return new JObject
-            {
-                ["totalVisits"] = visits.Count,
-                ["visitsWithCallLogged"] = withCallLogged,
-                ["visitsPendingCall"] = visits.Count - withCallLogged,
-                ["sitesWon"] = sitesWon
-            };
+            var summary = DomainSummaryProcessor.Summarize(
+                visits,
+                groupKeySelector: v => loggedSet.Contains(v.ID) ? "CallLogged" : "PendingCall");
+
+            summary.ByGroup["SiteWon"] = visits.Count(v => v.SiteWon == true);
+
+            return summary;
+        }
+
+        private class AttendanceRow
+        {
+            public bool Present { get; set; }
+        }
+
+        // "Present" matches SOPresentTodayController's own definition: a "Market start" row logged today.
+        private DomainSummary GetAttendanceSummary(List<int> soIds, DateTime start, DateTime end)
+        {
+            var presentSoIds = db.SOAttendances
+                .Where(a => a.SOID != null && soIds.Contains(a.SOID.Value) && a.Type == "Market start"
+                    && a.CreatedAt >= start && a.CreatedAt < end)
+                .Select(a => a.SOID.Value)
+                .Distinct()
+                .ToList();
+
+            var presentSet = new HashSet<int>(presentSoIds);
+            var perSo = soIds.Select(id => new AttendanceRow { Present = presentSet.Contains(id) }).ToList();
+
+            return DomainSummaryProcessor.Summarize(perSo, r => r.Present ? "Present" : "Absent");
         }
     }
 }

@@ -114,6 +114,7 @@
     <Compile Include="Common\Common.cs" />
     <Compile Include="Common\SelectedWeekday.cs" />
     <Compile Include="ComplaintData.cs" />
+    <Compile Include="DomainSummaryProcessor.cs" />
     <Compile Include="QrSOData.cs" />
     <Compile Include="QrActivityData.cs" />
     <Compile Include="TodoData.cs" />
