@@ -126,7 +126,7 @@ namespace FOS.Web.UI.Controllers.API
         {
             string status = "Failed";
             string errorDetail = null;
-            string normalizedPhone = NormalizePakistaniMobile(rawContactNumber);
+            string normalizedPhone = FOS.Web.UI.Common.CBSSmsSender.NormalizePhoneForCBS(rawContactNumber);
 
             try
             {
@@ -136,22 +136,18 @@ namespace FOS.Web.UI.Controllers.API
                 }
                 else
                 {
-                    string url = "http://weblogin.premiumsms.pk/sendsms_url.html"
-                        + "?Username=03214966886&Password=ms876&From=Test%20Acct"
-                        + "&To=" + Uri.EscapeDataString(normalizedPhone)
-                        + "&Message=" + Uri.EscapeDataString(WelcomeMessageText);
-
-                    using (var client = new HttpClient())
+                    // UniCode="1": the welcome message is Urdu script, which the CBS docs
+                    // say needs Unicode SMS encoding - sending it as UniCode="0" (GSM_7,
+                    // English-only) is exactly the kind of mismatch a carrier can silently
+                    // drop instead of delivering.
+                    var result = FOS.Web.UI.Common.CBSSmsSender.SendQuickSMS(normalizedPhone, WelcomeMessageText, "1");
+                    if (result.Success)
                     {
-                        HttpResponseMessage response = client.GetAsync(url).Result;
-                        if (response.IsSuccessStatusCode)
-                        {
-                            status = "Sent";
-                        }
-                        else
-                        {
-                            errorDetail = "Gateway StatusCode: " + (int)response.StatusCode + " " + response.ReasonPhrase;
-                        }
+                        status = "Sent";
+                    }
+                    else
+                    {
+                        errorDetail = "CBS StatusCode: " + result.StatusCode + " " + result.Description;
                     }
                 }
             }
@@ -203,21 +199,6 @@ namespace FOS.Web.UI.Controllers.API
             {
                 Log.Instance.Error(ex, "Business Affiliate welcome SMS log insert failed");
             }
-        }
-
-        // Tbl_BusinessAffiliates.ContactNumber is free-text (varchar) - strip everything
-        // but digits, then convert the local 03XXXXXXXXX form to the gateway's expected
-        // 923XXXXXXXXX form (matches the format already used elsewhere against this gateway).
-        private string NormalizePakistaniMobile(string rawContactNumber)
-        {
-            if (string.IsNullOrWhiteSpace(rawContactNumber)) return null;
-
-            string digits = new string(rawContactNumber.Where(char.IsDigit).ToArray());
-            if (string.IsNullOrEmpty(digits)) return null;
-
-            if (digits.StartsWith("0")) return "92" + digits.Substring(1);
-            if (digits.StartsWith("92")) return digits;
-            return "92" + digits;
         }
 
         public string ConvertIntoByte(string Base64, string DealerName, string SendDateTime, string folderName)

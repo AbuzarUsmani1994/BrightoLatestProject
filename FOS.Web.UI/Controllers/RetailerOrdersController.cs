@@ -2601,18 +2601,15 @@ namespace FOS.Web.UI.Controllers
                     return Json(new { success = false, message = "No contact number found for this customer." });
                 }
 
-                var destination = NormalizePhoneForCBS(phone);
-                var rawResponse = SendQuickSMSViaCBS(destination, Message);
-                var parts = (rawResponse ?? string.Empty).Split('|');
-                var statusCode = parts.Length > 0 ? parts[0].Trim() : string.Empty;
+                var destination = FOS.Web.UI.Common.CBSSmsSender.NormalizePhoneForCBS(phone);
+                var result = FOS.Web.UI.Common.CBSSmsSender.SendQuickSMS(destination, Message, "0");
 
-                if (statusCode == "0")
+                if (result.Success)
                 {
                     return Json(new { success = true, message = "SMS sent successfully." });
                 }
 
-                var description = parts.Length > 1 ? parts[1] : rawResponse;
-                return Json(new { success = false, message = "Failed to send SMS: " + description });
+                return Json(new { success = false, message = "Failed to send SMS: " + result.Description });
             }
             catch (Exception ex)
             {
@@ -2625,66 +2622,6 @@ namespace FOS.Web.UI.Controllers
                     actual = actual.InnerException;
                 }
                 return Json(new { success = false, message = "Error: " + actual.Message });
-            }
-        }
-
-        // Converts a locally-formatted PK mobile number (e.g. "0311xxxxxxx") to the
-        // "92xxxxxxxxxx" format the CBS API expects as Destination.
-        private string NormalizePhoneForCBS(string phone)
-        {
-            var digits = new string(phone.Where(char.IsDigit).ToArray());
-            if (digits.StartsWith("0"))
-            {
-                digits = "92" + digits.Substring(1);
-            }
-            else if (!digits.StartsWith("92") && digits.Length == 10)
-            {
-                digits = "92" + digits;
-            }
-            return digits;
-        }
-
-        private string SendQuickSMSViaCBS(string destination, string message)
-        {
-            const string cbsUrl = "https://cbs.zong.com.pk/reachrestapi/home/SendQuickSMS";
-            // Credentials live in FOS.Web.UI/Web.config <appSettings> (CBSLoginId /
-            // CBSLoginPassword / CBSMask) on the server only - that file is gitignored
-            // and never committed, so the CBS account password never ends up in git history.
-            var cbsLoginId = System.Configuration.ConfigurationManager.AppSettings["CBSLoginId"];
-            var cbsLoginPassword = System.Configuration.ConfigurationManager.AppSettings["CBSLoginPassword"];
-            var cbsMask = System.Configuration.ConfigurationManager.AppSettings["CBSMask"];
-
-            if (string.IsNullOrEmpty(cbsLoginId) || string.IsNullOrEmpty(cbsLoginPassword) || string.IsNullOrEmpty(cbsMask))
-            {
-                throw new InvalidOperationException("CBSLoginId / CBSLoginPassword / CBSMask are not configured in Web.config <appSettings>.");
-            }
-
-            var payload = new
-            {
-                loginId = cbsLoginId,
-                loginPassword = cbsLoginPassword,
-                Destination = destination,
-                Mask = cbsMask,
-                Message = message,
-                UniCode = "0",
-                ShortCodePrefered = "N"
-            };
-
-            // This legacy .NET Framework app defaults to SSL3/TLS1.0, which cbs.zong.com.pk
-            // (like most modern HTTPS endpoints) rejects - without this, PostAsync faults
-            // with a connection error that surfaces as the unhelpful "One or more errors
-            // occurred." AggregateException message.
-            System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
-
-            using (var client = new HttpClient())
-            {
-                var content = new StringContent(
-                    Newtonsoft.Json.JsonConvert.SerializeObject(payload),
-                    System.Text.Encoding.UTF8,
-                    "application/json");
-
-                var response = client.PostAsync(cbsUrl, content).Result;
-                return response.Content.ReadAsStringAsync().Result;
             }
         }
 

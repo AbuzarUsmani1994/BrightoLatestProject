@@ -513,6 +513,7 @@
       <DependentUpon>ClaimSummaryReportCategoryWise.xsd</DependentUpon>
     </Compile>
     <Compile Include="Common\CacheManager.cs" />
+    <Compile Include="Common\CBSSmsSender.cs" />
     <Compile Include="Common\CurrentUser.cs" />
     <Compile Include="Common\CustomerAttributes\CustomAuthorize.cs" />
     <Compile Include="Common\NumberCheck.cs" />
