@@ -3449,11 +3449,8 @@ namespace FOS.Web.UI.Controllers
             }
         }
 
-        // Retailers.Name (the owner/contact person) is frequently blank on real data,
-        // while ShopName is always set - fall back to ShopName so "Customer" shows a
-        // real, meaningful name instead of coming back blank for most rows.
         private const string WelcomeSmsReportSql =
-            @"SELECT l.ID, l.CustomerID, ISNULL(NULLIF(r.Name, ''), r.ShopName) AS CustomerName,
+            @"SELECT l.ID, l.CustomerID, r.ShopName AS CustomerName,
                      l.PhoneNo, l.Message, l.Status, l.ErrorDetail, l.CreatedOn
               FROM dbo.Tbl_BusinessAffiliateWelcomeMessageLog l
               LEFT JOIN dbo.Retailers r ON r.ID = l.CustomerID
