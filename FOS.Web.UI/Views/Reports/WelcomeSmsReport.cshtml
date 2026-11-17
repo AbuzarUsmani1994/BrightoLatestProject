@@ -42,6 +42,9 @@
                         <button type="button" id="btnSearch" class="btn btn-primary">
                             <i class="icon-search icon-white" style="padding-right: 8px"></i><span>Search</span>
                         </button>
+                        <button type="button" id="btnExport" class="btn btn-success">
+                            <i class="icon-download-alt icon-white"></i> Export (Excel)
+                        </button>
                     </div>
 
                 </div>
@@ -63,7 +66,6 @@
                         <thead>
                             <tr>
                                 <th>Customer</th>
-                                <th>Shop Name</th>
                                 <th>Phone</th>
                                 <th>Message</th>
                                 <th>Status</th>
@@ -135,13 +137,7 @@
                         "autoWidth": true,
                         "data": result.data,
                         "columns": [
-                            {
-                                "data": "CustomerName",
-                                "render": function (data, type, row) {
-                                    return data ? data : "(#" + row.CustomerID + ")";
-                                }
-                            },
-                            { "data": "ShopName" },
+                            { "data": "CustomerName" },
                             { "data": "PhoneNo" },
                             { "data": "Message" },
                             {
@@ -164,6 +160,16 @@
 
         $("#btnSearch").click(function () {
             LoadWelcomeSmsReport();
+        });
+
+        $("#btnExport").click(function () {
+            var sdate = $("#StartingDate1").val();
+            var edate = $("#StartingDate2").val();
+            if (sdate == "" || edate == "") {
+                alertify.error("Please select both a Starting and Ending Date before exporting.");
+                return;
+            }
+            window.location.href = '@Url.Action("WelcomeSmsReportExport", "Reports")?StartingDate=' + encodeURIComponent(sdate) + '&EndingDate=' + encodeURIComponent(edate);
         });
 
         LoadWelcomeSmsReport();

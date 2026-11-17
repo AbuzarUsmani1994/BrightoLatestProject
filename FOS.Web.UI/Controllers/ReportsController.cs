@@ -3410,13 +3410,7 @@ namespace FOS.Web.UI.Controllers
 
                 using (FOSDataModel dbContext = new FOSDataModel())
                 using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
-                using (var cmd = new SqlCommand(
-                    @"SELECT l.ID, l.CustomerID, r.Name AS CustomerName, r.ShopName, r.Phone1,
-                             l.PhoneNo, l.Message, l.Status, l.ErrorDetail, l.CreatedOn
-                      FROM dbo.Tbl_BusinessAffiliateWelcomeMessageLog l
-                      LEFT JOIN dbo.Retailers r ON r.ID = l.CustomerID
-                      WHERE l.CreatedOn >= @StartDate AND l.CreatedOn < @EndDate
-                      ORDER BY l.CreatedOn DESC", conn))
+                using (var cmd = new SqlCommand(WelcomeSmsReportSql, conn))
                 {
                     cmd.Parameters.AddWithValue("@StartDate", start);
                     cmd.Parameters.AddWithValue("@EndDate", end);
@@ -3426,12 +3420,16 @@ namespace FOS.Web.UI.Controllers
                     {
                         while (reader.Read())
                         {
+                            string customerName = GetSafeString(reader, "CustomerName");
+                            if (string.IsNullOrEmpty(customerName))
+                            {
+                                customerName = "(#" + GetSafeString(reader, "CustomerID") + ")";
+                            }
                             rows.Add(new
                             {
                                 ID = reader["ID"],
                                 CustomerID = reader["CustomerID"],
-                                CustomerName = GetSafeString(reader, "CustomerName"),
-                                ShopName = GetSafeString(reader, "ShopName"),
+                                CustomerName = customerName,
                                 PhoneNo = GetSafeString(reader, "PhoneNo"),
                                 Message = GetSafeString(reader, "Message"),
                                 Status = GetSafeString(reader, "Status"),
@@ -3449,6 +3447,83 @@ namespace FOS.Web.UI.Controllers
                 Log.Instance.Error(exp, "WelcomeSmsReportData Failed");
                 return Json(new { error = "Failed to load welcome SMS log: " + exp.Message }, JsonRequestBehavior.AllowGet);
             }
+        }
+
+        // Retailers.Name (the owner/contact person) is frequently blank on real data,
+        // while ShopName is always set - fall back to ShopName so "Customer" shows a
+        // real, meaningful name instead of coming back blank for most rows.
+        private const string WelcomeSmsReportSql =
+            @"SELECT l.ID, l.CustomerID, ISNULL(NULLIF(r.Name, ''), r.ShopName) AS CustomerName,
+                     l.PhoneNo, l.Message, l.Status, l.ErrorDetail, l.CreatedOn
+              FROM dbo.Tbl_BusinessAffiliateWelcomeMessageLog l
+              LEFT JOIN dbo.Retailers r ON r.ID = l.CustomerID
+              WHERE l.CreatedOn >= @StartDate AND l.CreatedOn < @EndDate
+              ORDER BY l.CreatedOn DESC";
+
+        public ActionResult WelcomeSmsReportExport(string StartingDate, string EndingDate)
+        {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            var remoteIpAddress = "";
+            string hostName = Dns.GetHostName();
+            IPAddress[] ipaddress = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress ip in ipaddress)
+            {
+                remoteIpAddress = ip.ToString();
+            }
+
+            DateTime start = Convert.ToDateTime(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
+            DateTime end = Convert.ToDateTime(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate).AddDays(1);
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("\"Customer\",\"Phone\",\"Message\",\"Status\",\"Error Detail\",\"Sent On\"");
+
+            using (FOSDataModel dbContext = new FOSDataModel())
+            using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
+            using (var cmd = new SqlCommand(WelcomeSmsReportSql, conn))
+            {
+                cmd.Parameters.AddWithValue("@StartDate", start);
+                cmd.Parameters.AddWithValue("@EndDate", end);
+
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string customerName = GetSafeString(reader, "CustomerName");
+                        if (string.IsNullOrEmpty(customerName))
+                        {
+                            customerName = "(#" + GetSafeString(reader, "CustomerID") + ")";
+                        }
+                        sb.AppendLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\"",
+                            EscapeCsvValue(customerName),
+                            EscapeCsvValue(GetSafeString(reader, "PhoneNo")),
+                            EscapeCsvValue(GetSafeString(reader, "Message")),
+                            EscapeCsvValue(GetSafeString(reader, "Status")),
+                            EscapeCsvValue(GetSafeString(reader, "ErrorDetail")),
+                            EscapeCsvValue(GetSafeString(reader, "CreatedOn"))));
+                    }
+                }
+            }
+
+            // Prepend the UTF-8 BOM (GetBytes alone doesn't include it) so Excel renders
+            // the Urdu welcome message text correctly instead of as mojibake - this is
+            // the only CSV export in this controller that carries non-ASCII text.
+            byte[] preamble = System.Text.Encoding.UTF8.GetPreamble();
+            byte[] content = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+            byte[] bytes = new byte[preamble.Length + content.Length];
+            Buffer.BlockCopy(preamble, 0, bytes, 0, preamble.Length);
+            Buffer.BlockCopy(content, 0, bytes, preamble.Length, content.Length);
+
+            ManagersLoginHst hst = new ManagersLoginHst();
+            hst.UserID = userID;
+            hst.IPAddress = remoteIpAddress;
+            hst.ReportName = "Welcome SMS Report";
+            hst.ReportType = "WelcomeSmsReport";
+            hst.CreatedOn = DateTime.UtcNow.AddHours(5);
+            db.ManagersLoginHsts.Add(hst);
+            db.SaveChanges();
+
+            return File(bytes, "application/vnd.ms-excel", "WelcomeSmsReport_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv");
         }
 
         #endregion
