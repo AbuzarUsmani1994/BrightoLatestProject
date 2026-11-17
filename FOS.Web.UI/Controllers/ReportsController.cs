@@ -48,8 +48,26 @@ namespace FOS.Web.UI.Controllers
             return value.ToString();
         }
 
+        // Video/image paths saved by the mobile app (e.g. ca.VideoPath) are stored root-relative
+        // ("/Images/CompetitorActivities/xyz.mp4") - fine for an <img>/<video> src on this same
+        // site, but useless pasted into a browser URL bar directly. Prepend the server's base
+        // URL, matching the "http://116.58.33.11:81/..." convention already used elsewhere in
+        // this controller (e.g. BusinessAffiliatesDSRReportController, CoverageDSRReportController).
+        private const string ServerBaseUrl = "http://116.58.33.11:81";
 
-    
+        private static string ToAbsoluteServerUrl(string relativePath)
+        {
+            if (string.IsNullOrWhiteSpace(relativePath)) return relativePath;
+            if (relativePath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                relativePath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                return relativePath;
+            }
+            return ServerBaseUrl + (relativePath.StartsWith("/") ? relativePath : "/" + relativePath);
+        }
+
+
+
     #region FOS Wise Date/Month Wise Intake Delivered Report-1A
     [HttpGet]
         public ActionResult FosDateWiseReport()
@@ -3241,7 +3259,7 @@ namespace FOS.Web.UI.Controllers
                             EscapeCsvValue(GetSafeString(reader, "ActivityType")),
                             EscapeCsvValue(GetSafeString(reader, "CompetitorName")),
                             EscapeCsvValue(GetSafeString(reader, "Remarks")),
-                            EscapeCsvValue(GetSafeString(reader, "VideoUrl"))
+                            EscapeCsvValue(ToAbsoluteServerUrl(GetSafeString(reader, "VideoUrl")))
                             ));
                         }
                     }
@@ -3283,6 +3301,94 @@ namespace FOS.Web.UI.Controllers
                 Response.End();
             }
 
+        }
+
+        // Same filters/data as CompetitorReport's CSV export, but as an on-screen grid with
+        // a Play button per row that opens the video in a popup instead of downloading a CSV.
+        public ActionResult CompetitorActivityGrid()
+        {
+            var userID = Convert.ToInt32(Session["UserID"]);
+            List<RegionalHeadData> regionalHeadData;
+            if (userID == 1117)
+            {
+                regionalHeadData = db.RegionalHeads.Where(u => u.IsDeleted == false)
+                    .OrderBy(u => u.Name)
+                    .Select(u => new RegionalHeadData { ID = u.ID, Name = u.Name })
+                    .ToList();
+            }
+            else
+            {
+                regionalHeadData = FOS.Setup.ManageRegionalHead.GetTerritorialRegionalHeadList(userID);
+            }
+            regionalHeadData.Insert(0, new RegionalHeadData { ID = 0, Name = "All" });
+
+            int regId = FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser();
+            if (regId == 0)
+            {
+                regId = regionalHeadData.Select(r => r.ID).FirstOrDefault();
+            }
+
+            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageRegion.GetAllSOListRelatedtoregionalHeadID(regId, true);
+            SaleOfficerObj.Insert(0, new SaleOfficer { ID = 0, Name = "All" });
+
+            var objJob = new JobsData
+            {
+                SaleOfficer = SaleOfficerObj,
+                RegionalHead = regionalHeadData
+            };
+            return View(objJob);
+        }
+
+        public JsonResult CompetitorActivityGridData(string StartingDate, string EndingDate, int TID, int fosid)
+        {
+            try
+            {
+                DateTime start = Convert.ToDateTime(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
+                DateTime end = Convert.ToDateTime(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate);
+                DateTime final = end.AddDays(1);
+
+                var rows = new List<object>();
+
+                using (FOSDataModel dbContext = new FOSDataModel())
+                using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
+                using (var cmd = new SqlCommand("dbo.usp_GetCompetitorReport", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@DateFrom", start);
+                    cmd.Parameters.AddWithValue("@DateTo", final);
+                    cmd.Parameters.AddWithValue("@SOID", fosid);
+                    cmd.Parameters.AddWithValue("@RegionalHeadID", TID);
+
+                    conn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string videoUrl = ToAbsoluteServerUrl(GetSafeString(reader, "VideoUrl"));
+                            rows.Add(new
+                            {
+                                SubmittedDate = GetSafeString(reader, "SubmittedDate"),
+                                RegionalHead = GetSafeString(reader, "RegionalHead"),
+                                SOName = GetSafeString(reader, "SOName"),
+                                Zone = GetSafeString(reader, "Zone"),
+                                City = GetSafeString(reader, "City"),
+                                ActivityType = GetSafeString(reader, "ActivityType"),
+                                CompetitorName = GetSafeString(reader, "CompetitorName"),
+                                Remarks = GetSafeString(reader, "Remarks"),
+                                VideoUrl = videoUrl,
+                                HasVideo = !string.IsNullOrEmpty(videoUrl)
+                            });
+                        }
+                    }
+                }
+
+                return Json(new { data = rows }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception exp)
+            {
+                Log.Instance.Error(exp, "CompetitorActivityGridData Failed");
+                return Json(new { error = "Failed to load competitor activities: " + exp.Message }, JsonRequestBehavior.AllowGet);
+            }
         }
 
         #endregion
