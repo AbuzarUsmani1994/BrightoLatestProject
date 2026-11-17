@@ -120,7 +120,10 @@ namespace FOS.Web.UI.Controllers
         {
             string prompt = "Extract the date range this question is asking about. Reply with EXACTLY one of: " +
                 "today, yesterday, this_week, last_week, this_month, last_month - or a specific date in YYYY-MM-DD " +
-                "format if one is mentioned. If no date is mentioned, reply exactly: today. " +
+                "format if a specific day is mentioned - or a specific month in YYYY-MM format if a month name is " +
+                "mentioned without a specific day (e.g. \"September\", \"Sep claims\", \"August 2026\") - use the " +
+                "most recent occurrence of that month that is not in the future if no year is given (today is " +
+                DateTime.Today.ToString("yyyy-MM-dd") + "). If no date is mentioned, reply exactly: today. " +
                 "Reply with ONLY that value, nothing else.\n\nQuestion: " + question;
 
             string reply = CallClaude(prompt, 15);
@@ -170,6 +173,22 @@ namespace FOS.Web.UI.Controllers
                     {
                         start = specific;
                         end = specific.AddDays(1);
+                        return;
+                    }
+                    DateTime month;
+                    if (DateTime.TryParseExact(label, "yyyy-MM", System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.None, out month))
+                    {
+                        start = new DateTime(month.Year, month.Month, 1);
+                        // Defensive: a bare month name with no year given (e.g. "September") should
+                        // mean the most recent PAST occurrence, never a future one - if Haiku picked
+                        // the current year for a month that hasn't happened yet this year, roll back
+                        // one year rather than report on a month that doesn't have any data yet.
+                        if (start > today)
+                        {
+                            start = start.AddYears(-1);
+                        }
+                        end = start.AddMonths(1);
                         return;
                     }
                     start = today;
