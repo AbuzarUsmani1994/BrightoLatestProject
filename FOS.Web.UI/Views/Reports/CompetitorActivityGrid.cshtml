@@ -50,47 +50,36 @@
                 <h4>Competitor Activity Grid</h4>
                 <span class="tools"></span>
             </div>
-            <div class="widget-body" style="min-height: 100px;">
-                <div class="span5">
+            <div class="widget-body" style="min-height: 100px; padding: 20px;">
+                <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end;">
 
-                    <div class="control-group" style="margin-bottom: 14px;">
-                        <label class="control-label">Starting Date *</label>
-                        <div class="controls">
-                            <input class="text-box single-line" id="StartingDate1" name="StartingDate1" style="height: 22px; width: 202px; margin-bottom: 0px;">
-                        </div>
+                    <div>
+                        <label class="control-label" style="font-weight: 700; color: #b94a48; margin-bottom: 5px;">Starting Date *</label>
+                        <input class="text-box single-line" id="StartingDate1" name="StartingDate1" style="height: 22px; width: 160px; margin-bottom: 0px;">
                     </div>
 
-                    <div class="control-group" style="margin-bottom: 14px;">
-                        <label class="control-label">Ending Date *</label>
-                        <div class="controls">
-                            <input class="text-box single-line" id="StartingDate2" name="StartingDate2" style="height: 22px; width: 202px; margin-bottom: 0px;">
-                        </div>
+                    <div>
+                        <label class="control-label" style="font-weight: 700; color: #b94a48; margin-bottom: 5px;">Ending Date *</label>
+                        <input class="text-box single-line" id="StartingDate2" name="StartingDate2" style="height: 22px; width: 160px; margin-bottom: 0px;">
                     </div>
 
-                    <div class="control-group">
-                        <label class="control-label">Select Head *</label>
-                        <div class="controls">
-                            @Html.DropDownListFor(model => model.RegionalHeadID, new SelectList(Model.RegionalHead, "ID", "Name"), new { @class = "" })
-                        </div>
+                    <div>
+                        <label class="control-label" style="font-weight: 700; color: #b94a48; margin-bottom: 5px;">Select Head *</label>
+                        @Html.DropDownListFor(model => model.RegionalHeadID, new SelectList(Model.RegionalHead, "ID", "Name"), new { @class = "" })
                     </div>
 
-                    <div class="control-group" style="margin-bottom: 14px;">
-                        <label class="control-label">Sales Officer *</label>
-                        <div class="controls">
-                            @Html.DropDownListFor(model => model.SaleOfficerID, new SelectList(Model.SaleOfficer, "ID", "Name"), new { @class = "" })
-                        </div>
+                    <div>
+                        <label class="control-label" style="font-weight: 700; color: #b94a48; margin-bottom: 5px;">Sales Officer *</label>
+                        @Html.DropDownListFor(model => model.SaleOfficerID, new SelectList(Model.SaleOfficer, "ID", "Name"), new { @class = "" })
                     </div>
 
-                    <div class="control-group" style="border-top: 1px solid #e5e5e5;">
-                        <div class="form-actions" style="padding-left: 130px; padding-right: 0px;">
-                            <button type="button" id="btnSearch" class="btn btn-primary">
-                                <i class="icon-search icon-white" style="padding-right: 8px"></i><span>Search</span>
-                            </button>
-                        </div>
+                    <div>
+                        <button type="button" id="btnSearch" class="btn btn-primary">
+                            <i class="icon-search icon-white" style="padding-right: 8px"></i><span>Search</span>
+                        </button>
                     </div>
 
                 </div>
-                <div class="span5"></div>
             </div>
         </div>
     </div>
