@@ -78,7 +78,7 @@ namespace FOS.Web.UI.Controllers
                 }
                 if (domains.Contains("Visits"))
                 {
-                    summary["housingVisits"] = ToJObject(GetHousingVisitsSummary(soIds, soNames, start, end));
+                    summary["housingVisits"] = ToJObject(GetHousingVisitsSummary(headID, start, end));
                 }
                 if (domains.Contains("TradeVisits"))
                 {
@@ -358,28 +358,26 @@ namespace FOS.Web.UI.Controllers
                 });
         }
 
-        private DomainSummary GetHousingVisitsSummary(List<int> soIds, Dictionary<int, string> soNames, DateTime start, DateTime end)
+        // Wraps the same backend SP the real "Housing Visits" PDF/CSV report uses
+        // (Sp_OrderForPDFHousingVisitsBackend, see ReportsController around line 5115),
+        // instead of a thin ad-hoc query against Tbl_HousingVisits directly - that
+        // ad-hoc version only had internal bookkeeping fields (call-logged vs not,
+        // a raw SiteWon flag) with no real business meaning to a Regional Head.
+        // This SP carries the same fields the business actually reports on: estimated
+        // value, order volume, business status, scope/nature, etc.
+        private DomainSummary GetHousingVisitsSummary(int headID, DateTime start, DateTime end)
         {
-            var visits = db.Tbl_HousingVisits
-                .Where(v => v.IsActive == true && v.SOID != null && soIds.Contains(v.SOID.Value)
-                    && v.CreatedAt >= start && v.CreatedAt < end)
-                .ToList();
+            var visits = db.Sp_OrderForPDFHousingVisitsBackend(start, end, 0, headID).ToList();
 
-            var visitIds = visits.Select(v => v.ID).ToList();
-            var loggedVisitIds = visitIds.Any()
-                ? db.Tbl_SaveCall.Where(c => c.VisitID != null && visitIds.Contains(c.VisitID.Value))
-                    .Select(c => c.VisitID.Value).ToList()
-                : new List<int>();
-            var loggedSet = new HashSet<int>(loggedVisitIds);
-
-            var summary = DomainSummaryProcessor.SummarizeBySO(
+            return DomainSummaryProcessor.SummarizeBySO(
                 visits,
-                soNameSelector: v => v.SOID.HasValue && soNames.ContainsKey(v.SOID.Value) ? soNames[v.SOID.Value] : null,
-                groupKeySelector: v => loggedSet.Contains(v.ID) ? "CallLogged" : "PendingCall");
-
-            summary.ByGroup["SiteWon"] = visits.Count(v => v.SiteWon == true);
-
-            return summary;
+                soNameSelector: v => v.SaleOfficerName,
+                groupKeySelector: v => v.BusinessStatus,
+                sumSelectors: new Dictionary<string, Func<Sp_OrderForPDFHousingVisitsBackend_Result, decimal?>>
+                {
+                    ["EstimatedValue"] = v => v.EstimatedValue,
+                    ["OrderVolume"] = v => v.OrderVolume
+                });
         }
 
         private class AttendanceRow
