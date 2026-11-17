@@ -197,6 +197,29 @@ namespace FOS.Web.UI.Controllers.API
                 db.Tbl_ComplaintUpdate.Add(complaintUpdate);
                 db.SaveChanges();
 
+                // Seed the complaint's initial quality-review status. ComplaintSuggesionAdded
+                // is otherwise only written when a quality reviewer submits their first review
+                // (ComplaintController.AddSuggestion) - until then, Manage Complaints' status
+                // showed blank instead of "In Progress" for a brand-new complaint. Same status
+                // codes as that existing insert (1=In Progress, 2=On Hold, 3=Resolved, 4=Duplicate).
+                string soName = db.SaleOfficers.Where(s => s.ID == jobDet.SOID).Select(s => s.Name).FirstOrDefault();
+                db.ComplaintSuggesionAddeds.Add(new ComplaintSuggesionAdded
+                {
+                    ComplaintID = jobDet.ID,
+                    ComplaintNo = complaintUpdate.ComplaintNumber,
+                    ComplaintSubmitby = soName,
+                    ComplaintSubmitDate = jobDet.CreatedOn,
+                    IsVerified = 0,
+                    IsVerifiedName = "In Progress",
+                    ComplaintStatus = 1,
+                    ComplaintStatusName = "In Progress",
+                    IsActive = true,
+                    IsPublished = false,
+                    CreatedDate = DateTime.Now,
+                    UpdatedDate = DateTime.Now
+                });
+                db.SaveChanges();
+
                 // Save Nature of Complaint records
                 if (rm.NatureOfComplaintModel != null && rm.NatureOfComplaintModel.Count > 0)
                 {
