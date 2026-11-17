@@ -2921,7 +2921,14 @@ namespace FOS.Setup
                                               latestVisit.CreatedAt >= FromDate &&
                                               latestVisit.CreatedAt < ToDate &&
                                               latestVisit.AgainCall != null && latestVisit.AgainCall != "" &&
-                                              (string.IsNullOrEmpty(callTimeline) || latestVisit.AgainCall == callTimeline)
+                                              // Case/whitespace-insensitive: the real stored values (confirmed via
+                                              // SELECT DISTINCT AgainCall FROM Tbl_HousingVisits) are "Immediate",
+                                              // "1 Week", "2 Weeks", "3 Weeks", "Not Applicable" - the filter dropdown
+                                              // previously sent "1 week"/"2 week"/"3 week"/"N/A", which matched none
+                                              // of the plural/"Not Applicable" ones under exact ==. Trim+ToUpper on
+                                              // both sides as a safety net against any future wording drift too.
+                                              (string.IsNullOrEmpty(callTimeline) ||
+                                               latestVisit.AgainCall.Trim().ToUpper() == callTimeline.Trim().ToUpper())
                                               )
                                        select new JobsDetailData
                                        {
@@ -2949,7 +2956,8 @@ namespace FOS.Setup
                                            // AgainCall timeline value (that's the filter criterion, not
                                            // a call outcome).
                                            CallerName = latestCall != null ? latestCall.CallerName : null,
-                                           CallStatus = latestCall != null ? latestCall.NatureOfCall : null
+                                           CallStatus = latestCall != null ? latestCall.NatureOfCall : null,
+                                           CallTimeline = latestVisit.AgainCall
                                        })
                                        .ToList();
                     }

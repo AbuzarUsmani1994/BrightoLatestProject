@@ -87,10 +87,10 @@
                             <select id="CallTimeline" name="CallTimeline">
                                 <option value="">-- All --</option>
                                 <option value="Immediate">Immediate</option>
-                                <option value="1 week">1 week</option>
-                                <option value="2 week">2 week</option>
-                                <option value="3 week">3 week</option>
-                                <option value="N/A">N/A</option>
+                                <option value="1 Week">1 Week</option>
+                                <option value="2 Weeks">2 Weeks</option>
+                                <option value="3 Weeks">3 Weeks</option>
+                                <option value="Not Applicable">Not Applicable</option>
                             </select>
                         </span>
 
@@ -165,6 +165,10 @@
                                 </th>
                                 <th style="width:10% !important">
                                     Call Status
+                                </th>
+
+                                <th style="width:10% !important">
+                                    Call Timeline
                                 </th>
 
                                 <th style="width:16% !important">
@@ -1377,6 +1381,7 @@ $.ajax({
 
 
                 { "data": "CallStatus", "sClass": "center-align-td", },
+                { "data": "CallTimeline", "sClass": "center-align-td", },
 
             {
 

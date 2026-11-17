@@ -265,6 +265,9 @@ namespace FOS.Shared
         public string PainterAddress { get; set; }
         public string CallerName { get; set; }  // Make sure this exists with get; set;
         public string CallStatus { get; set; }  // Make sure this exists with get; set;
+        // Only populated for AgentCalling's "Call to customer" data type (Tbl_HousingVisits.AgainCall
+        // on the customer's latest visit) - blank for the other 3 data types, which don't set it.
+        public string CallTimeline { get; set; }
 
 
         public List<DealerData> Dealers { get; set; }
