@@ -3457,6 +3457,18 @@ namespace FOS.Web.UI.Controllers
               WHERE l.CreatedOn >= @StartDate AND l.CreatedOn < @EndDate
               ORDER BY l.CreatedOn DESC";
 
+        private const string WelcomeSmsReportExportSql =
+            @"SELECT l.ID, l.CustomerID, r.ShopName AS CustomerName,
+                     l.PhoneNo, l.Message, l.Status, l.ErrorDetail, l.CreatedOn,
+                     so.Name AS SaleOfficerName, reg.Name AS RegionName, c.Name AS CityName
+              FROM dbo.Tbl_BusinessAffiliateWelcomeMessageLog l
+              LEFT JOIN dbo.Retailers r ON r.ID = l.CustomerID
+              LEFT JOIN dbo.SaleOfficers so ON so.ID = r.SaleOfficerID
+              LEFT JOIN dbo.Regions reg ON reg.ID = r.RegionID
+              LEFT JOIN dbo.Cities c ON c.ID = r.CityID
+              WHERE l.CreatedOn >= @StartDate AND l.CreatedOn < @EndDate
+              ORDER BY l.CreatedOn DESC";
+
         public ActionResult WelcomeSmsReportExport(string StartingDate, string EndingDate)
         {
             var userID = Convert.ToInt32(Session["UserID"]);
@@ -3472,11 +3484,11 @@ namespace FOS.Web.UI.Controllers
             DateTime end = Convert.ToDateTime(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate).AddDays(1);
 
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("\"Customer\",\"Phone\",\"Message\",\"Status\",\"Error Detail\",\"Sent On\"");
+            sb.AppendLine("\"Customer\",\"Phone\",\"Message\",\"Status\",\"Error Detail\",\"Sent On\",\"Sale Officer\",\"Region\",\"City\"");
 
             using (FOSDataModel dbContext = new FOSDataModel())
             using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
-            using (var cmd = new SqlCommand(WelcomeSmsReportSql, conn))
+            using (var cmd = new SqlCommand(WelcomeSmsReportExportSql, conn))
             {
                 cmd.Parameters.AddWithValue("@StartDate", start);
                 cmd.Parameters.AddWithValue("@EndDate", end);
@@ -3491,13 +3503,16 @@ namespace FOS.Web.UI.Controllers
                         {
                             customerName = "(#" + GetSafeString(reader, "CustomerID") + ")";
                         }
-                        sb.AppendLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\"",
+                        sb.AppendLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\"",
                             EscapeCsvValue(customerName),
                             EscapeCsvValue(GetSafeString(reader, "PhoneNo")),
                             EscapeCsvValue(GetSafeString(reader, "Message")),
                             EscapeCsvValue(GetSafeString(reader, "Status")),
                             EscapeCsvValue(GetSafeString(reader, "ErrorDetail")),
-                            EscapeCsvValue(GetSafeString(reader, "CreatedOn"))));
+                            EscapeCsvValue(GetSafeString(reader, "CreatedOn")),
+                            EscapeCsvValue(GetSafeString(reader, "SaleOfficerName")),
+                            EscapeCsvValue(GetSafeString(reader, "RegionName")),
+                            EscapeCsvValue(GetSafeString(reader, "CityName"))));
                     }
                 }
             }
