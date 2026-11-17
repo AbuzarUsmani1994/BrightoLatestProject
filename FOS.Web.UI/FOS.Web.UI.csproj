@@ -2379,6 +2379,7 @@
     <Content Include="Views\Reports\BusinessAffiliateReport.cshtml" />
     <Content Include="Views\Reports\CompetitorReport.cshtml" />
     <Content Include="Views\Reports\CompetitorActivityGrid.cshtml" />
+    <Content Include="Views\Reports\WelcomeSmsReport.cshtml" />
     <Content Include="Views\Reports\SOWiseTargetAllocationReport.cshtml" />
     <Content Include="Views\SaleOfficer\SOTransfer.cshtml" />
     <Content Include="Views\Item\ProductCategory.cshtml" />

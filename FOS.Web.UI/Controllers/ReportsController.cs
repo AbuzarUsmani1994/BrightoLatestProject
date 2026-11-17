@@ -3391,6 +3391,66 @@ namespace FOS.Web.UI.Controllers
             }
         }
 
+        // Date-ranged view of Tbl_BusinessAffiliateWelcomeMessageLog - the welcome SMS
+        // sent (via the Zong CBS gateway) when a new Retailer/customer is registered -
+        // so this can be checked without SSMS access.
+        public ActionResult WelcomeSmsReport()
+        {
+            return View();
+        }
+
+        public JsonResult WelcomeSmsReportData(string StartingDate, string EndingDate)
+        {
+            try
+            {
+                DateTime start = Convert.ToDateTime(string.IsNullOrEmpty(StartingDate) ? DateTime.Now.ToString() : StartingDate);
+                DateTime end = Convert.ToDateTime(string.IsNullOrEmpty(EndingDate) ? DateTime.Now.ToString() : EndingDate).AddDays(1);
+
+                var rows = new List<object>();
+
+                using (FOSDataModel dbContext = new FOSDataModel())
+                using (var conn = new SqlConnection(dbContext.Database.Connection.ConnectionString))
+                using (var cmd = new SqlCommand(
+                    @"SELECT l.ID, l.CustomerID, r.Name AS CustomerName, r.ShopName, r.Phone1,
+                             l.PhoneNo, l.Message, l.Status, l.ErrorDetail, l.CreatedOn
+                      FROM dbo.Tbl_BusinessAffiliateWelcomeMessageLog l
+                      LEFT JOIN dbo.Retailers r ON r.ID = l.CustomerID
+                      WHERE l.CreatedOn >= @StartDate AND l.CreatedOn < @EndDate
+                      ORDER BY l.CreatedOn DESC", conn))
+                {
+                    cmd.Parameters.AddWithValue("@StartDate", start);
+                    cmd.Parameters.AddWithValue("@EndDate", end);
+
+                    conn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            rows.Add(new
+                            {
+                                ID = reader["ID"],
+                                CustomerID = reader["CustomerID"],
+                                CustomerName = GetSafeString(reader, "CustomerName"),
+                                ShopName = GetSafeString(reader, "ShopName"),
+                                PhoneNo = GetSafeString(reader, "PhoneNo"),
+                                Message = GetSafeString(reader, "Message"),
+                                Status = GetSafeString(reader, "Status"),
+                                ErrorDetail = GetSafeString(reader, "ErrorDetail"),
+                                CreatedOn = GetSafeString(reader, "CreatedOn")
+                            });
+                        }
+                    }
+                }
+
+                return Json(new { data = rows }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception exp)
+            {
+                Log.Instance.Error(exp, "WelcomeSmsReportData Failed");
+                return Json(new { error = "Failed to load welcome SMS log: " + exp.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
         #endregion
 
 
