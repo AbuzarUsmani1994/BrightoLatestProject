@@ -105,13 +105,6 @@ namespace FOS.Web.UI.Controllers
 
             string narrative = Narrate(question, summary, start, end);
 
-            // Temporary: CallClaude only logs on failure, so a successful call that still
-            // produces a wrong-looking answer (e.g. missing SO-wise bullets) leaves no trace
-            // to diagnose from. Log the exact data sent and what Haiku said back, to check
-            // against real test questions instead of guessing why.
-            Log.Instance.Info("Ask AI debug - Question: " + question + " | Domains: " + string.Join(",", domains)
-                + " | JSON: " + summary.ToString(Formatting.None) + " | Narrative: " + narrative);
-
             return Json(new { numbers = summary, narrative = narrative });
         }
 
@@ -435,6 +428,10 @@ namespace FOS.Web.UI.Controllers
         // info. Queries SaleOfficer directly rather than the existing SaleOfficerDetailRpt proc,
         // which also selects the plaintext Password column - deliberately never selected here.
         // No Email field exists anywhere on SaleOfficer in this system.
+        // Phone numbers are deliberately left out here - unlike the other domains (which
+        // go through DomainSummaryProcessor and only ever carry aggregated counts/sums),
+        // this builds the JSON sent to Claude directly from the SaleOfficer rows, so this
+        // is the one place that controls what PII reaches the external API for "Team" queries.
         private JArray GetTeamInfo(List<SaleOfficer> team)
         {
             var array = new JArray();
@@ -444,8 +441,6 @@ namespace FOS.Web.UI.Controllers
                 {
                     ["name"] = so.Name,
                     ["userName"] = so.UserName,
-                    ["phone1"] = so.Phone1,
-                    ["phone2"] = so.Phone2,
                     ["active"] = so.IsActive
                 });
             }
