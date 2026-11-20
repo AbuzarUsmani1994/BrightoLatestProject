@@ -182,7 +182,11 @@ namespace FOS.Web.UI.Controllers.API
         // Welcome SMS for a newly-registered Retailer (customer). Never lets a gateway
         // failure affect the registration response - the customer record is already
         // saved by the time this runs, so any error here is only logged.
-        private const string WelcomeMessageText =
+        //
+        // Fallback only - the real template now lives in dbo.Tbl_SmsConfiguration's
+        // Template1 column (Setup/SmsConfiguration screen), so it's editable without
+        // a redeploy. This constant only matters until that row is actually filled in.
+        private const string DefaultWelcomeMessageText =
             "برائیٹو پینٹس کی جانب سے خوش آمدید\n" +
             "برائیٹو پینٹس پاکستان کا پہلا ملٹی نیشنل پینٹ برانڈ ہے جو 30 سے زائد ممالک میں دستیاب ہے\n" +
             "مزید معلومات کے لیےرابطہ فرمائیں\n" +
@@ -194,6 +198,9 @@ namespace FOS.Web.UI.Controllers.API
             string status = "Failed";
             string errorDetail = null;
             string normalizedPhone = FOS.Web.UI.Common.CBSSmsSender.NormalizePhoneForCBS(rawContactNumber);
+
+            var config = FOS.Setup.ManageSmsConfiguration.Get();
+            string messageText = !string.IsNullOrEmpty(config.Template1) ? config.Template1 : DefaultWelcomeMessageText;
 
             try
             {
@@ -207,7 +214,7 @@ namespace FOS.Web.UI.Controllers.API
                     // say needs Unicode SMS encoding - sending it as UniCode="0" (GSM_7,
                     // English-only) is exactly the kind of mismatch a carrier can silently
                     // drop instead of delivering.
-                    var result = FOS.Web.UI.Common.CBSSmsSender.SendQuickSMS(normalizedPhone, WelcomeMessageText, "1");
+                    var result = FOS.Web.UI.Common.CBSSmsSender.SendQuickSMS(normalizedPhone, messageText, "1");
                     if (result.Success)
                     {
                         status = "Sent";
@@ -231,10 +238,10 @@ namespace FOS.Web.UI.Controllers.API
                 + ", Phone=" + normalizedPhone + ", Status=" + status
                 + (errorDetail != null ? ", Detail=" + errorDetail : ""));
 
-            LogWelcomeMessage(customerId, normalizedPhone, status, errorDetail);
+            LogWelcomeMessage(customerId, normalizedPhone, messageText, status, errorDetail);
         }
 
-        private void LogWelcomeMessage(int customerId, string phoneNo, string status, string errorDetail)
+        private void LogWelcomeMessage(int customerId, string phoneNo, string messageText, string status, string errorDetail)
         {
             try
             {
@@ -255,7 +262,7 @@ namespace FOS.Web.UI.Controllers.API
                 {
                     cmd.Parameters.Add(new SqlParameter("@CustomerID", SqlDbType.Int) { Value = customerId });
                     cmd.Parameters.Add(new SqlParameter("@PhoneNo", SqlDbType.VarChar, 20) { Value = (object)phoneNo ?? DBNull.Value });
-                    cmd.Parameters.Add(new SqlParameter("@Message", SqlDbType.NVarChar, 1000) { Value = WelcomeMessageText });
+                    cmd.Parameters.Add(new SqlParameter("@Message", SqlDbType.NVarChar, 1000) { Value = (object)messageText ?? DBNull.Value });
                     cmd.Parameters.Add(new SqlParameter("@Status", SqlDbType.VarChar, 20) { Value = (object)status ?? DBNull.Value });
                     cmd.Parameters.Add(new SqlParameter("@ErrorDetail", SqlDbType.NVarChar, 500) { Value = (object)errorDetail ?? DBNull.Value });
                     conn.Open();

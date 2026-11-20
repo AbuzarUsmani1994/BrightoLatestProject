@@ -2148,6 +2148,7 @@
     <Content Include="Views\AdminPanel\Login.cshtml" />
     <Content Include="Views\AdminPanel\Users.cshtml" />
     <Content Include="Views\Setup\Region.cshtml" />
+    <Content Include="Views\Setup\SmsConfiguration.cshtml" />
     <Content Include="Views\Setup\FinancialYear.cshtml" />
     <Content Include="Views\Setup\City.cshtml" />
     <Content Include="Views\Setup\Area.cshtml" />

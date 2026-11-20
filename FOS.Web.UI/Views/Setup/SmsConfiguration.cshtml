@@ -1,0 +1,182 @@
+@model FOS.Shared.SmsConfigurationData
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!-- BEGIN PAGE HEADER-->
+<div class="row-fluid">
+    <div class="span12">
+        <h3 class="page-title"></h3>
+        <ul class="breadcrumb">
+            <li>
+                <a href="#">SMS Configuration</a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="row-fluid">
+    <div class="span12">
+        <div class="widget green" style="min-height: 100px;">
+            <div class="widget-title">
+                <h4>SMS Configuration</h4>
+                <span class="tools"></span>
+            </div>
+            <div class="widget-body" style="padding: 20px;">
+
+                <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; margin-bottom: 10px;">
+
+                    <div style="flex: 1 1 320px; min-width: 260px;">
+                        <label class="control-label" style="font-weight: 700; color: #b94a48; margin-bottom: 5px;">URL *</label>
+                        <input type="text" class="text-box single-line" id="Url" value="@Model.Url" style="height: 30px; width: 100%; box-sizing: border-box;">
+                    </div>
+
+                    <div style="flex: 1 1 200px; min-width: 180px;">
+                        <label class="control-label" style="font-weight: 700; color: #b94a48; margin-bottom: 5px;">Login *</label>
+                        <input type="text" class="text-box single-line" id="LoginId" value="@Model.LoginId" style="height: 30px; width: 100%; box-sizing: border-box;">
+                    </div>
+
+                    <div style="flex: 1 1 220px; min-width: 200px;">
+                        <label class="control-label" style="font-weight: 700; color: #b94a48; margin-bottom: 5px;">Password *</label>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="password" class="text-box single-line" id="Password" value="@Model.Password" style="height: 30px; width: 100%; box-sizing: border-box;">
+                            <button type="button" id="btnTogglePassword" class="btn btn-small" style="height: 30px;" title="Show/hide password">
+                                <i class="icon-eye-open"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="flex: 1 1 160px; min-width: 140px;">
+                        <label class="control-label" style="font-weight: 700; color: #b94a48; margin-bottom: 5px;">Mask *</label>
+                        <input type="text" class="text-box single-line" id="Mask" value="@Model.Mask" style="height: 30px; width: 100%; box-sizing: border-box;">
+                    </div>
+
+                    <div>
+                        <button type="button" id="btnSaveCredentials" class="btn btn-primary" style="height: 30px;">Save</button>
+                    </div>
+
+                </div>
+
+                <hr />
+
+                <div style="display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 10px;">
+
+                    <div>
+                        <label class="control-label" style="font-weight: 700; color: #b94a48; margin-bottom: 5px;">SMS Template 1</label>
+                        <textarea id="Template1" data-field="Template1" rows="4" style="width: 100%; box-sizing: border-box; resize: vertical;">@Model.Template1</textarea>
+                        <button type="button" class="btn btn-primary btn-save-template" data-field="Template1" style="margin-top: 6px;">Save</button>
+                    </div>
+
+                    <div>
+                        <label class="control-label" style="font-weight: 700; color: #b94a48; margin-bottom: 5px;">SMS Template 2</label>
+                        <textarea id="Template2" data-field="Template2" rows="4" style="width: 100%; box-sizing: border-box; resize: vertical;">@Model.Template2</textarea>
+                        <button type="button" class="btn btn-primary btn-save-template" data-field="Template2" style="margin-top: 6px;">Save</button>
+                    </div>
+
+                    <div>
+                        <label class="control-label" style="font-weight: 700; color: #b94a48; margin-bottom: 5px;">SMS Template 3</label>
+                        <textarea id="Template3" data-field="Template3" rows="4" style="width: 100%; box-sizing: border-box; resize: vertical;">@Model.Template3</textarea>
+                        <button type="button" class="btn btn-primary btn-save-template" data-field="Template3" style="margin-top: 6px;">Save</button>
+                    </div>
+
+                    <div>
+                        <label class="control-label" style="font-weight: 700; color: #b94a48; margin-bottom: 5px;">SMS Template 4</label>
+                        <textarea id="Template4" data-field="Template4" rows="4" style="width: 100%; box-sizing: border-box; resize: vertical;">@Model.Template4</textarea>
+                        <button type="button" class="btn btn-primary btn-save-template" data-field="Template4" style="margin-top: 6px;">Save</button>
+                    </div>
+
+                    <div>
+                        <label class="control-label" style="font-weight: 700; color: #b94a48; margin-bottom: 5px;">SMS Template 5</label>
+                        <textarea id="Template5" data-field="Template5" rows="4" style="width: 100%; box-sizing: border-box; resize: vertical;">@Model.Template5</textarea>
+                        <button type="button" class="btn btn-primary btn-save-template" data-field="Template5" style="margin-top: 6px;">Save</button>
+                    </div>
+
+                </div>
+
+                @if (Model.UpdatedOn.HasValue)
+                {
+                    <div style="margin-top: 20px;">
+                        <span class="muted">Last updated: @Model.UpdatedOn.Value.ToString("dd-MMM-yyyy hh:mm tt")</span>
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+
+        $("#btnTogglePassword").click(function () {
+            var $pwd = $("#Password");
+            $pwd.attr("type", $pwd.attr("type") === "password" ? "text" : "password");
+        });
+
+        // URL/Login/Password save together as one group.
+        $("#btnSaveCredentials").click(function () {
+            var $btn = $(this);
+            var url = $("#Url").val();
+            var loginId = $("#LoginId").val();
+            var password = $("#Password").val();
+            var mask = $("#Mask").val();
+
+            if (url == "" || loginId == "" || password == "" || mask == "") {
+                alertify.error("URL, Login, Password and Mask are required.");
+                return;
+            }
+
+            $btn.prop("disabled", true);
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("SaveSmsCredentials", "Setup")',
+                data: { url: url, loginId: loginId, password: password, mask: mask },
+                success: function (result) {
+                    if (result.success) {
+                        alertify.success("URL, Login, Password and Mask saved.");
+                    } else {
+                        alertify.error(result.error || "Failed to save.");
+                    }
+                },
+                error: function () {
+                    alertify.error("Failed to save.");
+                },
+                complete: function () {
+                    $btn.prop("disabled", false);
+                }
+            });
+        });
+
+        // Each template saves on its own - clicking a template's Save button only
+        // sends that one template's text.
+        $(".btn-save-template").click(function () {
+            var $btn = $(this);
+            var field = $btn.data("field");
+            var value = $("#" + field).val();
+
+            $btn.prop("disabled", true);
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("SaveSmsTemplateField", "Setup")',
+                data: { field: field, value: value },
+                success: function (result) {
+                    if (result.success) {
+                        alertify.success(field + " saved.");
+                    } else {
+                        alertify.error(result.error || ("Failed to save " + field + "."));
+                    }
+                },
+                error: function () {
+                    alertify.error("Failed to save " + field + ".");
+                },
+                complete: function () {
+                    $btn.prop("disabled", false);
+                }
+            });
+        });
+
+    });
+</script>

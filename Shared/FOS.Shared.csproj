@@ -124,6 +124,7 @@
     <Compile Include="Diagnostics\ObjectCopier.cs" />
     <Compile Include="Diagnostics\WebLogger.cs" />
     <Compile Include="JobsData.cs" />
+    <Compile Include="SmsConfigurationData.cs" />
     <Compile Include="PainterAssociationData.cs" />
     <Compile Include="ProductNatureData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

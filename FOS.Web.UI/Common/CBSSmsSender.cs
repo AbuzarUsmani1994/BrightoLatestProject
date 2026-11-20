@@ -10,7 +10,11 @@ namespace FOS.Web.UI.Common
     // RetailerOrdersController.SendCustomerSMS so the gateway call isn't duplicated.
     public static class CBSSmsSender
     {
-        private const string SendQuickSmsUrl = "https://cbs.zong.com.pk/reachrestapi/home/SendQuickSMS";
+        // Fallback only - Url/LoginId/Password/Mask now live in dbo.Tbl_SmsConfiguration
+        // (Setup/SmsConfiguration screen) so they're editable without a redeploy. This
+        // constant (and the Web.config AppSettings below) only matter until that row is
+        // actually filled in, or for whichever of the four fields is still blank there.
+        private const string DefaultSendQuickSmsUrl = "https://cbs.zong.com.pk/reachrestapi/home/SendQuickSMS";
 
         public class CBSResult
         {
@@ -45,13 +49,22 @@ namespace FOS.Web.UI.Common
         // silently dropped by the carrier instead of delivered.
         public static CBSResult SendQuickSMS(string destination, string message, string uniCode)
         {
-            var cbsLoginId = System.Configuration.ConfigurationManager.AppSettings["CBSLoginId"];
-            var cbsLoginPassword = System.Configuration.ConfigurationManager.AppSettings["CBSLoginPassword"];
-            var cbsMask = System.Configuration.ConfigurationManager.AppSettings["CBSMask"];
+            var config = FOS.Setup.ManageSmsConfiguration.Get();
+
+            var sendQuickSmsUrl = !string.IsNullOrEmpty(config.Url) ? config.Url : DefaultSendQuickSmsUrl;
+            var cbsLoginId = !string.IsNullOrEmpty(config.LoginId)
+                ? config.LoginId
+                : System.Configuration.ConfigurationManager.AppSettings["CBSLoginId"];
+            var cbsLoginPassword = !string.IsNullOrEmpty(config.Password)
+                ? config.Password
+                : System.Configuration.ConfigurationManager.AppSettings["CBSLoginPassword"];
+            var cbsMask = !string.IsNullOrEmpty(config.Mask)
+                ? config.Mask
+                : System.Configuration.ConfigurationManager.AppSettings["CBSMask"];
 
             if (string.IsNullOrEmpty(cbsLoginId) || string.IsNullOrEmpty(cbsLoginPassword) || string.IsNullOrEmpty(cbsMask))
             {
-                throw new InvalidOperationException("CBSLoginId / CBSLoginPassword / CBSMask are not configured in Web.config <appSettings>.");
+                throw new InvalidOperationException("CBS login/password/mask are not configured - set them on the SMS Configuration screen (or CBSLoginId/CBSLoginPassword/CBSMask in Web.config <appSettings> as a fallback).");
             }
 
             var payload = new
@@ -79,7 +92,7 @@ namespace FOS.Web.UI.Common
                     Encoding.UTF8,
                     "application/json");
 
-                var response = client.PostAsync(SendQuickSmsUrl, content).Result;
+                var response = client.PostAsync(sendQuickSmsUrl, content).Result;
                 rawResponse = response.Content.ReadAsStringAsync().Result;
             }
 

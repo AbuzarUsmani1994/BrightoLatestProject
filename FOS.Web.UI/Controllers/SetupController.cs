@@ -131,6 +131,49 @@ namespace FOS.Web.UI.Controllers
         }
         #endregion
 
+        #region SMS CONFIGURATION
+
+        [CustomAuthorize]
+        public ActionResult SmsConfiguration()
+        {
+            var model = ManageSmsConfiguration.Get();
+            return View(model);
+        }
+
+        [HttpPost]
+        public JsonResult SaveSmsCredentials(string url, string loginId, string password, string mask)
+        {
+            try
+            {
+                int userID = Convert.ToInt32(Session["UserID"]);
+                ManageSmsConfiguration.SaveCredentials(url, loginId, password, mask, userID);
+                return Json(new { success = true });
+            }
+            catch (Exception exp)
+            {
+                Log.Instance.Error(exp, "SaveSmsCredentials Failed");
+                return Json(new { success = false, error = "Failed to save: " + exp.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult SaveSmsTemplateField(string field, string value)
+        {
+            try
+            {
+                int userID = Convert.ToInt32(Session["UserID"]);
+                ManageSmsConfiguration.SaveTemplateField(field, value, userID);
+                return Json(new { success = true });
+            }
+            catch (Exception exp)
+            {
+                Log.Instance.Error(exp, "SaveSmsTemplateField Failed (" + field + ")");
+                return Json(new { success = false, error = "Failed to save: " + exp.Message });
+            }
+        }
+
+        #endregion
+
         #region REGION
 
         [CustomAuthorize]

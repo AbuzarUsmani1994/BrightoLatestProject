@@ -111,6 +111,7 @@
     <Compile Include="ManageJobs.cs" />
     <Compile Include="ManagePainter.cs" />
     <Compile Include="ManageRegionalHead.cs" />
+    <Compile Include="ManageSmsConfiguration.cs" />
     <Compile Include="ManageRetailer.cs" />
     <Compile Include="ManageComplaint.cs" />
     <Compile Include="ManageQrActivity.cs" />
