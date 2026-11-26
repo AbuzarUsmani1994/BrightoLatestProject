@@ -2659,6 +2659,10 @@ namespace FOS.Web.UI.Controllers
                         var activeCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 3 && x.Status == true).Select(x => x.ID).Count();
                         var completedCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 4 && x.Status == true).Select(x => x.ID).Count();
                         var lostCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 5 && x.Status == true).Select(x => x.ID).Count();
+                        // Retailers with a SegmentTypeID (counted in Total Customers) but no
+                        // BusinessStatusID at all - without this, Prospects+Existing+Active+
+                        // Completed+Lost silently undercounts Total Customers.
+                        var unassignedCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == null && x.Status == true).Select(x => x.ID).Count();
 
                         string regionalHeadName = (so != null && so.RegionalHeadID.HasValue)
                             ? db.RegionalHeads.Where(r => r.ID == so.RegionalHeadID.Value).Select(r => r.Name).FirstOrDefault()
@@ -2685,6 +2689,7 @@ namespace FOS.Web.UI.Controllers
                         comlist.Active = activeCount;
                         comlist.Completed = completedCount;
                         comlist.Lost = lostCount;
+                        comlist.Unassigned = unassignedCount;
                         comlist.TotalCustomers = tradecount + Housingcount + Corporatecount + AllPurposecount;
 
                         comlist.Trade = tradecount;
@@ -2707,7 +2712,7 @@ namespace FOS.Web.UI.Controllers
                 
                 StringWriter sw = new StringWriter();
 
-                sw.WriteLine("\"Saleofficer Name\",\"SO Code\",\"Segment\",\"Regional Head\",\"Region\",\"Primary City\",\"Prospects\",\"Existing\",\"Active\",\"Completed\",\"Lost\",\"Total Customers\",\"Trade \",\"Housing \",\"Corporate \",\"AllPurpose \",\"Trade Visits \",\"Housing Visits \",\"Corporate Visits \",\"All Purpose Visits \",\"Total Visits \"");
+                sw.WriteLine("\"Saleofficer Name\",\"SO Code\",\"Segment\",\"Regional Head\",\"Region\",\"Primary City\",\"Prospects\",\"Existing\",\"Active\",\"Completed\",\"Lost\",\"Unassigned\",\"Total Customers\",\"Trade \",\"Housing \",\"Corporate \",\"AllPurpose \",\"Trade Visits \",\"Housing Visits \",\"Corporate Visits \",\"All Purpose Visits \",\"Total Visits \"");
 
                 Response.ClearContent();
                 Response.AddHeader("content-disposition", "attachment;filename=SSSaleSummaryReport" + DateTime.Now + ".csv");
@@ -2716,7 +2721,7 @@ namespace FOS.Web.UI.Controllers
 
                 foreach (var retailer in list)
                 {
-                    sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\",\"{13}\",\"{14}\",\"{15}\",\"{16}\",\"{17}\",\"{18}\",\"{19}\",\"{20}\"",
+                    sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\",\"{13}\",\"{14}\",\"{15}\",\"{16}\",\"{17}\",\"{18}\",\"{19}\",\"{20}\",\"{21}\"",
 
                     retailer.Name,
                     retailer.SOCode,
@@ -2729,6 +2734,7 @@ namespace FOS.Web.UI.Controllers
                     retailer.Active,
                     retailer.Completed,
                     retailer.Lost,
+                    retailer.Unassigned,
                     retailer.TotalCustomers,
 
                      retailer.Trade ,

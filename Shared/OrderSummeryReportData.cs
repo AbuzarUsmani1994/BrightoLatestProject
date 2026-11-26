@@ -58,6 +58,7 @@ namespace FOS.Shared
         public int Active { get; set; }
         public int Completed { get; set; }
         public int Lost { get; set; }
+        public int Unassigned { get; set; }
         public int TotalCustomers { get; set; }
 
         public int? Trade { get; set; }
