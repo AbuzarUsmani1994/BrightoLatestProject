@@ -388,8 +388,10 @@ namespace FOS.Setup
             {
                 using (FOSDataModel dbContext = new FOSDataModel())
                 {
-                  
-                    qryCity = dbContext.Cities.Where(p => p.RegionID==soId).Select(c => new CityData()
+
+                    // soId == 0 means "All" - without this, filtering Cities.RegionID == 0
+                    // matches nothing (0 isn't a real region) and the list stays empty.
+                    qryCity = dbContext.Cities.Where(p => soId == 0 || p.RegionID==soId).Select(c => new CityData()
                     {
                         ID = c.ID,
                         Name = c.Name,
@@ -426,7 +428,9 @@ namespace FOS.Setup
                 using (FOSDataModel dbContext = new FOSDataModel())
                 {
                     
-                    qryCity = dbContext.Cities.Where(p => p.RegionID==soId).Select(c => new CityData()
+                    // soId == 0 means "All" - without this, filtering Cities.RegionID == 0
+                    // matches nothing (0 isn't a real region) and the list stays empty.
+                    qryCity = dbContext.Cities.Where(p => soId == 0 || p.RegionID==soId).Select(c => new CityData()
                     {
                         ID = c.ID,
                         Name = c.Name,

@@ -804,8 +804,14 @@ namespace FOS.Web.UI.Controllers
             {
                 regId = FOS.Web.UI.Controllers.AdminPanelController.GetRegionalHeadIDRelatedToUser();
             }
-            //List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageSaleOffice.GetAllSaleOfficerListRelatedtoregionalHeadID(0);
-            List<SaleOfficer> SaleOfficerObj = FOS.Setup.ManageSaleOffice.GetAllSaleOfficerListRelatedtoregionalHeadID(regId, true);
+            // The "Region" dropdown above is bound to RegionalHeadID in the model but is
+            // actually populated from dbo.Regions (GetTerritorialRegionaList), so regId
+            // here is a real Regions.ID - filter Sale Officers by their own RegionID to
+            // match, not the RegionalHeadID-based helper this used to call.
+            List<SaleOfficer> SaleOfficerObj = db.SaleOfficers
+                .Where(s => s.IsActive && (regId == 0 || s.RegionID == regId))
+                .OrderBy(s => s.Name)
+                .ToList();
 
             SaleOfficerObj.Insert(0, new SaleOfficer
             {
@@ -854,14 +860,18 @@ namespace FOS.Web.UI.Controllers
             return View(objJob);
         }
 
-        // Cascading Sale Officer dropdown for Retailer Information - filters by Regional
-        // Head AND Segment together (0 = All for either), so the list only ever shows
-        // officers that actually match both currently-selected filters.
-        public JsonResult GetSaleOfficersForRetailerInfo(int regionalHeadId, int segmentId)
+        // Cascading Sale Officer dropdown for Retailer Information - filters by Region
+        // AND Segment together (0 = All for either), so the list only ever shows
+        // officers that actually match both currently-selected filters. The "Region"
+        // dropdown on this screen is bound to RegionalHeadID in the model but is
+        // actually populated from dbo.Regions (ManageRegionalHead.GetTerritorialRegionaList),
+        // so the value coming in here is a real Regions.ID, not a RegionalHeads.ID -
+        // matched against SaleOfficers.RegionID accordingly.
+        public JsonResult GetSaleOfficersForRetailerInfo(int regionId, int segmentId)
         {
             var officers = db.SaleOfficers
                 .Where(s => !s.IsDeleted
-                    && (regionalHeadId == 0 || s.RegionalHeadID == regionalHeadId)
+                    && (regionId == 0 || s.RegionID == regionId)
                     && (segmentId == 0 || s.SegmentID == segmentId))
                 .OrderBy(s => s.Name)
                 .Select(s => new { ID = s.ID, Name = s.Name })

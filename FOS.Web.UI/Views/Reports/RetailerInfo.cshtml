@@ -76,7 +76,7 @@
                         </div>
 
                         <div class="control-group" style="margin-bottom: 14px;">
-                            <label class="control-label">Regional Head *</label>
+                            <label class="control-label">Region *</label>
                             <div class="controls">
                                 @Html.DropDownListFor(model => model.RegionalHeadID, new SelectList(Model.RegionalHead, "ID", "Name"), new { @class = "" })
                                 @Html.ValidationMessageFor(model => model.RegionalHeadID)
@@ -583,18 +583,18 @@
             //$("#RetailerTypeDiv").hide();
         });
 
-        // Sale Officer list is segment-and-head wise: re-filtered whenever either
-        // Regional Head or Segment changes, not just one of them.
+        // Sale Officer list is segment-and-region wise: re-filtered whenever either
+        // Region or Segment changes, not just one of them.
         $("#RangeID").change(function () {
             LoadSaleOfficersForRetailerInfo();
         });
 
         function LoadSaleOfficersForRetailerInfo() {
-            var regionalHeadId = $("#RegionalHeadID").val() || 0;
+            var regionId = $("#RegionalHeadID").val() || 0;
             var segmentId = $("#RangeID").val() || 0;
             $.ajax({
                 type: "GET",
-                data: { regionalHeadId: regionalHeadId, segmentId: segmentId },
+                data: { regionId: regionId, segmentId: segmentId },
                 url: "@Url.Action("GetSaleOfficersForRetailerInfo", "Reports")",
                 success: function (json) {
                     var $el = $("#SaleOfficerID");
