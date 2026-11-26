@@ -2662,17 +2662,29 @@ namespace FOS.Web.UI.Controllers
                         var Corporatecount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.SegmentTypeID == 3 && x.Status == true).Select(x => x.ID).Count();
                         var AllPurposecount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.SegmentTypeID == 5 && x.Status == true).Select(x => x.ID).Count();
 
-                        // BusinessStatusID lookup (dbo.BusinessStatus): 1=Prospect, 2=Existing,
-                        // 3=Active, 4=Completed, 5=Lost - confirmed against the live table.
-                        var prospectsCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 1 && x.Status == true).Select(x => x.ID).Count();
-                        var existingCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 2 && x.Status == true).Select(x => x.ID).Count();
-                        var activeCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 3 && x.Status == true).Select(x => x.ID).Count();
-                        var completedCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 4 && x.Status == true).Select(x => x.ID).Count();
-                        var lostCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 5 && x.Status == true).Select(x => x.ID).Count();
-                        // Retailers with a SegmentTypeID (counted in Total Customers) but no
-                        // BusinessStatusID at all - without this, Prospects+Existing+Active+
-                        // Completed+Lost silently undercounts Total Customers.
-                        var unassignedCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == null && x.Status == true).Select(x => x.ID).Count();
+                        // BusinessStatusID (dbo.BusinessStatus: 1=Active, 2=Lost, 3=Completed) wins
+                        // when set - it's confirmed to overlap heavily with CustomerType (most
+                        // Prospect/Existing Customer rows also carry a real BusinessStatusID), so
+                        // it's treated as the current real-world state. CustomerType (Prospect /
+                        // Existing Customer) is only used as a fallback when BusinessStatusID is
+                        // 0 or NULL (i.e. not yet assigned a real status).
+                        var activeCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 1 && x.Status == true).Select(x => x.ID).Count();
+                        var lostCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 2 && x.Status == true).Select(x => x.ID).Count();
+                        var completedCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 3 && x.Status == true).Select(x => x.ID).Count();
+                        var prospectsCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.Status == true
+                            && (x.BusinessStatusID == null || x.BusinessStatusID == 0)
+                            && x.CustomerType == "Prospect").Select(x => x.ID).Count();
+                        var existingCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.Status == true
+                            && (x.BusinessStatusID == null || x.BusinessStatusID == 0)
+                            && x.CustomerType == "Existing Customer").Select(x => x.ID).Count();
+                        // Retailers with a SegmentTypeID (counted in Total Customers) that match
+                        // none of the 5 buckets above (no real BusinessStatusID and a CustomerType
+                        // that's neither Prospect nor Existing Customer) - without this, the 5
+                        // buckets silently undercount Total Customers.
+                        var unassignedCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.Status == true
+                            && (x.BusinessStatusID == null || x.BusinessStatusID == 0)
+                            && x.CustomerType != "Prospect" && x.CustomerType != "Existing Customer")
+                            .Select(x => x.ID).Count();
 
                         string regionalHeadName = (so != null && so.RegionalHeadID.HasValue)
                             ? db.RegionalHeads.Where(r => r.ID == so.RegionalHeadID.Value).Select(r => r.Name).FirstOrDefault()
