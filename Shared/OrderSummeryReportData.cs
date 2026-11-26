@@ -48,6 +48,18 @@ namespace FOS.Shared
     {
         public string Name { get; set; }
 
+        public string SOCode { get; set; }
+        public string Segment { get; set; }
+        public string RegionalHead { get; set; }
+        public string Region { get; set; }
+        public string PrimaryCity { get; set; }
+        public int Prospects { get; set; }
+        public int Existing { get; set; }
+        public int Active { get; set; }
+        public int Completed { get; set; }
+        public int Lost { get; set; }
+        public int TotalCustomers { get; set; }
+
         public int? Trade { get; set; }
         public int? Housing { get; set; }
         public int? Corporate { get; set; }

@@ -2594,7 +2594,8 @@ namespace FOS.Web.UI.Controllers
                 {
                     foreach (var items in result)
                     {
-                        var soid = db.SaleOfficers.Where(x => x.Name == items.Name).Select(x => x.ID).FirstOrDefault();
+                        var so = db.SaleOfficers.Where(x => x.Name == items.Name).FirstOrDefault();
+                        var soid = so != null ? so.ID : 0;
                         comlist = new SaleOfficerCountFinal();
 
                         var tradecount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.SegmentTypeID == 1 && x.Status==true).Select(x => x.ID).Count();
@@ -2602,7 +2603,40 @@ namespace FOS.Web.UI.Controllers
                         var Corporatecount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.SegmentTypeID == 3 && x.Status == true).Select(x => x.ID).Count();
                         var AllPurposecount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.SegmentTypeID == 5 && x.Status == true).Select(x => x.ID).Count();
 
+                        // BusinessStatusID lookup (dbo.BusinessStatus): 1=Prospect, 2=Existing,
+                        // 3=Active, 4=Completed, 5=Lost - confirmed against the live table.
+                        var prospectsCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 1 && x.Status == true).Select(x => x.ID).Count();
+                        var existingCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 2 && x.Status == true).Select(x => x.ID).Count();
+                        var activeCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 3 && x.Status == true).Select(x => x.ID).Count();
+                        var completedCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 4 && x.Status == true).Select(x => x.ID).Count();
+                        var lostCount = db.Retailers.Where(x => x.SaleOfficerID == soid && x.BusinessStatusID == 5 && x.Status == true).Select(x => x.ID).Count();
+
+                        string regionalHeadName = (so != null && so.RegionalHeadID.HasValue)
+                            ? db.RegionalHeads.Where(r => r.ID == so.RegionalHeadID.Value).Select(r => r.Name).FirstOrDefault()
+                            : null;
+                        string regionName = (so != null && so.RegionID.HasValue)
+                            ? db.Regions.Where(r => r.ID == so.RegionID.Value).Select(r => r.Name).FirstOrDefault()
+                            : null;
+                        string primaryCityName = (so != null && so.PrimaryCityID.HasValue)
+                            ? db.Cities.Where(c => c.ID == so.PrimaryCityID.Value).Select(c => c.Name).FirstOrDefault()
+                            : null;
+                        string segmentName = (so != null && so.SegmentID.HasValue)
+                            ? db.Tbl_Segmenttype.Where(s => s.ID == so.SegmentID.Value).Select(s => s.Name).FirstOrDefault()
+                            : null;
+
                         comlist.Name = items.Name;
+
+                        comlist.SOCode = so != null ? so.ECode : null;
+                        comlist.Segment = segmentName;
+                        comlist.RegionalHead = regionalHeadName;
+                        comlist.Region = regionName;
+                        comlist.PrimaryCity = primaryCityName;
+                        comlist.Prospects = prospectsCount;
+                        comlist.Existing = existingCount;
+                        comlist.Active = activeCount;
+                        comlist.Completed = completedCount;
+                        comlist.Lost = lostCount;
+                        comlist.TotalCustomers = tradecount + Housingcount + Corporatecount + AllPurposecount;
 
                         comlist.Trade = tradecount;
                         comlist.Housing = Housingcount;
@@ -2615,7 +2649,7 @@ namespace FOS.Web.UI.Controllers
                         comlist.AllPurpose = items.AllPurposeVisitsCount;
                         comlist.TotalVisits = items.TradeVisitsCount + items.HousingVisitsCount + items.CorporateVisitsCount + items.AllPurposeVisitsCount;
                         list.Add(comlist);
-                    
+
                     }
 
 
@@ -2624,7 +2658,7 @@ namespace FOS.Web.UI.Controllers
                 
                 StringWriter sw = new StringWriter();
 
-                sw.WriteLine("\"Saleofficer Name\",\"Trade \",\"Housing \",\"Corporate \",\"AllPurpose \",\"Trade Visits \",\"Housing Visits \",\"Corporate Visits \",\"All Purpose Visits \",\"Total Visits \"");
+                sw.WriteLine("\"Saleofficer Name\",\"SO Code\",\"Segment\",\"Regional Head\",\"Region\",\"Primary City\",\"Prospects\",\"Existing\",\"Active\",\"Completed\",\"Lost\",\"Total Customers\",\"Trade \",\"Housing \",\"Corporate \",\"AllPurpose \",\"Trade Visits \",\"Housing Visits \",\"Corporate Visits \",\"All Purpose Visits \",\"Total Visits \"");
 
                 Response.ClearContent();
                 Response.AddHeader("content-disposition", "attachment;filename=SSSaleSummaryReport" + DateTime.Now + ".csv");
@@ -2633,9 +2667,20 @@ namespace FOS.Web.UI.Controllers
 
                 foreach (var retailer in list)
                 {
-                    sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\"",
+                    sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\",\"{13}\",\"{14}\",\"{15}\",\"{16}\",\"{17}\",\"{18}\",\"{19}\",\"{20}\"",
 
                     retailer.Name,
+                    retailer.SOCode,
+                    retailer.Segment,
+                    retailer.RegionalHead,
+                    retailer.Region,
+                    retailer.PrimaryCity,
+                    retailer.Prospects,
+                    retailer.Existing,
+                    retailer.Active,
+                    retailer.Completed,
+                    retailer.Lost,
+                    retailer.TotalCustomers,
 
                      retailer.Trade ,
                     retailer.Housing ,
