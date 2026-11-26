@@ -834,7 +834,8 @@ namespace FOS.Web.UI.Controllers
                                     ID = u.ID,
                                     MainCategoryName = u.Name,
                                 }).ToList();
-                
+            CityObj.Insert(0, new Shared.MainCategories { ID = 0, MainCategoryName = "All" });
+
             //List<VisitPlanData> visitData = new List<VisitPlanData>();
             //visitData = FOS.Setup.ManageJobs.GetAllVisitList();
 
@@ -853,7 +854,26 @@ namespace FOS.Web.UI.Controllers
             return View(objJob);
         }
 
-        public void RetailerInformation(int TID, int RangeID, int cityid, DateTime sdate, DateTime edate)
+        // Cascading Sale Officer dropdown for Retailer Information - filters by Regional
+        // Head AND Segment together (0 = All for either), so the list only ever shows
+        // officers that actually match both currently-selected filters.
+        public JsonResult GetSaleOfficersForRetailerInfo(int regionalHeadId, int segmentId)
+        {
+            var officers = db.SaleOfficers
+                .Where(s => !s.IsDeleted
+                    && (regionalHeadId == 0 || s.RegionalHeadID == regionalHeadId)
+                    && (segmentId == 0 || s.SegmentID == segmentId))
+                .OrderBy(s => s.Name)
+                .Select(s => new { ID = s.ID, Name = s.Name })
+                .ToList();
+
+            var result = new List<object> { new { ID = 0, Name = "All" } };
+            result.AddRange(officers);
+
+            return Json(result, JsonRequestBehavior.AllowGet);
+        }
+
+        public void RetailerInformation(int TID, int RangeID, int cityid, DateTime sdate, DateTime edate, int SOID = 0, string EmployeeStatus = "All")
         {
             DateTime start = sdate;
             DateTime end = edate;
@@ -873,12 +893,23 @@ namespace FOS.Web.UI.Controllers
 
                 var segment = db.Tbl_Segmenttype.Where(x => x.ID == RangeID).Select(x => x.Name).FirstOrDefault();
                 ManageRetailer objRetailers = new ManageRetailer();
-                List<Sp_Total_RetailerInformation1_5_Result> result = objRetailers.RetailerInfos(TID, 0, RangeID, cityid, start, final);
+                List<Sp_Total_RetailerInformation1_5_Result> result = objRetailers.RetailerInfos(TID, SOID, RangeID, cityid, start, final);
+
+                // SO Segment / SO Status aren't in this SP's output - looked up per row from
+                // the Sale Officer's own record instead, matched by name since the SP only
+                // returns SaleofficerName, not an ID. Also where Employee Status actually
+                // filters, since the SP has no concept of it.
+                var soLookup = db.SaleOfficers
+                    .Select(s => new { s.Name, s.SegmentID, s.IsActive })
+                    .ToList()
+                    .GroupBy(s => s.Name)
+                    .ToDictionary(g => g.Key, g => g.First());
+                var segmentNames = db.Tbl_Segmenttype.ToDictionary(s => s.ID, s => s.Name);
 
                 // Example data
                 StringWriter sw = new StringWriter();
 
-                sw.WriteLine("\"SrNO \",\"Shop ID\",\"Created On\",\"Customer Name\",\"Owner Name\",\"Sales Officer Name\",\"Compitators Name\",\"Region Name\",\"City Name\",\"Address\",\"Phone1\",\"Phone2\",\"Customer Type\",\"Segment\",\"Business Type\",\"Business Status\",\"Location\"");
+                sw.WriteLine("\"SrNO \",\"Shop ID\",\"Created On\",\"Customer Name\",\"Owner Name\",\"Sales Officer Name\",\"SO Segment\",\"SO Status\",\"Compitators Name\",\"Region Name\",\"City Name\",\"Address\",\"Phone1\",\"Phone2\",\"Customer Type\",\"Segment\",\"Business Type\",\"Business Status\",\"Location\"");
 
                 Response.ClearContent();
                 Response.AddHeader("content-disposition", $"attachment;filename=Retailers_{segment}_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
@@ -892,7 +923,23 @@ namespace FOS.Web.UI.Controllers
 
                     foreach (var retailer in result)
                     {
-                        sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\",\"{13}\",\"{14}\",\"{15}\",\"{16}\"",
+                        string soSegment = "";
+                        string soStatus = "";
+                        bool soIsActive = true;
+                        if (soLookup.TryGetValue(retailer.SaleofficerName ?? "", out var so))
+                        {
+                            soIsActive = so.IsActive;
+                            soStatus = so.IsActive ? "Active" : "Inactive";
+                            if (so.SegmentID.HasValue && segmentNames.TryGetValue(so.SegmentID.Value, out var segName))
+                            {
+                                soSegment = segName;
+                            }
+                        }
+
+                        if (EmployeeStatus == "Active" && !soIsActive) continue;
+                        if (EmployeeStatus == "Inactive" && soIsActive) continue;
+
+                        sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\",\"{13}\",\"{14}\",\"{15}\",\"{16}\",\"{17}\",\"{18}\"",
 
                             srNo,
                             retailer.ShopID,
@@ -900,6 +947,8 @@ namespace FOS.Web.UI.Controllers
                          retailer.shopname,
                           retailer.CustomerName,
                         retailer.SaleofficerName,
+                        soSegment,
+                        soStatus,
                           retailer.Compitators,
                         retailer.Region,
                         retailer.City,
@@ -912,7 +961,7 @@ namespace FOS.Web.UI.Controllers
                         retailer.BusinessType,
 
                       retailer.BusinessStatus,
-                        
+
 
                       retailer.location,
 

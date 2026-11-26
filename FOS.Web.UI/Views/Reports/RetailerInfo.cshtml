@@ -76,29 +76,10 @@
                         </div>
 
                         <div class="control-group" style="margin-bottom: 14px;">
-                            <label class="control-label">Region *</label>
+                            <label class="control-label">Regional Head *</label>
                             <div class="controls">
                                 @Html.DropDownListFor(model => model.RegionalHeadID, new SelectList(Model.RegionalHead, "ID", "Name"), new { @class = "" })
                                 @Html.ValidationMessageFor(model => model.RegionalHeadID)
-                            </div>
-                        </div>
-
-                        @*<div class="control-group" style="margin-bottom: 14px;">
-            <label class="control-label">Sales Officer *</label>
-            <div class="controls">
-                @Html.DropDownListFor(model => model.SaleOfficerID, new SelectList(Model.SaleOfficer, "ID", "Name"), new { @class = "" })
-                @Html.ValidationMessageFor(model => model.SaleOfficerID)
-                @Html.HiddenFor(model => model.ID)
-                @Html.HiddenFor(model => model.SelectedRetailers)
-
-            </div>
-        </div>*@
-                        <div class="control-group" style="margin-bottom: 14px;">
-                            <label class="control-label">Cities *</label>
-                            <div class="controls">
-                                @Html.DropDownListFor(model => model.CityID, new SelectList(Model.Cities, "ID", "Name"), new { @class = "" })
-                                @Html.ValidationMessageFor(model => model.CityID)
-                                @Html.HiddenFor(model => model.CityID)
                             </div>
                         </div>
 
@@ -108,6 +89,34 @@
                                 @Html.DropDownListFor(model => model.RangeID, new SelectList(Model.Regions, "ID", "MainCategoryName"), new { @class = "" })
                                 @Html.ValidationMessageFor(model => model.RangeID)
                                 @Html.HiddenFor(model => model.RangeID)
+                            </div>
+                        </div>
+
+                        <div class="control-group" style="margin-bottom: 14px;">
+                            <label class="control-label">Employee Status *</label>
+                            <div class="controls">
+                                <select id="EmployeeStatus" name="EmployeeStatus">
+                                    <option value="All">All</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="control-group" style="margin-bottom: 14px;">
+                            <label class="control-label">Sales Officer *</label>
+                            <div class="controls">
+                                @Html.DropDownListFor(model => model.SaleOfficerID, new SelectList(Model.SaleOfficer, "ID", "Name"), new { @class = "" })
+                                @Html.ValidationMessageFor(model => model.SaleOfficerID)
+                            </div>
+                        </div>
+
+                        <div class="control-group" style="margin-bottom: 14px;">
+                            <label class="control-label">Cities *</label>
+                            <div class="controls">
+                                @Html.DropDownListFor(model => model.CityID, new SelectList(Model.Cities, "ID", "Name"), new { @class = "" })
+                                @Html.ValidationMessageFor(model => model.CityID)
+                                @Html.HiddenFor(model => model.CityID)
                             </div>
                         </div>
 
@@ -570,8 +579,33 @@
         $("#RegionalHeadID").change(function () {
 
             LoadCities($(this).val());
+            LoadSaleOfficersForRetailerInfo();
             //$("#RetailerTypeDiv").hide();
         });
+
+        // Sale Officer list is segment-and-head wise: re-filtered whenever either
+        // Regional Head or Segment changes, not just one of them.
+        $("#RangeID").change(function () {
+            LoadSaleOfficersForRetailerInfo();
+        });
+
+        function LoadSaleOfficersForRetailerInfo() {
+            var regionalHeadId = $("#RegionalHeadID").val() || 0;
+            var segmentId = $("#RangeID").val() || 0;
+            $.ajax({
+                type: "GET",
+                data: { regionalHeadId: regionalHeadId, segmentId: segmentId },
+                url: "@Url.Action("GetSaleOfficersForRetailerInfo", "Reports")",
+                success: function (json) {
+                    var $el = $("#SaleOfficerID");
+                    $el.empty();
+                    $.each(json, function (value, key) {
+                        $el.append($("<option></option>")
+                                .val(key.ID).text(key.Name));
+                    });
+                }
+            });
+        }
 
         $("#SaleOfficerID").change(function () {
             //LoadRetailerAccordingToSalesOfficer();
@@ -751,11 +785,13 @@
         var $TID = $("#RegionalHeadID").val();
         var $fosid = $("#SaleOfficerID").val();
         var $cityid = $("#CityID").val();
+        var $soid = $("#SaleOfficerID").val() || 0;
+        var $empstatus = $("#EmployeeStatus").val() || "All";
             @*if ($("#cbCheck1").is(':checked') == true) {
                 window.open("@Url.Action("CityMonthWiseIntakeReport", "Retailer")" + "?StartingDate=" + $("#StartingDate1").val() + "&EndingDate=" + $("#StartingDate2").val() + "&TID=" + $("#TID").val() + "&Shoptypeid=" + $("#Shoptypeid").val() + "&message=" + message + "", "_top");
             }*@
         //else {
-        window.open("@Url.Action("RetailerInformation", "Reports")" + "?TID=" + $("#RegionalHeadID").val() + "&RangeID=" + $("#RangeID").val()+"&cityid=" + $("#CityID").val()+ "&sdate=" + $sdate+"&edate=" + $edate);
+        window.open("@Url.Action("RetailerInformation", "Reports")" + "?TID=" + $("#RegionalHeadID").val() + "&RangeID=" + $("#RangeID").val()+"&cityid=" + $("#CityID").val()+ "&sdate=" + $sdate+"&edate=" + $edate + "&SOID=" + $soid + "&EmployeeStatus=" + $empstatus);
         //}
     });
 
