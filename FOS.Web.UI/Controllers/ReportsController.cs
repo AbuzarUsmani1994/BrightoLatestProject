@@ -936,10 +936,12 @@ namespace FOS.Web.UI.Controllers
                         string soSegment = "";
                         string soStatus = "";
                         bool soIsActive = true;
+                        int? soSegmentID = null;
                         if (soLookup.TryGetValue(retailer.SaleofficerName ?? "", out var so))
                         {
                             soIsActive = so.IsActive;
                             soStatus = so.IsActive ? "Active" : "Inactive";
+                            soSegmentID = so.SegmentID;
                             if (so.SegmentID.HasValue && segmentNames.TryGetValue(so.SegmentID.Value, out var segName))
                             {
                                 soSegment = segName;
@@ -948,6 +950,10 @@ namespace FOS.Web.UI.Controllers
 
                         if (EmployeeStatus == "Active" && !soIsActive) continue;
                         if (EmployeeStatus == "Inactive" && soIsActive) continue;
+                        // Segment filter is the Sale Officer's own assigned segment
+                        // (SaleOfficers.SegmentID), not the retailer's own SegmentTypeID -
+                        // selecting "Trade" should only keep rows for Trade-segment SOs.
+                        if (RangeID != 0 && soSegmentID != RangeID) continue;
 
                         sw.WriteLine(string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\",\"{7}\",\"{8}\",\"{9}\",\"{10}\",\"{11}\",\"{12}\",\"{13}\",\"{14}\",\"{15}\",\"{16}\",\"{17}\",\"{18}\"",
 
