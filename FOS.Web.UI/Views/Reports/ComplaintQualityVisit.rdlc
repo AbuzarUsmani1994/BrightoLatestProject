@@ -117,7 +117,6 @@
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>TitleBox</rd:DefaultName>
-                          <ColSpan>2</ColSpan>
                           <Style>
                             <Border>
                               <Style>None</Style>
@@ -131,14 +130,12 @@
                             <PaddingBottom>6pt</PaddingBottom>
                           </Style>
                         </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents />
-                    </TablixCell>
+                      <ColSpan>2</ColSpan>
+                    </CellContents>
+                  </TablixCell>
+                  <TablixCell />
                   </TablixCells>
                 </TablixRow>
-
 
                 <TablixRow>
                   <Height>0.28in</Height>
@@ -748,7 +745,6 @@
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>SectionHeading10</rd:DefaultName>
-                          <ColSpan>2</ColSpan>
                           <Style>
                             <Border>
                               <Style>None</Style>
@@ -762,11 +758,10 @@
                             <PaddingBottom>3pt</PaddingBottom>
                           </Style>
                         </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents />
-                    </TablixCell>
+                      <ColSpan>2</ColSpan>
+                    </CellContents>
+                  </TablixCell>
+                  <TablixCell />
                   </TablixCells>
                 </TablixRow>
 
@@ -792,7 +787,6 @@
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>SectionBody11</rd:DefaultName>
-                          <ColSpan>2</ColSpan>
                           <Style>
                             <Border>
                               <Style>None</Style>
@@ -801,11 +795,10 @@
                             <PaddingBottom>6pt</PaddingBottom>
                           </Style>
                         </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents />
-                    </TablixCell>
+                      <ColSpan>2</ColSpan>
+                    </CellContents>
+                  </TablixCell>
+                  <TablixCell />
                   </TablixCells>
                 </TablixRow>
 
@@ -832,7 +825,6 @@
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>SectionHeading12</rd:DefaultName>
-                          <ColSpan>2</ColSpan>
                           <Style>
                             <Border>
                               <Style>None</Style>
@@ -846,11 +838,10 @@
                             <PaddingBottom>3pt</PaddingBottom>
                           </Style>
                         </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents />
-                    </TablixCell>
+                      <ColSpan>2</ColSpan>
+                    </CellContents>
+                  </TablixCell>
+                  <TablixCell />
                   </TablixCells>
                 </TablixRow>
 
@@ -876,7 +867,6 @@
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>SectionBody13</rd:DefaultName>
-                          <ColSpan>2</ColSpan>
                           <Style>
                             <Border>
                               <Style>None</Style>
@@ -885,11 +875,10 @@
                             <PaddingBottom>6pt</PaddingBottom>
                           </Style>
                         </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents />
-                    </TablixCell>
+                      <ColSpan>2</ColSpan>
+                    </CellContents>
+                  </TablixCell>
+                  <TablixCell />
                   </TablixCells>
                 </TablixRow>
 
@@ -916,7 +905,6 @@
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>SectionHeading14</rd:DefaultName>
-                          <ColSpan>2</ColSpan>
                           <Style>
                             <Border>
                               <Style>None</Style>
@@ -930,11 +918,10 @@
                             <PaddingBottom>3pt</PaddingBottom>
                           </Style>
                         </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents />
-                    </TablixCell>
+                      <ColSpan>2</ColSpan>
+                    </CellContents>
+                  </TablixCell>
+                  <TablixCell />
                   </TablixCells>
                 </TablixRow>
 
@@ -960,7 +947,6 @@
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>SectionBody15</rd:DefaultName>
-                          <ColSpan>2</ColSpan>
                           <Style>
                             <Border>
                               <Style>None</Style>
@@ -969,11 +955,10 @@
                             <PaddingBottom>6pt</PaddingBottom>
                           </Style>
                         </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents />
-                    </TablixCell>
+                      <ColSpan>2</ColSpan>
+                    </CellContents>
+                  </TablixCell>
+                  <TablixCell />
                   </TablixCells>
                 </TablixRow>
 
@@ -1000,7 +985,6 @@
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>SectionHeading16</rd:DefaultName>
-                          <ColSpan>2</ColSpan>
                           <Style>
                             <Border>
                               <Style>None</Style>
@@ -1014,11 +998,10 @@
                             <PaddingBottom>3pt</PaddingBottom>
                           </Style>
                         </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents />
-                    </TablixCell>
+                      <ColSpan>2</ColSpan>
+                    </CellContents>
+                  </TablixCell>
+                  <TablixCell />
                   </TablixCells>
                 </TablixRow>
 
@@ -1044,7 +1027,6 @@
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>SectionBody17</rd:DefaultName>
-                          <ColSpan>2</ColSpan>
                           <Style>
                             <Border>
                               <Style>None</Style>
@@ -1053,11 +1035,10 @@
                             <PaddingBottom>6pt</PaddingBottom>
                           </Style>
                         </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents />
-                    </TablixCell>
+                      <ColSpan>2</ColSpan>
+                    </CellContents>
+                  </TablixCell>
+                  <TablixCell />
                   </TablixCells>
                 </TablixRow>
 
@@ -1084,7 +1065,6 @@
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>PictureHeading</rd:DefaultName>
-                          <ColSpan>2</ColSpan>
                           <Style>
                             <Border>
                               <Style>None</Style>
@@ -1098,11 +1078,10 @@
                             <PaddingBottom>3pt</PaddingBottom>
                           </Style>
                         </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents />
-                    </TablixCell>
+                      <ColSpan>2</ColSpan>
+                    </CellContents>
+                  </TablixCell>
+                  <TablixCell />
                   </TablixCells>
                 </TablixRow>
 
@@ -1115,7 +1094,6 @@
                           <Source>External</Source>
                           <Value>=Fields!PictureUrl.Value</Value>
                           <Sizing>FitProportional</Sizing>
-                          <ColSpan>2</ColSpan>
                           <Height>3.4in</Height>
                           <Width>5in</Width>
                           <Style>
@@ -1124,11 +1102,10 @@
                             </Border>
                           </Style>
                         </Image>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents />
-                    </TablixCell>
+                      <ColSpan>2</ColSpan>
+                    </CellContents>
+                  </TablixCell>
+                  <TablixCell />
                   </TablixCells>
                 </TablixRow>
               </TablixRows>
