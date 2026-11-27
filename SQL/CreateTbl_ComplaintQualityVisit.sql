@@ -1,50 +1,21 @@
 -- Backs the new "Add Visit" popup on Manage Complaints (quality staff logging a
 -- physical site visit against a specific complaint, distinct from the existing
--- ComplaintSuggesionAdded quality-review entries). Two new tables:
+-- ComplaintSuggesionAdded quality-review entries).
 --
--- 1) dbo.Tbl_PackSize - brand-new lookup, no equivalent table exists anywhere
---    in this schema today. Seeded with Drum/Gallon/Quarter/Tin per your values.
---
--- 2) dbo.Tbl_ComplaintQualityVisit - one row per visit submission.
---    ComplaintNatureID/SubstrateNatureID/ProductCategoryID are stored as IDs
---    against existing lookup tables - ComplaintNatureID against
---    Tbl_ProductNature (the same "Nature" lookup already used elsewhere on
---    this page/mobile app, not a dedicated complaint-nature table) - plus
---    Tbl_ConditionOfSubstratee, Tbl_ProuctCategory. No Product Sub Category -
---    just Product Category, per your instruction. PackSize and
---    ComplaintStatus are stored as plain text (the dropdown's displayed
---    value, e.g. "Tin"/"In Progress"), not an ID/code - Tbl_PackSize is
---    still the source that populates the Pack Size dropdown, just not
---    referenced by ID on save. Every other field is free text. No FK
---    constraints, matching this schema's existing loose-FK convention.
-
-IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Tbl_PackSize' AND schema_id = SCHEMA_ID('dbo'))
-BEGIN
-    CREATE TABLE dbo.Tbl_PackSize
-    (
-        ID         INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-        Name       VARCHAR(100) NOT NULL,
-        IsActive   BIT NOT NULL CONSTRAINT DF_Tbl_PackSize_IsActive DEFAULT (1),
-        CreatedOn  DATETIME NOT NULL CONSTRAINT DF_Tbl_PackSize_CreatedOn DEFAULT (GETDATE())
-    );
-
-    PRINT 'Created dbo.Tbl_PackSize.';
-END
-ELSE
-BEGIN
-    PRINT 'dbo.Tbl_PackSize already exists - skipped create.';
-END
-GO
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Tbl_PackSize WHERE Name = 'Drum')
-    INSERT INTO dbo.Tbl_PackSize (Name) VALUES ('Drum');
-IF NOT EXISTS (SELECT 1 FROM dbo.Tbl_PackSize WHERE Name = 'Gallon')
-    INSERT INTO dbo.Tbl_PackSize (Name) VALUES ('Gallon');
-IF NOT EXISTS (SELECT 1 FROM dbo.Tbl_PackSize WHERE Name = 'Quarter')
-    INSERT INTO dbo.Tbl_PackSize (Name) VALUES ('Quarter');
-IF NOT EXISTS (SELECT 1 FROM dbo.Tbl_PackSize WHERE Name = 'Tin')
-    INSERT INTO dbo.Tbl_PackSize (Name) VALUES ('Tin');
-GO
+-- dbo.Tbl_ComplaintQualityVisit - one row per visit submission.
+-- ComplaintNatureID/SubstrateNatureID/ProductCategoryID are stored as IDs
+-- against existing lookup tables - ComplaintNatureID against
+-- Tbl_ProductNature (the same "Nature" lookup already used elsewhere on
+-- this page/mobile app, not a dedicated complaint-nature table) - plus
+-- Tbl_ConditionOfSubstratee, Tbl_ProuctCategory. No Product Sub Category -
+-- just Product Category, per your instruction. PackSize and ComplaintStatus
+-- are stored as plain text (the dropdown's displayed value, e.g.
+-- "Tin"/"In Progress"), not an ID/code. Pack Size is a hardcoded dropdown in
+-- the view, not DB-backed - no lookup table for it (an earlier version of
+-- this script created dbo.Tbl_PackSize for that; if you already ran that on
+-- this database it's harmless and unused now, left in place rather than
+-- dropped). Every other field is free text. No FK constraints, matching
+-- this schema's existing loose-FK convention.
 
 IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Tbl_ComplaintQualityVisit' AND schema_id = SCHEMA_ID('dbo'))
 BEGIN

@@ -512,9 +512,8 @@ namespace FOS.Web.UI.Controllers
         // "Nature *" filter on this page (Model.ProductNatures) and the mobile app's
         // Submit Complaint "Nature" dropdown (Solvent Based / Water Based).
         // Tbl_ProductNature/Tbl_ConditionOfSubstratee/Tbl_ProuctCategory are already in
-        // the .edmx, so these three are plain EF reads. Tbl_PackSize is brand new and
-        // deliberately NOT added to the .edmx (per this repo's convention of keeping new
-        // tables off the fragile .edmx) - queried via raw ADO.NET instead.
+        // the .edmx, so these three are plain EF reads. Pack Size is hardcoded directly
+        // in the view instead of DB-backed, per your instruction - no lookup table for it.
         public JsonResult GetQualityVisitLookups()
         {
             // The global HandleErrorAttribute filter (FilterConfig.cs) would otherwise
@@ -532,32 +531,7 @@ namespace FOS.Web.UI.Controllers
                     var productCategories = db.Tbl_ProuctCategory.Where(x => x.IsActive == true)
                         .OrderBy(x => x.Name).Select(x => new { ID = x.ID, Name = x.Name }).ToList();
 
-                    // Isolated in its own try/catch: if Tbl_PackSize hasn't been created yet
-                    // (CreateTbl_ComplaintQualityVisit.sql not yet run), Pack Size degrades
-                    // to an empty list instead of an exception blanking out the other three
-                    // dropdowns too, which already come from existing tables.
-                    var packSizes = new List<object>();
-                    try
-                    {
-                        using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
-                        using (var cmd = new SqlCommand("SELECT ID, Name FROM dbo.Tbl_PackSize WHERE IsActive = 1 ORDER BY Name", conn))
-                        {
-                            conn.Open();
-                            using (var reader = cmd.ExecuteReader())
-                            {
-                                while (reader.Read())
-                                {
-                                    packSizes.Add(new { ID = reader.GetInt32(0), Name = reader.GetString(1) });
-                                }
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        packSizes = new List<object>();
-                    }
-
-                    return Json(new { complaintNatures, substrateNatures, productCategories, packSizes }, JsonRequestBehavior.AllowGet);
+                    return Json(new { complaintNatures, substrateNatures, productCategories }, JsonRequestBehavior.AllowGet);
                 }
             }
             catch (Exception ex)
