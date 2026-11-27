@@ -44,10 +44,22 @@ namespace FOS.Web.UI.Controllers
             if (RangeID == null || RangeID == 0)
             {
                 // ViewBag.rptid = "";
-                ViewBag.retailers = db.Retailers.Where(x => x.IsActive == true && x.SegmentTypeID==1 ).Count();
+                // Trade/Housing/Corporate Customers: segment comes from the assigned Sale
+                // Officer's own SegmentID (not the retailer's own SegmentTypeID).
+                ViewBag.retailers = (from r in db.Retailers
+                                     join so in db.SaleOfficers on r.SaleOfficerID equals so.ID
+                                     where r.IsActive == true && so.SegmentID == 1
+                                     select r.ID).Count();
 
-                ViewBag.Housing = db.Retailers.Where(x => x.IsActive == true && x.SegmentTypeID == 2).Count();
-                ViewBag.Corporate = db.Retailers.Where(x => x.IsActive == true && x.SegmentTypeID == 3).Count();
+                ViewBag.Housing = (from r in db.Retailers
+                                   join so in db.SaleOfficers on r.SaleOfficerID equals so.ID
+                                   where r.IsActive == true && so.SegmentID == 2
+                                   select r.ID).Count();
+
+                ViewBag.Corporate = (from r in db.Retailers
+                                     join so in db.SaleOfficers on r.SaleOfficerID equals so.ID
+                                     where r.IsActive == true && so.SegmentID == 3
+                                     select r.ID).Count();
 
 
                 var totalSO = db.SaleOfficers.Where(x => x.IsActive == true).Count();
