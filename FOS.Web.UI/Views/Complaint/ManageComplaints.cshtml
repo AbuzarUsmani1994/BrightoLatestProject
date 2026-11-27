@@ -302,11 +302,12 @@
             <div class="modal-body">
                 <div class="span12">
                     <button type="button" class="close" id="qvClose" data-dismiss="modal">&times;</button>
-                    <h2 style="margin-top: -10px;text-align:center;color: #62c462;font-weight: bolder;border-bottom: 1px solid #62c462;border-top: 1px solid #62c462;padding-bottom: 10px;padding-top: 10px;">Add Quality Visit</h2>
+                    <h2 id="qvModalTitle" style="margin-top: -10px;text-align:center;color: #62c462;font-weight: bolder;border-bottom: 1px solid #62c462;border-top: 1px solid #62c462;padding-bottom: 10px;padding-top: 10px;">Add Quality Visit</h2>
 
                     <div class="span12" style="padding:5px">
                         <form class="form-inline">
                             <span id="qvComplaintID" style="display:none"></span>
+                            <span id="qvVisitID" style="display:none"></span>
                             <div class="row-fluid">
                                 <div class="span4"><span>Complaint No:</span> <span id="qvComplaintNo"></span></div>
                                 <div class="span4"><span>Customer:</span> <span id="qvComplaintCustomer"></span></div>
@@ -328,7 +329,7 @@
                                 </div>
                                 <div class="span3">
                                     <label class="control-label">Sale Person Name</label>
-                                    <input type="text" id="qvSalePersonName" class="span12" />
+                                    <select id="qvSalePersonName" class="span12"><option value="">Select</option></select>
                                 </div>
                                 <div class="span3">
                                     <label class="control-label">Visit Team Members</label>
@@ -409,6 +410,11 @@
                                     <input type="file" id="qvPicture2" accept="image/*" />
                                 </div>
                             </div>
+                            <!-- Browsers can't prefill a file input, so an existing visit's
+                                 pictures (if any) are shown here as links instead; choosing
+                                 a new file above replaces that picture, leaving it unchanged
+                                 otherwise (see Picture1/Picture2 = COALESCE(...) on save). -->
+                            <div class="row-fluid" id="qvExistingPictures" style="margin-top:5px"></div>
                             <div class="row-fluid" style="margin-top:15px">
                                 <span class="span3">
                                     <button type="button" id="qvSave" class="btn btn-primary">Submit Visit</button>
@@ -891,18 +897,23 @@
 
     var qualityVisitLookupsLoaded = false;
 
-    function fillQualityVisitSelect(selectId, items, placeholder) {
+    // useNameAsValue is true for Sale Person Name - its saved value is the officer's
+    // name text (matching the existing VARCHAR column), not their SaleOfficer ID.
+    function fillQualityVisitSelect(selectId, items, placeholder, useNameAsValue) {
         var $el = $(selectId);
         $el.empty();
         $el.append($("<option></option>").val("").text(placeholder));
         $.each(items, function (i, item) {
-            $el.append($("<option></option>").val(item.ID).text(item.Name));
+            $el.append($("<option></option>").val(useNameAsValue ? item.Name : item.ID).text(item.Name));
         });
     }
 
     // Pack Size is hardcoded directly in the view (not DB-backed) - only
     // Complaint Nature/Substrate Nature/Product Category are loaded here.
-    function loadQualityVisitLookups() {
+    // onDone runs after the dropdowns are populated, since setting a select's value
+    // before its options exist is a no-op - loadExistingQualityVisit below depends on
+    // this ordering to prefill Complaint Nature/Substrate Nature/Product Category.
+    function loadQualityVisitLookups(onDone) {
         $.ajax({
             type: "Get",
             url: "@Url.Action("GetQualityVisitLookups", "Complaint")",
@@ -914,7 +925,17 @@
                 fillQualityVisitSelect("#qvComplaintNatureID", res.complaintNatures, "Select");
                 fillQualityVisitSelect("#qvSubstrateNatureID", res.substrateNatures, "Select");
                 fillQualityVisitSelect("#qvProductCategoryID", res.productCategories, "Select");
+                fillQualityVisitSelect("#qvSalePersonName", res.saleOfficers, "Select Sale Officer", true);
+                // select2 needs the <option> list to exist before it builds its search
+                // dropdown, so this only happens once, right after the options above
+                // are populated - matches this page's existing select2 dropdowns.
+                $("#qvSalePersonName").select2({
+                    width: "100%",
+                    placeholder: "Select Sale Officer",
+                    allowClear: true
+                });
                 qualityVisitLookupsLoaded = true;
+                if (onDone) { onDone(); }
             },
             error: function () {
                 alertify.error("Unable to load dropdown options for the Visit form.");
@@ -923,11 +944,65 @@
     }
 
     function clearQualityVisitForm() {
-        $("#qvCustomerName, #qvSiteContactPerson, #qvSalePersonName, #qvVisitTeamMembers, #qvNoOfVisits, #qvVisitDates, #qvComplaintStatus").val("");
+        $("#qvVisitID").text("");
+        $("#qvModalTitle").text("Add Quality Visit");
+        $("#qvExistingPictures").empty();
+        $("#qvCustomerName, #qvSiteContactPerson, #qvVisitTeamMembers, #qvNoOfVisits, #qvVisitDates, #qvComplaintStatus").val("");
         $("#qvComplaintSummary, #qvSiteObservationInvestigation, #qvCorrectiveAndPreventiveActions, #qvConclusion").val("");
         $("#qvComplaintNatureID, #qvSubstrateNatureID, #qvProductCategoryID, #qvPackSizeID").val("");
+        // select2 needs a change event to refresh its own display after .val() -
+        // plain .val("") alone leaves the old selection showing.
+        $("#qvSalePersonName").val("").trigger("change");
         $("#qvPicture1").val("");
         $("#qvPicture2").val("");
+    }
+
+    // If this complaint already has a visit, reloads the popup with that visit's data
+    // for editing (so re-submitting updates it instead of creating a duplicate) rather
+    // than leaving the form blank for a new one.
+    function loadExistingQualityVisit(ComplaintID) {
+        $.ajax({
+            type: "Get",
+            url: "@Url.Action("GetComplaintQualityVisit", "Complaint")",
+            data: { complaintId: ComplaintID },
+            success: function (res) {
+                if (res.error) {
+                    alertify.error("Unable to check for an existing visit: " + res.error);
+                    return;
+                }
+                if (!res.id) {
+                    return;
+                }
+
+                $("#qvVisitID").text(res.id);
+                $("#qvModalTitle").text("Edit Quality Visit");
+                $("#qvCustomerName").val(res.customerName);
+                $("#qvSiteContactPerson").val(res.siteContactPerson);
+                $("#qvComplaintNatureID").val(res.complaintNatureId || "");
+                $("#qvSubstrateNatureID").val(res.substrateNatureId || "");
+                $("#qvProductCategoryID").val(res.productCategoryId || "");
+                $("#qvPackSizeID").val(res.packSize || "");
+                $("#qvVisitTeamMembers").val(res.visitTeamMembers);
+                $("#qvNoOfVisits").val(res.noOfVisits);
+                $("#qvVisitDates").val(res.visitDates);
+                $("#qvComplaintStatus").val(res.complaintStatus || "");
+                $("#qvSalePersonName").val(res.salePersonName || "").trigger("change");
+                $("#qvComplaintSummary").val(res.complaintSummary);
+                $("#qvSiteObservationInvestigation").val(res.siteObservationInvestigation);
+                $("#qvCorrectiveAndPreventiveActions").val(res.correctiveAndPreventiveActions);
+                $("#qvConclusion").val(res.conclusion);
+
+                var picsHtml = "";
+                if (res.picture1) { picsHtml += '<a href="' + res.picture1 + '" target="_blank">Current Picture 1</a>&nbsp;&nbsp;'; }
+                if (res.picture2) { picsHtml += '<a href="' + res.picture2 + '" target="_blank">Current Picture 2</a>'; }
+                $("#qvExistingPictures").html(picsHtml);
+
+                alertify.success("This complaint already has a visit - loaded it for editing.");
+            },
+            error: function () {
+                alertify.error("Unable to check for an existing visit.");
+            }
+        });
     }
 
     function openQualityVisitModal(ComplaintID, ComplaintNo, CustomerName, SoName) {
@@ -937,10 +1012,20 @@
         $("#qvComplaintCustomer").text(CustomerName);
         $("#qvComplaintSO").text(SoName);
         $("#qvCustomerName").val(CustomerName);
-        $("#qvSalePersonName").val(SoName);
+
+        // Sale Person Name is select2-enabled and only has options once the lookups
+        // AJAX below has populated it, so the row's SO name can't be set until then -
+        // loadExistingQualityVisit (if this complaint has a saved visit) runs right
+        // after and overrides it with that visit's own saved Sale Person Name.
+        function setDefaultsAfterLookups() {
+            $("#qvSalePersonName").val(SoName || "").trigger("change");
+            loadExistingQualityVisit(ComplaintID);
+        }
 
         if (!qualityVisitLookupsLoaded) {
-            loadQualityVisitLookups();
+            loadQualityVisitLookups(setDefaultsAfterLookups);
+        } else {
+            setDefaultsAfterLookups();
         }
 
         $("#QualityVisitModal").modal('show');
@@ -955,6 +1040,7 @@
 
         var data = new FormData();
         data.append("ComplaintID", ComplaintID);
+        data.append("VisitID", $("#qvVisitID").text());
         data.append("CustomerName", $("#qvCustomerName").val());
         data.append("SiteContactPerson", $("#qvSiteContactPerson").val());
         data.append("ComplaintNatureID", $("#qvComplaintNatureID").val());
@@ -989,7 +1075,7 @@
             data: data,
             success: function (res) {
                 if (res.success) {
-                    alertify.success("Visit Submitted Successfully");
+                    alertify.success($("#qvVisitID").text() ? "Visit Updated Successfully" : "Visit Submitted Successfully");
                     $("#QualityVisitModal").modal('hide');
                     window.open("@Url.Action("DownloadComplaintQualityVisitReport", "Complaint")" + "?id=" + res.id);
                 }

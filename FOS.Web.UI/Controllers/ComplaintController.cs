@@ -530,13 +530,76 @@ namespace FOS.Web.UI.Controllers
                         .OrderBy(x => x.Name).Select(x => new { ID = x.ID, Name = x.Name }).ToList();
                     var productCategories = db.Tbl_ProuctCategory.Where(x => x.IsActive == true)
                         .OrderBy(x => x.Name).Select(x => new { ID = x.ID, Name = x.Name }).ToList();
+                    // Sale Person Name is a searchable dropdown of active Sale Officers
+                    // (select2, same as this page's other searchable dropdowns) - stored
+                    // as the officer's name text, matching the existing VARCHAR column.
+                    var saleOfficers = db.SaleOfficers.Where(x => x.IsActive)
+                        .OrderBy(x => x.Name).Select(x => new { ID = x.ID, Name = x.Name }).ToList();
 
-                    return Json(new { complaintNatures, substrateNatures, productCategories }, JsonRequestBehavior.AllowGet);
+                    return Json(new { complaintNatures, substrateNatures, productCategories, saleOfficers }, JsonRequestBehavior.AllowGet);
                 }
             }
             catch (Exception ex)
             {
                 return Json(new { error = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        // Most recent active visit for this complaint, if any - lets the popup detect
+        // "this complaint already has a visit" and reload it for editing instead of
+        // starting blank. Returns a plain object with every field the popup needs to
+        // prefill, or an object with id = null when there's no existing visit.
+        public JsonResult GetComplaintQualityVisit(int complaintId)
+        {
+            try
+            {
+                using (var db = new FOSDataModel())
+                using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+                using (var cmd = new SqlCommand(@"
+                    SELECT TOP 1 ID, CustomerName, SiteContactPerson, ComplaintNatureID, SubstrateNatureID,
+                           ProductCategoryID, PackSize, VisitTeamMembers, NoOfVisits, VisitDates,
+                           ComplaintStatus, SalePersonName, ComplaintSummary, SiteObservationInvestigation,
+                           CorrectiveAndPreventiveActions, Conclusion, Picture1, Picture2
+                    FROM dbo.Tbl_ComplaintQualityVisit
+                    WHERE ComplaintID = @ComplaintID AND IsActive = 1
+                    ORDER BY ID DESC", conn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@ComplaintID", SqlDbType.Int) { Value = complaintId });
+                    conn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if (!reader.Read())
+                        {
+                            return Json(new { id = (int?)null }, JsonRequestBehavior.AllowGet);
+                        }
+
+                        return Json(new
+                        {
+                            id = (int?)reader["ID"],
+                            customerName = reader["CustomerName"] as string,
+                            siteContactPerson = reader["SiteContactPerson"] as string,
+                            complaintNatureId = reader["ComplaintNatureID"] as int?,
+                            substrateNatureId = reader["SubstrateNatureID"] as int?,
+                            productCategoryId = reader["ProductCategoryID"] as int?,
+                            packSize = reader["PackSize"] as string,
+                            visitTeamMembers = reader["VisitTeamMembers"] as string,
+                            noOfVisits = reader["NoOfVisits"] as string,
+                            visitDates = reader["VisitDates"] as string,
+                            complaintStatus = reader["ComplaintStatus"] as string,
+                            salePersonName = reader["SalePersonName"] as string,
+                            complaintSummary = reader["ComplaintSummary"] as string,
+                            siteObservationInvestigation = reader["SiteObservationInvestigation"] as string,
+                            correctiveAndPreventiveActions = reader["CorrectiveAndPreventiveActions"] as string,
+                            conclusion = reader["Conclusion"] as string,
+                            picture1 = reader["Picture1"] as string,
+                            picture2 = reader["Picture2"] as string
+                        }, JsonRequestBehavior.AllowGet);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { id = (int?)null, error = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -558,49 +621,78 @@ namespace FOS.Web.UI.Controllers
                 int userId = 0;
                 int.TryParse(Convert.ToString(Session["UserID"]), out userId);
 
-                int newId;
+                // VisitID present (and non-zero) means the popup was opened in edit mode
+                // (an existing visit for this complaint was loaded) - update that row
+                // instead of inserting a new one, so re-submitting a visit replaces it
+                // rather than accumulating duplicates.
+                int visitId;
+                int.TryParse(Request.Form["VisitID"], out visitId);
+
+                int savedId;
                 using (var db = new FOSDataModel())
                 using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
-                using (var cmd = new SqlCommand(@"
-                    INSERT INTO dbo.Tbl_ComplaintQualityVisit
-                        (ComplaintID, CustomerName, SiteContactPerson, ComplaintNatureID, SubstrateNatureID,
-                         ProductCategoryID, PackSize, VisitTeamMembers, NoOfVisits,
-                         VisitDates, ComplaintStatus, SalePersonName, ComplaintSummary,
-                         SiteObservationInvestigation, CorrectiveAndPreventiveActions, Conclusion,
-                         Picture1, Picture2, CreatedBy)
-                    VALUES
-                        (@ComplaintID, @CustomerName, @SiteContactPerson, @ComplaintNatureID, @SubstrateNatureID,
-                         @ProductCategoryID, @PackSize, @VisitTeamMembers, @NoOfVisits,
-                         @VisitDates, @ComplaintStatus, @SalePersonName, @ComplaintSummary,
-                         @SiteObservationInvestigation, @CorrectiveAndPreventiveActions, @Conclusion,
-                         @Picture1, @Picture2, @CreatedBy);
-                    SELECT CAST(SCOPE_IDENTITY() AS INT);", conn))
                 {
-                    cmd.Parameters.Add(new SqlParameter("@ComplaintID", SqlDbType.Int) { Value = complaintId });
-                    cmd.Parameters.Add(new SqlParameter("@CustomerName", SqlDbType.VarChar, 200) { Value = (object)Request.Form["CustomerName"] ?? DBNull.Value });
-                    cmd.Parameters.Add(new SqlParameter("@SiteContactPerson", SqlDbType.VarChar, 200) { Value = (object)Request.Form["SiteContactPerson"] ?? DBNull.Value });
-                    cmd.Parameters.Add(ToNullableIntParam("@ComplaintNatureID", Request.Form["ComplaintNatureID"]));
-                    cmd.Parameters.Add(ToNullableIntParam("@SubstrateNatureID", Request.Form["SubstrateNatureID"]));
-                    cmd.Parameters.Add(ToNullableIntParam("@ProductCategoryID", Request.Form["ProductCategoryID"]));
-                    cmd.Parameters.Add(new SqlParameter("@PackSize", SqlDbType.VarChar, 100) { Value = (object)Request.Form["PackSize"] ?? DBNull.Value });
-                    cmd.Parameters.Add(new SqlParameter("@VisitTeamMembers", SqlDbType.VarChar, 500) { Value = (object)Request.Form["VisitTeamMembers"] ?? DBNull.Value });
-                    cmd.Parameters.Add(new SqlParameter("@NoOfVisits", SqlDbType.VarChar, 50) { Value = (object)Request.Form["NoOfVisits"] ?? DBNull.Value });
-                    cmd.Parameters.Add(new SqlParameter("@VisitDates", SqlDbType.VarChar, 500) { Value = (object)Request.Form["VisitDates"] ?? DBNull.Value });
-                    cmd.Parameters.Add(new SqlParameter("@ComplaintStatus", SqlDbType.VarChar, 100) { Value = (object)Request.Form["ComplaintStatus"] ?? DBNull.Value });
-                    cmd.Parameters.Add(new SqlParameter("@SalePersonName", SqlDbType.VarChar, 200) { Value = (object)Request.Form["SalePersonName"] ?? DBNull.Value });
-                    cmd.Parameters.Add(new SqlParameter("@ComplaintSummary", SqlDbType.NVarChar, -1) { Value = (object)Request.Form["ComplaintSummary"] ?? DBNull.Value });
-                    cmd.Parameters.Add(new SqlParameter("@SiteObservationInvestigation", SqlDbType.NVarChar, -1) { Value = (object)Request.Form["SiteObservationInvestigation"] ?? DBNull.Value });
-                    cmd.Parameters.Add(new SqlParameter("@CorrectiveAndPreventiveActions", SqlDbType.NVarChar, -1) { Value = (object)Request.Form["CorrectiveAndPreventiveActions"] ?? DBNull.Value });
-                    cmd.Parameters.Add(new SqlParameter("@Conclusion", SqlDbType.NVarChar, -1) { Value = (object)Request.Form["Conclusion"] ?? DBNull.Value });
-                    cmd.Parameters.Add(new SqlParameter("@Picture1", SqlDbType.VarChar, 500) { Value = (object)picture1Path ?? DBNull.Value });
-                    cmd.Parameters.Add(new SqlParameter("@Picture2", SqlDbType.VarChar, 500) { Value = (object)picture2Path ?? DBNull.Value });
-                    cmd.Parameters.Add(new SqlParameter("@CreatedBy", SqlDbType.Int) { Value = userId });
-
                     conn.Open();
-                    newId = Convert.ToInt32(cmd.ExecuteScalar());
+                    string commandText = visitId > 0
+                        ? @"UPDATE dbo.Tbl_ComplaintQualityVisit SET
+                                CustomerName = @CustomerName, SiteContactPerson = @SiteContactPerson,
+                                ComplaintNatureID = @ComplaintNatureID, SubstrateNatureID = @SubstrateNatureID,
+                                ProductCategoryID = @ProductCategoryID, PackSize = @PackSize,
+                                VisitTeamMembers = @VisitTeamMembers, NoOfVisits = @NoOfVisits,
+                                VisitDates = @VisitDates, ComplaintStatus = @ComplaintStatus,
+                                SalePersonName = @SalePersonName, ComplaintSummary = @ComplaintSummary,
+                                SiteObservationInvestigation = @SiteObservationInvestigation,
+                                CorrectiveAndPreventiveActions = @CorrectiveAndPreventiveActions,
+                                Conclusion = @Conclusion,
+                                Picture1 = COALESCE(@Picture1, Picture1),
+                                Picture2 = COALESCE(@Picture2, Picture2)
+                            WHERE ID = @VisitID AND ComplaintID = @ComplaintID;
+                            SELECT @VisitID;"
+                        : @"INSERT INTO dbo.Tbl_ComplaintQualityVisit
+                                (ComplaintID, CustomerName, SiteContactPerson, ComplaintNatureID, SubstrateNatureID,
+                                 ProductCategoryID, PackSize, VisitTeamMembers, NoOfVisits,
+                                 VisitDates, ComplaintStatus, SalePersonName, ComplaintSummary,
+                                 SiteObservationInvestigation, CorrectiveAndPreventiveActions, Conclusion,
+                                 Picture1, Picture2, CreatedBy)
+                            VALUES
+                                (@ComplaintID, @CustomerName, @SiteContactPerson, @ComplaintNatureID, @SubstrateNatureID,
+                                 @ProductCategoryID, @PackSize, @VisitTeamMembers, @NoOfVisits,
+                                 @VisitDates, @ComplaintStatus, @SalePersonName, @ComplaintSummary,
+                                 @SiteObservationInvestigation, @CorrectiveAndPreventiveActions, @Conclusion,
+                                 @Picture1, @Picture2, @CreatedBy);
+                            SELECT CAST(SCOPE_IDENTITY() AS INT);";
+
+                    using (var cmd = new SqlCommand(commandText, conn))
+                    {
+                        cmd.Parameters.Add(new SqlParameter("@ComplaintID", SqlDbType.Int) { Value = complaintId });
+                        cmd.Parameters.Add(new SqlParameter("@CustomerName", SqlDbType.VarChar, 200) { Value = (object)Request.Form["CustomerName"] ?? DBNull.Value });
+                        cmd.Parameters.Add(new SqlParameter("@SiteContactPerson", SqlDbType.VarChar, 200) { Value = (object)Request.Form["SiteContactPerson"] ?? DBNull.Value });
+                        cmd.Parameters.Add(ToNullableIntParam("@ComplaintNatureID", Request.Form["ComplaintNatureID"]));
+                        cmd.Parameters.Add(ToNullableIntParam("@SubstrateNatureID", Request.Form["SubstrateNatureID"]));
+                        cmd.Parameters.Add(ToNullableIntParam("@ProductCategoryID", Request.Form["ProductCategoryID"]));
+                        cmd.Parameters.Add(new SqlParameter("@PackSize", SqlDbType.VarChar, 100) { Value = (object)Request.Form["PackSize"] ?? DBNull.Value });
+                        cmd.Parameters.Add(new SqlParameter("@VisitTeamMembers", SqlDbType.VarChar, 500) { Value = (object)Request.Form["VisitTeamMembers"] ?? DBNull.Value });
+                        cmd.Parameters.Add(new SqlParameter("@NoOfVisits", SqlDbType.VarChar, 50) { Value = (object)Request.Form["NoOfVisits"] ?? DBNull.Value });
+                        cmd.Parameters.Add(new SqlParameter("@VisitDates", SqlDbType.VarChar, 500) { Value = (object)Request.Form["VisitDates"] ?? DBNull.Value });
+                        cmd.Parameters.Add(new SqlParameter("@ComplaintStatus", SqlDbType.VarChar, 100) { Value = (object)Request.Form["ComplaintStatus"] ?? DBNull.Value });
+                        cmd.Parameters.Add(new SqlParameter("@SalePersonName", SqlDbType.VarChar, 200) { Value = (object)Request.Form["SalePersonName"] ?? DBNull.Value });
+                        cmd.Parameters.Add(new SqlParameter("@ComplaintSummary", SqlDbType.NVarChar, -1) { Value = (object)Request.Form["ComplaintSummary"] ?? DBNull.Value });
+                        cmd.Parameters.Add(new SqlParameter("@SiteObservationInvestigation", SqlDbType.NVarChar, -1) { Value = (object)Request.Form["SiteObservationInvestigation"] ?? DBNull.Value });
+                        cmd.Parameters.Add(new SqlParameter("@CorrectiveAndPreventiveActions", SqlDbType.NVarChar, -1) { Value = (object)Request.Form["CorrectiveAndPreventiveActions"] ?? DBNull.Value });
+                        cmd.Parameters.Add(new SqlParameter("@Conclusion", SqlDbType.NVarChar, -1) { Value = (object)Request.Form["Conclusion"] ?? DBNull.Value });
+                        cmd.Parameters.Add(new SqlParameter("@Picture1", SqlDbType.VarChar, 500) { Value = (object)picture1Path ?? DBNull.Value });
+                        cmd.Parameters.Add(new SqlParameter("@Picture2", SqlDbType.VarChar, 500) { Value = (object)picture2Path ?? DBNull.Value });
+                        cmd.Parameters.Add(new SqlParameter("@CreatedBy", SqlDbType.Int) { Value = userId });
+                        if (visitId > 0)
+                        {
+                            cmd.Parameters.Add(new SqlParameter("@VisitID", SqlDbType.Int) { Value = visitId });
+                        }
+
+                        savedId = Convert.ToInt32(cmd.ExecuteScalar());
+                    }
                 }
 
-                return Json(new { success = true, id = newId });
+                return Json(new { success = true, id = savedId });
             }
             catch (Exception ex)
             {
@@ -674,6 +766,18 @@ namespace FOS.Web.UI.Controllers
         // Tbl_ProuctCategory), not necessarily matching any particular reference sample.
         public void DownloadComplaintQualityVisitReport(int id)
         {
+            byte[] bytes = null;
+            string contentType = null;
+            string errorMessage = null;
+
+            // The global HandleErrorAttribute filter (FilterConfig.cs) would otherwise
+            // swallow any exception here into a generic "An error occurred" page -
+            // writing the real message directly to the response instead. Response.End()
+            // (used below on both the success and error paths) throws a
+            // ThreadAbortException by design, so it must never be called from inside
+            // this try - that's why the actual writes happen after this block, not here.
+            try
+            {
             using (var db = new FOSDataModel())
             {
                 string customerName = null, siteContactPerson = null, visitTeamMembers = null,
@@ -757,19 +861,33 @@ namespace FOS.Web.UI.Controllers
 
                 Warning[] warnings;
                 string[] streamIds;
-                string contentType, encoding, extension;
-                byte[] bytes = reportViewer.Render("PDF", null, out contentType, out encoding, out extension, out streamIds, out warnings);
-
-                Response.Clear();
-                Response.Buffer = true;
-                Response.Charset = "";
-                Response.Cache.SetCacheability(HttpCacheability.NoCache);
-                Response.ContentType = contentType;
-                Response.AddHeader("content-disposition", "attachment;filename=ComplaintVisitReport_" + id + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf");
-                Response.BinaryWrite(bytes);
-                Response.Flush();
-                Response.End();
+                string encoding, extension;
+                bytes = reportViewer.Render("PDF", null, out contentType, out encoding, out extension, out streamIds, out warnings);
             }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = ex.Message;
+            }
+
+            if (errorMessage != null)
+            {
+                Response.Clear();
+                Response.ContentType = "text/plain";
+                Response.Write("Error generating the Visit Report PDF: " + errorMessage);
+                Response.End();
+                return;
+            }
+
+            Response.Clear();
+            Response.Buffer = true;
+            Response.Charset = "";
+            Response.Cache.SetCacheability(HttpCacheability.NoCache);
+            Response.ContentType = contentType;
+            Response.AddHeader("content-disposition", "attachment;filename=ComplaintVisitReport_" + id + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf");
+            Response.BinaryWrite(bytes);
+            Response.Flush();
+            Response.End();
         }
 
         #endregion
