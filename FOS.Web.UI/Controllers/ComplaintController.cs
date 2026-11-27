@@ -867,7 +867,15 @@ namespace FOS.Web.UI.Controllers
             }
             catch (Exception ex)
             {
-                errorMessage = ex.Message;
+                // LocalReport.Render wraps the real RDL error inside InnerException(s)
+                // behind a generic "An error occurred during local report processing."
+                // top-level message - walk the chain so the actual cause is visible.
+                var messages = new List<string>();
+                for (var current = ex; current != null; current = current.InnerException)
+                {
+                    messages.Add(current.Message);
+                }
+                errorMessage = string.Join(" --> ", messages);
             }
 
             if (errorMessage != null)
