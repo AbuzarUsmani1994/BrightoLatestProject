@@ -506,6 +506,150 @@ namespace FOS.Web.UI.Controllers
             return Json("1", JsonRequestBehavior.AllowGet);
         }
 
+        #region Quality Visit Form (distinct from the Quality Review entries above)
+
+        // Complaint Nature reuses Tbl_ProductNature - the same lookup already behind the
+        // "Nature *" filter on this page (Model.ProductNatures) and the mobile app's
+        // Submit Complaint "Nature" dropdown (Solvent Based / Water Based).
+        // Tbl_ProductNature/Tbl_ConditionOfSubstratee/Tbl_ProuctCategory are already in
+        // the .edmx, so these three are plain EF reads. Tbl_PackSize is brand new and
+        // deliberately NOT added to the .edmx (per this repo's convention of keeping new
+        // tables off the fragile .edmx) - queried via raw ADO.NET instead.
+        public JsonResult GetQualityVisitLookups()
+        {
+            using (var db = new FOSDataModel())
+            {
+                var complaintNatures = db.Tbl_ProductNature.Where(x => x.IsActive == true)
+                    .OrderBy(x => x.Name).Select(x => new { ID = x.ID, Name = x.Name }).ToList();
+                var substrateNatures = db.Tbl_ConditionOfSubstratee.Where(x => x.IsActive == true)
+                    .OrderBy(x => x.Name).Select(x => new { ID = x.ID, Name = x.Name }).ToList();
+                var productCategories = db.Tbl_ProuctCategory.Where(x => x.IsActive == true)
+                    .OrderBy(x => x.Name).Select(x => new { ID = x.ID, Name = x.Name }).ToList();
+
+                var packSizes = new List<object>();
+                using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+                using (var cmd = new SqlCommand("SELECT ID, Name FROM dbo.Tbl_PackSize WHERE IsActive = 1 ORDER BY Name", conn))
+                {
+                    conn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            packSizes.Add(new { ID = reader.GetInt32(0), Name = reader.GetString(1) });
+                        }
+                    }
+                }
+
+                return Json(new { complaintNatures, substrateNatures, productCategories, packSizes }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult SaveComplaintQualityVisit()
+        {
+            try
+            {
+                int complaintId;
+                int.TryParse(Request.Form["ComplaintID"], out complaintId);
+                if (complaintId == 0)
+                {
+                    return Json("0");
+                }
+
+                string picture1Path = SaveQualityVisitPicture(Request.Files["Picture1"]);
+                string picture2Path = SaveQualityVisitPicture(Request.Files["Picture2"]);
+
+                int userId = 0;
+                int.TryParse(Convert.ToString(Session["UserID"]), out userId);
+
+                using (var db = new FOSDataModel())
+                using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+                using (var cmd = new SqlCommand(@"
+                    INSERT INTO dbo.Tbl_ComplaintQualityVisit
+                        (ComplaintID, CustomerName, SiteContactPerson, ComplaintNatureID, SubstrateNatureID,
+                         ProductCategoryID, PackSize, VisitTeamMembers, NoOfVisits,
+                         VisitDates, ComplaintStatus, SalePersonName, ComplaintSummary,
+                         SiteObservationInvestigation, CorrectiveAndPreventiveActions, Conclusion,
+                         Picture1, Picture2, CreatedBy)
+                    VALUES
+                        (@ComplaintID, @CustomerName, @SiteContactPerson, @ComplaintNatureID, @SubstrateNatureID,
+                         @ProductCategoryID, @PackSize, @VisitTeamMembers, @NoOfVisits,
+                         @VisitDates, @ComplaintStatus, @SalePersonName, @ComplaintSummary,
+                         @SiteObservationInvestigation, @CorrectiveAndPreventiveActions, @Conclusion,
+                         @Picture1, @Picture2, @CreatedBy)", conn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@ComplaintID", SqlDbType.Int) { Value = complaintId });
+                    cmd.Parameters.Add(new SqlParameter("@CustomerName", SqlDbType.VarChar, 200) { Value = (object)Request.Form["CustomerName"] ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@SiteContactPerson", SqlDbType.VarChar, 200) { Value = (object)Request.Form["SiteContactPerson"] ?? DBNull.Value });
+                    cmd.Parameters.Add(ToNullableIntParam("@ComplaintNatureID", Request.Form["ComplaintNatureID"]));
+                    cmd.Parameters.Add(ToNullableIntParam("@SubstrateNatureID", Request.Form["SubstrateNatureID"]));
+                    cmd.Parameters.Add(ToNullableIntParam("@ProductCategoryID", Request.Form["ProductCategoryID"]));
+                    cmd.Parameters.Add(new SqlParameter("@PackSize", SqlDbType.VarChar, 100) { Value = (object)Request.Form["PackSize"] ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@VisitTeamMembers", SqlDbType.VarChar, 500) { Value = (object)Request.Form["VisitTeamMembers"] ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@NoOfVisits", SqlDbType.VarChar, 50) { Value = (object)Request.Form["NoOfVisits"] ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@VisitDates", SqlDbType.VarChar, 500) { Value = (object)Request.Form["VisitDates"] ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@ComplaintStatus", SqlDbType.VarChar, 100) { Value = (object)Request.Form["ComplaintStatus"] ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@SalePersonName", SqlDbType.VarChar, 200) { Value = (object)Request.Form["SalePersonName"] ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@ComplaintSummary", SqlDbType.NVarChar, -1) { Value = (object)Request.Form["ComplaintSummary"] ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@SiteObservationInvestigation", SqlDbType.NVarChar, -1) { Value = (object)Request.Form["SiteObservationInvestigation"] ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@CorrectiveAndPreventiveActions", SqlDbType.NVarChar, -1) { Value = (object)Request.Form["CorrectiveAndPreventiveActions"] ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@Conclusion", SqlDbType.NVarChar, -1) { Value = (object)Request.Form["Conclusion"] ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@Picture1", SqlDbType.VarChar, 500) { Value = (object)picture1Path ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@Picture2", SqlDbType.VarChar, 500) { Value = (object)picture2Path ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@CreatedBy", SqlDbType.Int) { Value = userId });
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+
+                return Json("1");
+            }
+            catch
+            {
+                return Json("0");
+            }
+        }
+
+        // Empty/unselected dropdowns come through Request.Form as "" rather than null -
+        // treated as NULL here rather than failing the int parse.
+        private static SqlParameter ToNullableIntParam(string name, string rawValue)
+        {
+            int parsed;
+            if (!string.IsNullOrEmpty(rawValue) && int.TryParse(rawValue, out parsed))
+            {
+                return new SqlParameter(name, SqlDbType.Int) { Value = parsed };
+            }
+            return new SqlParameter(name, SqlDbType.Int) { Value = DBNull.Value };
+        }
+
+        // Same extension whitelist as the existing Quality Review Image upload in
+        // SaveManageComplaints, saved to its own folder so these don't mix with the
+        // existing ~/Images/ComPicture quality-review pictures.
+        private string SaveQualityVisitPicture(HttpPostedFileBase file)
+        {
+            if (file == null || file.ContentLength == 0)
+            {
+                return null;
+            }
+
+            string extension = Path.GetExtension(file.FileName).ToLower();
+            if (!(extension.Equals(".jpeg") || extension.Equals(".jpg") || extension.Equals(".png") || extension.Equals(".gif")))
+            {
+                return null;
+            }
+
+            string fileName = Guid.NewGuid().ToString("N") + extension;
+            string folder = Server.MapPath("~/Images/ComQualityVisit");
+            if (!Directory.Exists(folder))
+            {
+                Directory.CreateDirectory(folder);
+            }
+            file.SaveAs(Path.Combine(folder, fileName));
+            return "/Images/ComQualityVisit/" + fileName;
+        }
+
+        #endregion
+
         public void DownloadPDFCompalintReport(string DateTO, string FromTO, int ComplaintID)
         {
             FOSDataModel db = new FOSDataModel();

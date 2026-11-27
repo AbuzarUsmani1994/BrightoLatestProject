@@ -293,6 +293,127 @@
         </div>
     </div>
 </div>
+
+<!-- Quality Visit Form - separate from the Quality Review modal above. One row per
+     site visit against a complaint, saved to Tbl_ComplaintQualityVisit. -->
+<div id="QualityVisitModal" class="modal hide fade in" role="dialog" style="width: 60%;max-height: 88%;top: 5%;left: 20%;overflow-y:auto;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="span12">
+                    <button type="button" class="close" id="qvClose" data-dismiss="modal">&times;</button>
+                    <h2 style="margin-top: -10px;text-align:center;color: #62c462;font-weight: bolder;border-bottom: 1px solid #62c462;border-top: 1px solid #62c462;padding-bottom: 10px;padding-top: 10px;">Add Quality Visit</h2>
+
+                    <div class="span12" style="padding:5px">
+                        <form class="form-inline">
+                            <span id="qvComplaintID" style="display:none"></span>
+                            <div class="span4"><span>Complaint No:</span> <span id="qvComplaintNo"></span></div>
+                            <div class="span4"><span>Customer:</span> <span id="qvComplaintCustomer"></span></div>
+                            <div class="span4"><span>Sale Officer:</span> <span id="qvComplaintSO"></span></div>
+                        </form>
+                    </div>
+
+                    <div class="span12" style="padding:5px">
+                        <div class="container">
+                            <div class="row" style="margin-top:5px">
+                                <div class="span3">
+                                    <label class="control-label">Customer Name</label>
+                                    <input type="text" id="qvCustomerName" class="span12" />
+                                </div>
+                                <div class="span3">
+                                    <label class="control-label">Site Contact Person</label>
+                                    <input type="text" id="qvSiteContactPerson" class="span12" />
+                                </div>
+                                <div class="span3">
+                                    <label class="control-label">Sale Person Name</label>
+                                    <input type="text" id="qvSalePersonName" class="span12" />
+                                </div>
+                                <div class="span3">
+                                    <label class="control-label">Visit Team Members</label>
+                                    <input type="text" id="qvVisitTeamMembers" class="span12" />
+                                </div>
+                            </div>
+                            <div class="row" style="margin-top:10px">
+                                <div class="span3">
+                                    <label class="control-label">Complaint Nature</label>
+                                    <select id="qvComplaintNatureID" class="span12"><option value="">Select</option></select>
+                                </div>
+                                <div class="span3">
+                                    <label class="control-label">Substrate Nature</label>
+                                    <select id="qvSubstrateNatureID" class="span12"><option value="">Select</option></select>
+                                </div>
+                                <div class="span3">
+                                    <label class="control-label">Product Category</label>
+                                    <select id="qvProductCategoryID" class="span12"><option value="">Select</option></select>
+                                </div>
+                                <div class="span3">
+                                    <label class="control-label">Pack Size</label>
+                                    <select id="qvPackSizeID" class="span12"><option value="">Select</option></select>
+                                </div>
+                            </div>
+                            <div class="row" style="margin-top:10px">
+                                <div class="span3">
+                                    <label class="control-label">No of Visits</label>
+                                    <input type="text" id="qvNoOfVisits" class="span12" />
+                                </div>
+                                <div class="span3">
+                                    <label class="control-label">Visit Dates</label>
+                                    <input type="text" id="qvVisitDates" class="span12" placeholder="e.g. 12-Nov-2026, 18-Nov-2026" />
+                                </div>
+                                <div class="span3">
+                                    <label class="control-label">Complaint Status</label>
+                                    <select id="qvComplaintStatus" class="span12">
+                                        <option value="">-- Select Status --</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="On Hold">On Hold</option>
+                                        <option value="Resolved">Resolved</option>
+                                        <option value="Duplicate">Duplicate</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row" style="margin-top:10px">
+                                <div class="span6">
+                                    <label class="control-label">Complaint Summary</label>
+                                    <textarea id="qvComplaintSummary" class="span12" rows="2"></textarea>
+                                </div>
+                                <div class="span6">
+                                    <label class="control-label">Site Observation &amp; Investigation</label>
+                                    <textarea id="qvSiteObservationInvestigation" class="span12" rows="2"></textarea>
+                                </div>
+                            </div>
+                            <div class="row" style="margin-top:10px">
+                                <div class="span6">
+                                    <label class="control-label">Corrective and Preventive Actions</label>
+                                    <textarea id="qvCorrectiveAndPreventiveActions" class="span12" rows="2"></textarea>
+                                </div>
+                                <div class="span6">
+                                    <label class="control-label">Conclusion</label>
+                                    <textarea id="qvConclusion" class="span12" rows="2"></textarea>
+                                </div>
+                            </div>
+                            <div class="row" style="margin-top:10px">
+                                <div class="span3">
+                                    <label class="control-label">Picture 1</label>
+                                    <input type="file" id="qvPicture1" accept="image/*" />
+                                </div>
+                                <div class="span3">
+                                    <label class="control-label">Picture 2</label>
+                                    <input type="file" id="qvPicture2" accept="image/*" />
+                                </div>
+                            </div>
+                            <div class="row" style="margin-top:15px">
+                                <span class="span3">
+                                    <button type="button" id="qvSave" class="btn btn-primary">Submit Visit</button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="~/Scripts/js/preview.js"></script>
 <script>
     // Publish button on each Quality Review history row is only for userID 1124 -
@@ -320,6 +441,7 @@
 
         GenerateDetailGrid();
         $("#ProductDetail").modal('hide');
+        $("#QualityVisitModal").modal('hide');
 
         $("#AppID").select2({
             width: "100%",
@@ -560,7 +682,10 @@
                 var UpdateCheck = "0";
                 var DeleteCheck = "0";
 
-                if (UpdateCheck == "@HttpContext.Current.Session["UpdateCheck"]") { $(".edit").css("display", "none"); }
+                if (UpdateCheck == "@HttpContext.Current.Session["UpdateCheck"]") {
+                    $(".edit").css("display", "none");
+                    $(".add-visit").css("display", "none");
+                }
                 else {
                     $(".edit").on("click", function () {
                         var ComplaintID = $(this).attr("data-id");
@@ -574,6 +699,14 @@
                             scrollTop: $(window).scrollTop() - $(window).height()
                         }, 400);
                         $("#ProductDetail").modal('show');
+                    });
+
+                    $(".add-visit").on("click", function () {
+                        var ComplaintID = $(this).attr("data-id");
+                        var ComplaintNo = $(this).attr("data-complaintno");
+                        var CustomerName = $(this).attr("data-customer");
+                        var SoName = $(this).attr("data-soname");
+                        openQualityVisitModal(ComplaintID, ComplaintNo, CustomerName, SoName);
                     });
                     }
 
@@ -620,7 +753,7 @@
                 "mData": null,
                 "bSortable": false,
                 "mRender": function (data, type, row) {
-                    return '<button class="btn btn-success edit" data-id=' + row.ComplaintID + ' data-complaintNo=' + '"' + row.ComplaintNumber + '"' + ' data-soname=' + '"' + row.SaleOfficerName + '"' + ' data-created=' + '"' + row.StartingDate1 + '"' + '>' + '<i class=icon-pencil></i>' + '</button>&nbsp; <button class="btn btn-primary delete" style="margin-top:5px" data-id=' + row.ComplaintID + '>Report</button>';
+                    return '<button class="btn btn-success edit" data-id=' + row.ComplaintID + ' data-complaintNo=' + '"' + row.ComplaintNumber + '"' + ' data-soname=' + '"' + row.SaleOfficerName + '"' + ' data-created=' + '"' + row.StartingDate1 + '"' + '>' + '<i class=icon-pencil></i>' + '</button>&nbsp; <button class="btn btn-primary delete" style="margin-top:5px" data-id=' + row.ComplaintID + '>Report</button>&nbsp; <button class="btn btn-info add-visit" style="margin-top:5px" data-id=' + row.ComplaintID + ' data-complaintno=' + '"' + row.ComplaintNumber + '"' + ' data-customer=' + '"' + row.CustomerName + '"' + ' data-soname=' + '"' + row.SaleOfficerName + '"' + '>+ Visit</button>';
                 }
             }
             ],
@@ -670,6 +803,115 @@
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
     }
+
+    // --- Quality Visit Form ---------------------------------------------------
+
+    var qualityVisitLookupsLoaded = false;
+
+    // useNameAsValue is true for Pack Size - its saved value is the plain name
+    // text ("Tin"/"Gallon"/...), not the Tbl_PackSize ID, per your instruction.
+    function fillQualityVisitSelect(selectId, items, placeholder, useNameAsValue) {
+        var $el = $(selectId);
+        $el.empty();
+        $el.append($("<option></option>").val("").text(placeholder));
+        $.each(items, function (i, item) {
+            $el.append($("<option></option>").val(useNameAsValue ? item.Name : item.ID).text(item.Name));
+        });
+    }
+
+    function loadQualityVisitLookups() {
+        $.ajax({
+            type: "Get",
+            url: "@Url.Action("GetQualityVisitLookups", "Complaint")",
+            success: function (res) {
+                fillQualityVisitSelect("#qvComplaintNatureID", res.complaintNatures, "Select");
+                fillQualityVisitSelect("#qvSubstrateNatureID", res.substrateNatures, "Select");
+                fillQualityVisitSelect("#qvProductCategoryID", res.productCategories, "Select");
+                fillQualityVisitSelect("#qvPackSizeID", res.packSizes, "Select", true);
+                qualityVisitLookupsLoaded = true;
+            }
+        });
+    }
+
+    function clearQualityVisitForm() {
+        $("#qvCustomerName, #qvSiteContactPerson, #qvSalePersonName, #qvVisitTeamMembers, #qvNoOfVisits, #qvVisitDates, #qvComplaintStatus").val("");
+        $("#qvComplaintSummary, #qvSiteObservationInvestigation, #qvCorrectiveAndPreventiveActions, #qvConclusion").val("");
+        $("#qvComplaintNatureID, #qvSubstrateNatureID, #qvProductCategoryID, #qvPackSizeID").val("");
+        $("#qvPicture1").val("");
+        $("#qvPicture2").val("");
+    }
+
+    function openQualityVisitModal(ComplaintID, ComplaintNo, CustomerName, SoName) {
+        clearQualityVisitForm();
+        $("#qvComplaintID").text(ComplaintID);
+        $("#qvComplaintNo").text(ComplaintNo);
+        $("#qvComplaintCustomer").text(CustomerName);
+        $("#qvComplaintSO").text(SoName);
+        $("#qvCustomerName").val(CustomerName);
+        $("#qvSalePersonName").val(SoName);
+
+        if (!qualityVisitLookupsLoaded) {
+            loadQualityVisitLookups();
+        }
+
+        $("#QualityVisitModal").modal('show');
+    }
+
+    $("#qvSave").click(function () {
+        var ComplaintID = $("#qvComplaintID").text();
+        if (!ComplaintID) {
+            alertify.error("No complaint selected");
+            return;
+        }
+
+        var data = new FormData();
+        data.append("ComplaintID", ComplaintID);
+        data.append("CustomerName", $("#qvCustomerName").val());
+        data.append("SiteContactPerson", $("#qvSiteContactPerson").val());
+        data.append("ComplaintNatureID", $("#qvComplaintNatureID").val());
+        data.append("SubstrateNatureID", $("#qvSubstrateNatureID").val());
+        data.append("ProductCategoryID", $("#qvProductCategoryID").val());
+        data.append("PackSize", $("#qvPackSizeID").val());
+        data.append("VisitTeamMembers", $("#qvVisitTeamMembers").val());
+        data.append("NoOfVisits", $("#qvNoOfVisits").val());
+        data.append("VisitDates", $("#qvVisitDates").val());
+        data.append("ComplaintStatus", $("#qvComplaintStatus").val());
+        data.append("SalePersonName", $("#qvSalePersonName").val());
+        data.append("ComplaintSummary", $("#qvComplaintSummary").val());
+        data.append("SiteObservationInvestigation", $("#qvSiteObservationInvestigation").val());
+        data.append("CorrectiveAndPreventiveActions", $("#qvCorrectiveAndPreventiveActions").val());
+        data.append("Conclusion", $("#qvConclusion").val());
+
+        var pic1 = $("#qvPicture1").get(0).files;
+        if (pic1.length > 0) {
+            data.append("Picture1", pic1[0]);
+        }
+        var pic2 = $("#qvPicture2").get(0).files;
+        if (pic2.length > 0) {
+            data.append("Picture2", pic2[0]);
+        }
+
+        $.ajax({
+            type: "Post",
+            url: "@Url.Action("SaveComplaintQualityVisit", "Complaint")",
+            cache: false,
+            contentType: false,
+            processData: false,
+            data: data,
+            success: function (res) {
+                if (res == "1") {
+                    alertify.success("Visit Submitted Successfully");
+                    $("#QualityVisitModal").modal('hide');
+                }
+                else {
+                    alertify.error("Unable to submit visit");
+                }
+            },
+            error: function () {
+                alertify.error("Server Is not Responding.");
+            }
+        });
+    });
 
     // Fetches the full quality-review history for a complaint (GetSuggestData now
     // returns a JSON array, most-recent-first) and renders:
