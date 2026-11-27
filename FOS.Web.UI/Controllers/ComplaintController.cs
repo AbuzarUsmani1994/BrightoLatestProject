@@ -558,6 +558,7 @@ namespace FOS.Web.UI.Controllers
                 int userId = 0;
                 int.TryParse(Convert.ToString(Session["UserID"]), out userId);
 
+                int newId;
                 using (var db = new FOSDataModel())
                 using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
                 using (var cmd = new SqlCommand(@"
@@ -572,7 +573,8 @@ namespace FOS.Web.UI.Controllers
                          @ProductCategoryID, @PackSize, @VisitTeamMembers, @NoOfVisits,
                          @VisitDates, @ComplaintStatus, @SalePersonName, @ComplaintSummary,
                          @SiteObservationInvestigation, @CorrectiveAndPreventiveActions, @Conclusion,
-                         @Picture1, @Picture2, @CreatedBy)", conn))
+                         @Picture1, @Picture2, @CreatedBy);
+                    SELECT CAST(SCOPE_IDENTITY() AS INT);", conn))
                 {
                     cmd.Parameters.Add(new SqlParameter("@ComplaintID", SqlDbType.Int) { Value = complaintId });
                     cmd.Parameters.Add(new SqlParameter("@CustomerName", SqlDbType.VarChar, 200) { Value = (object)Request.Form["CustomerName"] ?? DBNull.Value });
@@ -595,14 +597,14 @@ namespace FOS.Web.UI.Controllers
                     cmd.Parameters.Add(new SqlParameter("@CreatedBy", SqlDbType.Int) { Value = userId });
 
                     conn.Open();
-                    cmd.ExecuteNonQuery();
+                    newId = Convert.ToInt32(cmd.ExecuteScalar());
                 }
 
-                return Json("1");
+                return Json(new { success = true, id = newId });
             }
-            catch
+            catch (Exception ex)
             {
-                return Json("0");
+                return Json(new { success = false, error = ex.Message });
             }
         }
 
@@ -642,6 +644,132 @@ namespace FOS.Web.UI.Controllers
             }
             file.SaveAs(Path.Combine(folder, fileName));
             return "/Images/ComQualityVisit/" + fileName;
+        }
+
+        // Plain POCO bound to ComplaintQualityVisit.rdlc's DataSet1 - field names here
+        // must match the Field Names in that file exactly.
+        private class ComplaintQualityVisitReportRow
+        {
+            public string ComplaintSite { get; set; }
+            public string ComplaintNature { get; set; }
+            public string SubstrateNature { get; set; }
+            public string ComplaintProductName { get; set; }
+            public string VisitedTeam { get; set; }
+            public string SiteContactPerson { get; set; }
+            public string NumberOfVisits { get; set; }
+            public string DateOfVisits { get; set; }
+            public string ComplaintStatus { get; set; }
+            public string ComplaintSummary { get; set; }
+            public string SiteObservationInvestigation { get; set; }
+            public string CorrectiveAndPreventiveActions { get; set; }
+            public string Conclusion { get; set; }
+            public string PictureUrl { get; set; }
+        }
+
+        // Auto-downloaded right after a successful Submit Visit (see qvSave's success
+        // handler in ManageComplaints.cshtml). Same RDLC + LocalReport pattern as the
+        // existing DownloadPDFCompalintReport action above - no new PDF dependency.
+        // Complaint Nature/Substrate Nature/Complaint Product Name show whatever was
+        // actually selected in the popup (Tbl_ProductNature / Tbl_ConditionOfSubstratee /
+        // Tbl_ProuctCategory), not necessarily matching any particular reference sample.
+        public void DownloadComplaintQualityVisitReport(int id)
+        {
+            using (var db = new FOSDataModel())
+            {
+                string customerName = null, siteContactPerson = null, visitTeamMembers = null,
+                    noOfVisits = null, visitDates = null, complaintStatus = null,
+                    complaintSummary = null, siteObservation = null, correctiveActions = null,
+                    conclusion = null, picture1 = null;
+                int? complaintNatureId = null, substrateNatureId = null, productCategoryId = null;
+
+                using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+                using (var cmd = new SqlCommand(@"
+                    SELECT CustomerName, SiteContactPerson, ComplaintNatureID, SubstrateNatureID,
+                           ProductCategoryID, VisitTeamMembers, NoOfVisits, VisitDates,
+                           ComplaintStatus, ComplaintSummary, SiteObservationInvestigation,
+                           CorrectiveAndPreventiveActions, Conclusion, Picture1
+                    FROM dbo.Tbl_ComplaintQualityVisit WHERE ID = @ID", conn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@ID", SqlDbType.Int) { Value = id });
+                    conn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            customerName = reader["CustomerName"] as string;
+                            siteContactPerson = reader["SiteContactPerson"] as string;
+                            complaintNatureId = reader["ComplaintNatureID"] as int?;
+                            substrateNatureId = reader["SubstrateNatureID"] as int?;
+                            productCategoryId = reader["ProductCategoryID"] as int?;
+                            visitTeamMembers = reader["VisitTeamMembers"] as string;
+                            noOfVisits = reader["NoOfVisits"] as string;
+                            visitDates = reader["VisitDates"] as string;
+                            complaintStatus = reader["ComplaintStatus"] as string;
+                            complaintSummary = reader["ComplaintSummary"] as string;
+                            siteObservation = reader["SiteObservationInvestigation"] as string;
+                            correctiveActions = reader["CorrectiveAndPreventiveActions"] as string;
+                            conclusion = reader["Conclusion"] as string;
+                            picture1 = reader["Picture1"] as string;
+                        }
+                    }
+                }
+
+                string complaintNatureName = complaintNatureId.HasValue
+                    ? db.Tbl_ProductNature.Where(x => x.ID == complaintNatureId.Value).Select(x => x.Name).FirstOrDefault()
+                    : null;
+                string substrateNatureName = substrateNatureId.HasValue
+                    ? db.Tbl_ConditionOfSubstratee.Where(x => x.ID == substrateNatureId.Value).Select(x => x.Name).FirstOrDefault()
+                    : null;
+                string productCategoryName = productCategoryId.HasValue
+                    ? db.Tbl_ProuctCategory.Where(x => x.ID == productCategoryId.Value).Select(x => x.Name).FirstOrDefault()
+                    : null;
+
+                string baseUrl = "http://" + HttpContext.Request.Url.Authority + "/";
+                string pictureUrl = string.IsNullOrEmpty(picture1) ? baseUrl + "Images/NoImage.jpg" : baseUrl + picture1.TrimStart('/');
+
+                var rows = new List<ComplaintQualityVisitReportRow>
+                {
+                    new ComplaintQualityVisitReportRow
+                    {
+                        ComplaintSite = customerName,
+                        ComplaintNature = complaintNatureName,
+                        SubstrateNature = substrateNatureName,
+                        ComplaintProductName = productCategoryName,
+                        VisitedTeam = visitTeamMembers,
+                        SiteContactPerson = siteContactPerson,
+                        NumberOfVisits = noOfVisits,
+                        DateOfVisits = visitDates,
+                        ComplaintStatus = complaintStatus,
+                        ComplaintSummary = complaintSummary,
+                        SiteObservationInvestigation = siteObservation,
+                        CorrectiveAndPreventiveActions = correctiveActions,
+                        Conclusion = conclusion,
+                        PictureUrl = pictureUrl
+                    }
+                };
+
+                var reportViewer = new LocalReport();
+                reportViewer.ReportPath = Server.MapPath("~\\Views\\Reports\\ComplaintQualityVisit.rdlc");
+                reportViewer.EnableExternalImages = true;
+                reportViewer.DataSources.Clear();
+                reportViewer.DataSources.Add(new ReportDataSource("DataSet1", rows));
+                reportViewer.Refresh();
+
+                Warning[] warnings;
+                string[] streamIds;
+                string contentType, encoding, extension;
+                byte[] bytes = reportViewer.Render("PDF", null, out contentType, out encoding, out extension, out streamIds, out warnings);
+
+                Response.Clear();
+                Response.Buffer = true;
+                Response.Charset = "";
+                Response.Cache.SetCacheability(HttpCacheability.NoCache);
+                Response.ContentType = contentType;
+                Response.AddHeader("content-disposition", "attachment;filename=ComplaintVisitReport_" + id + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf");
+                Response.BinaryWrite(bytes);
+                Response.Flush();
+                Response.End();
+            }
         }
 
         #endregion
@@ -781,6 +909,64 @@ namespace FOS.Web.UI.Controllers
             Response.Flush();
 
             Response.End();
+        }
+
+        #endregion
+
+        #region Commercial Decision (visible only to userID 1124)
+
+        // Same product-category source as the Quality Visit form's lookups, reused
+        // here rather than duplicating the query - only ProductCategories is used by
+        // this form's JS.
+        [HttpPost]
+        public JsonResult SaveComplaintCommercialDecision()
+        {
+            int userId = 0;
+            int.TryParse(Convert.ToString(Session["UserID"]), out userId);
+            if (userId != 1124)
+            {
+                return Json(new { success = false, error = "Not authorized." });
+            }
+
+            try
+            {
+                int complaintId;
+                int.TryParse(Request.Form["ComplaintID"], out complaintId);
+                if (complaintId == 0)
+                {
+                    return Json(new { success = false, error = "No complaint selected." });
+                }
+
+                string picture1Path = SaveQualityVisitPicture(Request.Files["Picture1"]);
+                string picture2Path = SaveQualityVisitPicture(Request.Files["Picture2"]);
+
+                using (var db = new FOSDataModel())
+                using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+                using (var cmd = new SqlCommand(@"
+                    INSERT INTO dbo.Tbl_ComplaintCommercialDecision
+                        (ComplaintID, ProductCategoryID, PackSize, Quantity, Remarks, Picture1, Picture2, CreatedBy)
+                    VALUES
+                        (@ComplaintID, @ProductCategoryID, @PackSize, @Quantity, @Remarks, @Picture1, @Picture2, @CreatedBy)", conn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@ComplaintID", SqlDbType.Int) { Value = complaintId });
+                    cmd.Parameters.Add(ToNullableIntParam("@ProductCategoryID", Request.Form["ProductCategoryID"]));
+                    cmd.Parameters.Add(new SqlParameter("@PackSize", SqlDbType.VarChar, 100) { Value = (object)Request.Form["PackSize"] ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@Quantity", SqlDbType.VarChar, 50) { Value = (object)Request.Form["Quantity"] ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@Remarks", SqlDbType.NVarChar, 1000) { Value = (object)Request.Form["Remarks"] ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@Picture1", SqlDbType.VarChar, 500) { Value = (object)picture1Path ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@Picture2", SqlDbType.VarChar, 500) { Value = (object)picture2Path ?? DBNull.Value });
+                    cmd.Parameters.Add(new SqlParameter("@CreatedBy", SqlDbType.Int) { Value = userId });
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message });
+            }
         }
 
         #endregion

@@ -140,7 +140,7 @@
                                 <th style="width:15%">
                                     Is Verified
                                 </th>
-                                <th style="width:16%">Actions</th>
+                                <th style="width:20%">Actions</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -422,6 +422,70 @@
     </div>
 </div>
 
+<!-- Commercial Decision - visible only to userID 1124 (same gate as the existing
+     Quality Review Publish button). Saved to Tbl_ComplaintCommercialDecision. -->
+<div id="CommercialDecisionModal" class="modal hide fade in" role="dialog" style="width: 50%;max-height: 85%;top: 7%;left: 25%;overflow-y:auto;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="span12">
+                    <button type="button" class="close" id="cdClose" data-dismiss="modal">&times;</button>
+                    <h2 style="margin-top: -10px;text-align:center;color: #62c462;font-weight: bolder;border-bottom: 1px solid #62c462;border-top: 1px solid #62c462;padding-bottom: 10px;padding-top: 10px;">Commercial Decision</h2>
+
+                    <div class="span12" style="padding:5px">
+                        <span id="cdComplaintID" style="display:none"></span>
+                        <div class="container-fluid">
+                            <div class="row-fluid" style="margin-top:10px">
+                                <div class="span6">
+                                    <label class="control-label">Product Category</label>
+                                    <select id="cdProductCategoryID" class="span12"><option value="">Select</option></select>
+                                </div>
+                                <div class="span6">
+                                    <label class="control-label">Pack Size</label>
+                                    <select id="cdPackSize" class="span12">
+                                        <option value="">Select</option>
+                                        <option value="Drum">Drum</option>
+                                        <option value="Gallon">Gallon</option>
+                                        <option value="Quarter">Quarter</option>
+                                        <option value="Tin">Tin</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row-fluid" style="margin-top:10px">
+                                <div class="span6">
+                                    <label class="control-label">Quantity</label>
+                                    <input type="text" id="cdQuantity" class="span12" />
+                                </div>
+                            </div>
+                            <div class="row-fluid" style="margin-top:10px">
+                                <div class="span12">
+                                    <label class="control-label">Remarks</label>
+                                    <textarea id="cdRemarks" class="span12" rows="3"></textarea>
+                                </div>
+                            </div>
+                            <div class="row-fluid" style="margin-top:10px">
+                                <div class="span6">
+                                    <label class="control-label">Picture 1</label>
+                                    <input type="file" id="cdPicture1" accept="image/*" />
+                                </div>
+                                <div class="span6">
+                                    <label class="control-label">Picture 2</label>
+                                    <input type="file" id="cdPicture2" accept="image/*" />
+                                </div>
+                            </div>
+                            <div class="row-fluid" style="margin-top:15px">
+                                <span class="span3">
+                                    <button type="button" id="cdPublish" class="btn btn-primary">Publish</button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="~/Scripts/js/preview.js"></script>
 <script>
     // Publish button on each Quality Review history row is only for userID 1124 -
@@ -450,6 +514,7 @@
         GenerateDetailGrid();
         $("#ProductDetail").modal('hide');
         $("#QualityVisitModal").modal('hide');
+        $("#CommercialDecisionModal").modal('hide');
 
         $("#AppID").select2({
             width: "100%",
@@ -716,6 +781,11 @@
                         var SoName = $(this).attr("data-soname");
                         openQualityVisitModal(ComplaintID, ComplaintNo, CustomerName, SoName);
                     });
+
+                    $(".commercial-decision").on("click", function () {
+                        var ComplaintID = $(this).attr("data-id");
+                        openCommercialDecisionModal(ComplaintID);
+                    });
                     }
 
                 if (UpdateCheck == "@HttpContext.Current.Session["DeleteCheck"]") { $(".delete").css("display", "none"); }
@@ -745,7 +815,7 @@
                 { "width": "120px", "targets": 5 }, // ProductCategory
                 { "width": "160px", "targets": 6 }, // ProductDesc
                 { "width": "120px", "targets": 7 }, // ProductBatchNo
-                { "width": "190px", "targets": 8 }  // Action buttons: edit, Report, + Visit
+                { "width": "260px", "targets": 8 }  // Action buttons: edit, Report, + Visit, + Decision (userID 1124 only)
             ],
             "columns": [
                 { "data": "ComplaintID"},
@@ -761,7 +831,12 @@
                 "mData": null,
                 "bSortable": false,
                 "mRender": function (data, type, row) {
-                    return '<button class="btn btn-success edit" data-id=' + row.ComplaintID + ' data-complaintNo=' + '"' + row.ComplaintNumber + '"' + ' data-soname=' + '"' + row.SaleOfficerName + '"' + ' data-created=' + '"' + row.StartingDate1 + '"' + '>' + '<i class=icon-pencil></i>' + '</button>&nbsp; <button class="btn btn-primary delete" style="margin-top:5px" data-id=' + row.ComplaintID + '>Report</button>&nbsp; <button class="btn btn-info add-visit" style="margin-top:5px" data-id=' + row.ComplaintID + ' data-complaintno=' + '"' + row.ComplaintNumber + '"' + ' data-customer=' + '"' + row.CustomerName + '"' + ' data-soname=' + '"' + row.SaleOfficerName + '"' + '>+ Visit</button>';
+                    var html = '<button class="btn btn-success edit" data-id=' + row.ComplaintID + ' data-complaintNo=' + '"' + row.ComplaintNumber + '"' + ' data-soname=' + '"' + row.SaleOfficerName + '"' + ' data-created=' + '"' + row.StartingDate1 + '"' + '>' + '<i class=icon-pencil></i>' + '</button>&nbsp; <button class="btn btn-primary delete" style="margin-top:5px" data-id=' + row.ComplaintID + '>Report</button>&nbsp; <button class="btn btn-info add-visit" style="margin-top:5px" data-id=' + row.ComplaintID + ' data-complaintno=' + '"' + row.ComplaintNumber + '"' + ' data-customer=' + '"' + row.CustomerName + '"' + ' data-soname=' + '"' + row.SaleOfficerName + '"' + '>+ Visit</button>';
+                    // Commercial Decision button is visible only to userID 1124 (canPublish).
+                    if (canPublish) {
+                        html += '&nbsp; <button class="btn btn-warning commercial-decision" style="margin-top:5px" data-id=' + row.ComplaintID + '>+ Decision</button>';
+                    }
+                    return html;
                 }
             }
             ],
@@ -913,12 +988,91 @@
             processData: false,
             data: data,
             success: function (res) {
-                if (res == "1") {
+                if (res.success) {
                     alertify.success("Visit Submitted Successfully");
                     $("#QualityVisitModal").modal('hide');
+                    window.open("@Url.Action("DownloadComplaintQualityVisitReport", "Complaint")" + "?id=" + res.id);
                 }
                 else {
-                    alertify.error("Unable to submit visit");
+                    alertify.error("Unable to submit visit" + (res.error ? ": " + res.error : ""));
+                }
+            },
+            error: function () {
+                alertify.error("Server Is not Responding.");
+            }
+        });
+    });
+
+    // --- Commercial Decision (userID 1124 only) --------------------------------
+
+    var commercialDecisionCategoriesLoaded = false;
+
+    function clearCommercialDecisionForm() {
+        $("#cdQuantity, #cdRemarks").val("");
+        $("#cdProductCategoryID, #cdPackSize").val("");
+        $("#cdPicture1").val("");
+        $("#cdPicture2").val("");
+    }
+
+    function openCommercialDecisionModal(ComplaintID) {
+        clearCommercialDecisionForm();
+        $("#cdComplaintID").text(ComplaintID);
+
+        if (!commercialDecisionCategoriesLoaded) {
+            $.ajax({
+                type: "Get",
+                url: "@Url.Action("GetQualityVisitLookups", "Complaint")",
+                success: function (res) {
+                    if (res.error) {
+                        alertify.error("Unable to load Product Category: " + res.error);
+                        return;
+                    }
+                    fillQualityVisitSelect("#cdProductCategoryID", res.productCategories, "Select");
+                    commercialDecisionCategoriesLoaded = true;
+                }
+            });
+        }
+
+        $("#CommercialDecisionModal").modal('show');
+    }
+
+    $("#cdPublish").click(function () {
+        var ComplaintID = $("#cdComplaintID").text();
+        if (!ComplaintID) {
+            alertify.error("No complaint selected");
+            return;
+        }
+
+        var data = new FormData();
+        data.append("ComplaintID", ComplaintID);
+        data.append("ProductCategoryID", $("#cdProductCategoryID").val());
+        data.append("PackSize", $("#cdPackSize").val());
+        data.append("Quantity", $("#cdQuantity").val());
+        data.append("Remarks", $("#cdRemarks").val());
+
+        var pic1 = $("#cdPicture1").get(0).files;
+        if (pic1.length > 0) {
+            data.append("Picture1", pic1[0]);
+        }
+        var pic2 = $("#cdPicture2").get(0).files;
+        if (pic2.length > 0) {
+            data.append("Picture2", pic2[0]);
+        }
+
+        $.ajax({
+            type: "Post",
+            url: "@Url.Action("SaveComplaintCommercialDecision", "Complaint")",
+            cache: false,
+            contentType: false,
+            processData: false,
+            data: data,
+            success: function (res) {
+                if (res.success) {
+                    alertify.success("Published Successfully");
+                    $("#CommercialDecisionModal").modal('hide');
+                }
+                else {
+                    alertify.error("Unable to publish" + (res.error ? ": " + res.error : ""));
                 }
             },
             error: function () {

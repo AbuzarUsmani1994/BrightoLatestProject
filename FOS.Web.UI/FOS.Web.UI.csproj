@@ -2587,6 +2587,7 @@
     <EmbeddedResource Include="Views\Reports\Count.rdlc" />
     <EmbeddedResource Include="Views\Reports\BrandClaims.rdlc" />
     <Content Include="Views\Reports\SOComplaints.rdlc" />
+    <Content Include="Views\Reports\ComplaintQualityVisit.rdlc" />
     <EmbeddedResource Include="Views\Reports\TradeVisit.rdlc" />
     <EmbeddedResource Include="Views\Reports\MMCOrdersRSM.rdlc" />
     <EmbeddedResource Include="Views\Reports\OnlineOfflineWise.rdlc" />
