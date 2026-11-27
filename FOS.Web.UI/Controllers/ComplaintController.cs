@@ -517,30 +517,52 @@ namespace FOS.Web.UI.Controllers
         // tables off the fragile .edmx) - queried via raw ADO.NET instead.
         public JsonResult GetQualityVisitLookups()
         {
-            using (var db = new FOSDataModel())
+            // The global HandleErrorAttribute filter (FilterConfig.cs) would otherwise
+            // swallow any exception here into a generic "An error occurred" page for a
+            // GET request hit directly in the browser, and into a silently-failed AJAX
+            // call from the Visit popup - surfacing the real message as JSON instead.
+            try
             {
-                var complaintNatures = db.Tbl_ProductNature.Where(x => x.IsActive == true)
-                    .OrderBy(x => x.Name).Select(x => new { ID = x.ID, Name = x.Name }).ToList();
-                var substrateNatures = db.Tbl_ConditionOfSubstratee.Where(x => x.IsActive == true)
-                    .OrderBy(x => x.Name).Select(x => new { ID = x.ID, Name = x.Name }).ToList();
-                var productCategories = db.Tbl_ProuctCategory.Where(x => x.IsActive == true)
-                    .OrderBy(x => x.Name).Select(x => new { ID = x.ID, Name = x.Name }).ToList();
-
-                var packSizes = new List<object>();
-                using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
-                using (var cmd = new SqlCommand("SELECT ID, Name FROM dbo.Tbl_PackSize WHERE IsActive = 1 ORDER BY Name", conn))
+                using (var db = new FOSDataModel())
                 {
-                    conn.Open();
-                    using (var reader = cmd.ExecuteReader())
+                    var complaintNatures = db.Tbl_ProductNature.Where(x => x.IsActive == true)
+                        .OrderBy(x => x.Name).Select(x => new { ID = x.ID, Name = x.Name }).ToList();
+                    var substrateNatures = db.Tbl_ConditionOfSubstratee.Where(x => x.IsActive == true)
+                        .OrderBy(x => x.Name).Select(x => new { ID = x.ID, Name = x.Name }).ToList();
+                    var productCategories = db.Tbl_ProuctCategory.Where(x => x.IsActive == true)
+                        .OrderBy(x => x.Name).Select(x => new { ID = x.ID, Name = x.Name }).ToList();
+
+                    // Isolated in its own try/catch: if Tbl_PackSize hasn't been created yet
+                    // (CreateTbl_ComplaintQualityVisit.sql not yet run), Pack Size degrades
+                    // to an empty list instead of an exception blanking out the other three
+                    // dropdowns too, which already come from existing tables.
+                    var packSizes = new List<object>();
+                    try
                     {
-                        while (reader.Read())
+                        using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+                        using (var cmd = new SqlCommand("SELECT ID, Name FROM dbo.Tbl_PackSize WHERE IsActive = 1 ORDER BY Name", conn))
                         {
-                            packSizes.Add(new { ID = reader.GetInt32(0), Name = reader.GetString(1) });
+                            conn.Open();
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    packSizes.Add(new { ID = reader.GetInt32(0), Name = reader.GetString(1) });
+                                }
+                            }
                         }
                     }
-                }
+                    catch
+                    {
+                        packSizes = new List<object>();
+                    }
 
-                return Json(new { complaintNatures, substrateNatures, productCategories, packSizes }, JsonRequestBehavior.AllowGet);
+                    return Json(new { complaintNatures, substrateNatures, productCategories, packSizes }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { error = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
