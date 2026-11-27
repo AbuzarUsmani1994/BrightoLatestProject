@@ -45,20 +45,21 @@ namespace FOS.Web.UI.Controllers
             {
                 // ViewBag.rptid = "";
                 // Trade/Housing/Corporate Customers: segment comes from the assigned Sale
-                // Officer's own SegmentID (not the retailer's own SegmentTypeID).
+                // Officer's own SegmentID (not the retailer's own SegmentTypeID), and both
+                // the SO and the customer must be active.
                 ViewBag.retailers = (from r in db.Retailers
                                      join so in db.SaleOfficers on r.SaleOfficerID equals so.ID
-                                     where r.IsActive == true && so.SegmentID == 1
+                                     where r.IsActive == true && so.IsActive == true && so.SegmentID == 1
                                      select r.ID).Count();
 
                 ViewBag.Housing = (from r in db.Retailers
                                    join so in db.SaleOfficers on r.SaleOfficerID equals so.ID
-                                   where r.IsActive == true && so.SegmentID == 2
+                                   where r.IsActive == true && so.IsActive == true && so.SegmentID == 2
                                    select r.ID).Count();
 
                 ViewBag.Corporate = (from r in db.Retailers
                                      join so in db.SaleOfficers on r.SaleOfficerID equals so.ID
-                                     where r.IsActive == true && so.SegmentID == 3
+                                     where r.IsActive == true && so.IsActive == true && so.SegmentID == 3
                                      select r.ID).Count();
 
 
